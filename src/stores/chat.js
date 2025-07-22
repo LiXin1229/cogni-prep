@@ -5,6 +5,12 @@ import API from '@/utils/API.js'
 import axios from 'axios'
 
 export const useChatStore = defineStore('chat', () => {
+  const MSG_TYPE = {
+    'user': 0, // 用户发言
+    'question': 1, // AI提问
+    'evaluation': 2 // AI评价
+  }
+
   // 已经加载的聊天记录
   const chatList = ref([])
 
@@ -14,19 +20,22 @@ export const useChatStore = defineStore('chat', () => {
   // 会话ID
   const sessionId = ref(5)
 
-  // 当前的发言状态(0: AI待发言  1: 用户待发言)
+  // 当前的发言状态(1: AI待发言  0: 用户待发言)
   const chatStatus = computed(() => {
-    if (displayChat.value.length <= 0) return 0
+    if (displayChat.value.length <= 0) return MSG_TYPE['question']
 
-    if (displayChat.value[displayChat.value.length - 1].messageType === 0) {
-      return 1
+    if (displayChat.value[displayChat.value.length - 1].messageType === MSG_TYPE['question']) {
+      return MSG_TYPE['user']
     }
 
-    return 0
+    return MSG_TYPE['question']
   })
 
   // 输入框内容
-  const customContent = ref('开始提问')
+  const customContent = ref('')
+
+  // @特殊功能
+  const funcStatus = ref('')
 
   const initDisplayChat = async () => {
     const { data } = await axios({
@@ -43,8 +52,11 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const submit = async () => {
+    console.log(customContent.value)
+    
+    return
     // 发送请求让AI开始提问
-    if (chatStatus.value === 0) {
+    if (chatStatus.value === 1) {
       // 初始化session
       if (!sessionId.value) {
         const { data } = await axios({
@@ -80,7 +92,7 @@ export const useChatStore = defineStore('chat', () => {
     }
 
     // 用户回答问题
-    else if (chatStatus.value === 1) {
+    else if (chatStatus.value === 0) {
       const { data } = await axios({
         url: API.interviewAnswer,
         method: 'POST',
@@ -91,8 +103,9 @@ export const useChatStore = defineStore('chat', () => {
           mainArea: '前端'
         }
       })
+      // console.log(data.data)
 
-      console.log(data.data)
+      displayChat.value.push(data.data)
     }
   }
 
@@ -100,6 +113,7 @@ export const useChatStore = defineStore('chat', () => {
     displayChat,
     initDisplayChat,
     chatStatus,
+    funcStatus,
     submit,
     customContent
   }

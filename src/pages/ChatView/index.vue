@@ -13,20 +13,23 @@ onMounted(() => {
   chatStore.initDisplayChat()
 })
 
+const funcBtn = () => {
+  console.log('@')
+  chatStore.funcStatus = '@模板+答案'
+}
+
 const submit = () => {
   chatStore.submit()
 }
 
-const inputHeight = ref(60)
+const inputHeight = ref(52)
 const textareaHeight = ref(null)
 
 watch(() => textareaHeight.value, (newHeight, oldHeight) => {
   if (newHeight === oldHeight) return
   // console.log(newHeight)
 
-  if (newHeight >= 210) return
-
-  inputHeight.value = newHeight
+  inputHeight.value = Math.min(Math.max(newHeight, 52), 210)
 })
 </script>
 
@@ -37,19 +40,20 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
     <div class="top"></div>
 
     <!-- 滚动聊天记录区 -->
-    <div class="scroll-view" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 64px)`}">
+    <div class="scroll-view" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}">
       <!-- 对话内容区 -->
       <div class="text-view">
         <!-- 每条聊天记录包裹层 -->
-        <div :class="['text-wrapper', chat.messageType === 0 ? 'system-wrapper' : 'user-wrapper']" v-for="chat in chatList" :key="chat.id">
-          <div :class="[chat.messageType === 0 ? 'system' : 'user']">{{ chat.content }}</div>
+        <div :class="['text-wrapper', chat.messageType === 0 ? 'user-wrapper' : 'system-wrapper']" v-for="chat in chatList" :key="chat.id">
+          <div :class="[chat.messageType === 0 ? 'user' : 'system']">{{ chat.content }}</div>
+          <button @click="funcBtn">@</button>
         </div>
       </div>
     </div>
 
     <!-- 输入框区 -->
     <div class="input-box">
-      <div class="input-panel" :style="{height: `${inputHeight + 64}px`}">
+      <div class="input-panel" :style="{height: `${inputHeight + 65}px`}">
 
         <!-- 功能按钮区 -->
         <div class="tool-btns">
@@ -75,11 +79,8 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
           <cust-textarea
             v-model="chatStore.customContent"
             v-model:height="textareaHeight"
-            ref="textareaRef"
-            placeholder="描述"
-            resize="none"
-            type="textarea"
-            :input-style="`height: ${inputHeight}px; box-shadow: none; color: var(--theme-font-color1); font-size: 16px;`"
+            :funcStatus="chatStore.funcStatus"
+            :placeholder="chatStore.chatStatus ? '开始提问' : '回答问题'"
           />
         </div>
       </div>
@@ -116,6 +117,8 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
       margin: 0 auto;
 
       .text-wrapper {
+        color: var(--text-color-0);
+
         .user {
           display: inline-block;
           background-color: var(--uesr-bubble-bgc);
@@ -126,7 +129,7 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
 
       .text-wrapper.user-wrapper {
         text-align: end;
-        color: var(--text-color-1);
+        
       }
     }
   }
