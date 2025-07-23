@@ -1,8 +1,11 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import Quill from 'quill'
 import 'quill/dist/quill.bubble.css'
 import Delta from 'quill-delta'
+import { useChatStore } from '@/stores/chat'
+
+const chatStore = useChatStore()
 
 const props = defineProps({
   modelValue: {
@@ -14,8 +17,8 @@ const props = defineProps({
     default: 0
   },
   funcStatus: {
-    type: String,
-    default: ''
+    type: Number,
+    default: 0
   },
   placeholder: {
     type: String,
@@ -27,6 +30,23 @@ const emit = defineEmits(['update:modelValue', 'update:height'])
 
 const editorRef = ref(null)
 let quillInstance = null
+
+// 匹配功能的模式
+const matchPatterns = computed(() => {
+  return chatStore.funcType.map(item => {
+    if (item === '标准') {
+      return {
+        regex: /^$/, // 匹配空字符串
+        style: { color: 'inherit', bold: false }
+      }
+    } else {
+      return {
+        regex: new RegExp(`^\\s*${item.replace('+', '\\+')}`), // 转义特殊字符（如 +）
+        style: { color: 'var(--light-blue-color)', bold: true }
+      }
+    }
+  })
+})
 
 // 转义函数：将 < > 等转成 &lt; &gt;
 const escapeHtml = (html) => {
@@ -63,36 +83,11 @@ onMounted(() => {
             // 返回纯文本Delta
             return new Delta().insert(text)
           }]
-        ],
-        beforePaste: (clipboardData) => {
-          const items = clipboardData.items;
-          let hasImage = false;
-
-          console.log('clipboardData', clipboardData)
-
-          // 检查是否包含图片
-          for (let i = 0; i < items.length; i++) {
-            if (items[i].type.includes('image/')) {
-              hasImage = true;
-              break;
-            }
-          }
-
-          if (hasImage) {
-            alert('不支持粘贴图片！');
-            return false; // 返回 false 完全阻止粘贴
-          }
-
-          // 只保留纯文本（清除格式）
-          const text = clipboardData.getData('text/plain');
-          // 返回新的剪贴板数据（只含纯文本）
-          return new Blob([text], { type: 'text/plain' });
-        },
+        ]
       }
     }
   })
-
-
+  
   // 设置初始值
   if (props.modelValue) {
     // 先进行HTML转义处理
@@ -101,53 +96,50 @@ onMounted(() => {
   }
 
   // 监听编辑器内容变化
-  quillInstance.on('text-change', () => {
+  quillInstance.on('text-change', (delta, oldDelta, source) => {
+    if (source === 'api') return
+
     const plainText  = quillInstance.getText()
 
     const unescapedText = escapeHtml(plainText)
-    // console.log(unescapedText)
+
+    // 清除样式
+    clearStyle(quillInstance)
+
+    // 匹配特定样式
+    matchText(unescapedText)
 
     emit('update:modelValue', unescapedText)
 
     updateEditorHeight()
   })
-
-  // quillInstance.root.addEventListener("paste", (event) => {
-  //   console.log('paste', event)
-
-  //   event.preventDefault()
-    
-  //   if (event.clipboardData && event.clipboardData.files.length > 0) {
-  //     event.preventDefault(); // 阻止默认粘贴行为
-  //     const files = event.clipboardData.files
-  //   }
-  // })
-
-  // const editorElement = editorRef.value.querySelector('.ql-editor');
-  
-  // // 监听粘贴事件
-  // editorElement.addEventListener('paste', (e) => {
-  //   const items = e.clipboardData.items
-
-  //   for (let i = 0; i < items.length; i++) {
-  //     console.log("类型:", items[i].type) // 如 "image/png"
-  //   }
-    
-  //   e.preventDefault()
-    
-  //   // 1. 获取纯文本内容
-  //   const plainText = e.clipboardData.getData('text/plain')
-  //   // console.log('剪贴板纯文本:', plainText);
-    
-  //   // 2. 获取HTML内容
-  //   const htmlContent = e.clipboardData.getData('text/html')
-  //   // console.log('剪贴板HTML内容:', htmlContent);
-    
-  //   // 如需自定义处理粘贴，可以阻止默认行为并手动插入
-  //   // e.preventDefault();
-  //   // quillInstance.insertText(quillInstance.getSelection().index, plainText);
-  // })
 })
+
+// 清除样式
+const clearStyle = (instance) => {
+  const length = instance.getLength()
+  instance.formatText(0, length, { 'color': 'inherit', 'bold': false })
+}
+
+// 匹配特定字符, 修改其样式
+const matchText = (text) => {
+  const pattern = matchPatterns.value[chatStore.funcStatus]
+  const match = text.match(pattern.regex)
+
+  if (match) {
+    quillInstance.formatText(
+      0,
+      match[0].length,
+      {
+        'color': pattern.style.color,
+        'bold': pattern.style.bold
+      }
+    )
+  } else {
+    // 没有匹配的字符则将当前功能取消
+    chatStore.funcStatus = 0
+  }
+}
 
 // 更新编辑器高度
 const updateEditorHeight = () => {
@@ -168,6 +160,31 @@ const updateEditorHeight = () => {
   }
 }
 
+// 插入文本特定文本
+const insertText = (text, position = 0) => {
+  if (!quillInstance) return
+
+  clearStyle(quillInstance)
+
+  quillInstance.insertText(position, text)
+
+  const textLenght = quillInstance.getLength()
+  
+  // 插入后将光标移到文本末尾
+  quillInstance.setSelection(textLenght - 1, 0)
+
+  matchText(text)
+}
+
+const deleteText = (length, position = 0) => {
+  quillInstance.deleteText(position, length)
+}
+
+// 暴露方法给父组件
+defineExpose({
+  insertText,
+  deleteText
+})
 </script>
 
 <template>
