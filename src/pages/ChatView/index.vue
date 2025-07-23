@@ -13,13 +13,35 @@ onMounted(() => {
   chatStore.initDisplayChat()
 })
 
-const funcBtn = () => {
-  console.log('@')
-  chatStore.funcStatus = '@模板+答案'
+const quillRef = ref(null)
+
+const funcBtn = (type) => {
+  // 不能重复按相同按钮
+  if (chatStore.funcStatus === type) return
+
+  // 先清除上个@的内容
+  if (chatStore.funcStatus > 0) {
+    quillRef.value?.deleteText(chatStore.funcType[chatStore.funcStatus].length)
+  }
+  
+  // 设置当前功能
+  chatStore.funcStatus = type
+
+  // 将功能显示到输入框开头
+  quillRef.value?.insertText(chatStore.funcType[type])
+  chatStore.customContent = chatStore.funcType[type] + chatStore.customContent
+}
+
+// 下一题
+const nextQuestion = () => {
+  chatStore.getAIquestion()
 }
 
 const submit = () => {
   chatStore.submit()
+
+  // 重置输入框
+  quillRef.value?.resetForm(chatStore.customContent.length)
 }
 
 const inputHeight = ref(52)
@@ -46,7 +68,14 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
         <!-- 每条聊天记录包裹层 -->
         <div :class="['text-wrapper', chat.messageType === 0 ? 'user-wrapper' : 'system-wrapper']" v-for="chat in chatList" :key="chat.id">
           <div :class="[chat.messageType === 0 ? 'user' : 'system']">{{ chat.content }}</div>
-          <button @click="funcBtn">@</button>
+
+          <!-- 功能按键 -->
+          <div class="functionList">
+            <button @click="nextQuestion">@下一题</button>
+            <button @click="funcBtn(1)" v-if="chat.messageType === 1">@回答模板</button>
+            <button @click="funcBtn(2)" v-if="chat.messageType === 1">@标准答案</button>
+            <button @click="funcBtn(3)" v-if="chat.messageType === 1">@模板+答案</button>
+          </div>
         </div>
       </div>
     </div>
@@ -77,9 +106,9 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
         <!-- 文字输入区 -->
         <div class="text-area">
           <cust-textarea
+            ref="quillRef"
             v-model="chatStore.customContent"
             v-model:height="textareaHeight"
-            :funcStatus="chatStore.funcStatus"
             :placeholder="chatStore.chatStatus ? '开始提问' : '回答问题'"
           />
         </div>
@@ -129,7 +158,6 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
 
       .text-wrapper.user-wrapper {
         text-align: end;
-        
       }
     }
   }
@@ -162,7 +190,7 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
           .main-area {
             background-color: var(--main-bgc);
             padding: 5px 10px;
-            border: 1px solid var(--light-main-color);
+            border: 1px solid var(--light-blue-color);
             color: var(--main-color);
             border-radius: 10px;
             margin-right: 10px;

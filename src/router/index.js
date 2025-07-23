@@ -13,6 +13,7 @@ const router = createRouter({
       children: [
         {
           path: 'chat-view',
+          name: '每日刷题',
           component: ChatView
         }
       ]

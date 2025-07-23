@@ -26,6 +26,10 @@ const props = defineProps({
   }
 })
 
+watch(() => props.placeholder, () => {
+  console.log('props.placeholder', props.placeholder)
+}, { immediate: true })
+
 const emit = defineEmits(['update:modelValue', 'update:height'])
 
 const editorRef = ref(null)
@@ -153,7 +157,7 @@ const updateEditorHeight = () => {
     
     // 获取新的scrollHeight
     const scrollHeight = innerTextarea.scrollHeight
-    console.log('文本高度:', scrollHeight)
+    // console.log('文本高度:', scrollHeight)
     
     // 暴露高度给父组件
     emit('update:height', scrollHeight)
@@ -180,10 +184,18 @@ const deleteText = (length, position = 0) => {
   quillInstance.deleteText(position, length)
 }
 
+// 重置输入框
+const resetForm = (length) => {
+  deleteText(length, 0)
+  chatStore.funcStatus = 0
+  updateEditorHeight()
+}
+
 // 暴露方法给父组件
 defineExpose({
   insertText,
-  deleteText
+  deleteText,
+  resetForm
 })
 </script>
 
