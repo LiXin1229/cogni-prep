@@ -2,8 +2,17 @@
 import { faMagnifyingGlass, faCalendarDays, faFolderTree, faPenToSquare, faStar, faUserTie } from '@fortawesome/free-solid-svg-icons'
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useSessionStore } from '../../stores/session'
 
+import canlendar from '@/assets/svgs/canlendar.svg'
+import siweidaotu from '@/assets/svgs/siweidaotu.svg'
+import penToSquare from '@/assets/svgs/pen-to-square.svg'
+import star from '@/assets/svgs/star.svg'
+import userTie from '@/assets/svgs/user-tie.svg'
+
+const router = useRouter()
 const route = useRoute()
+const sessionStore = useSessionStore()
 
 const sidebarRef = ref(null)
 const mainViewRef = ref(null)
@@ -25,18 +34,35 @@ const toggleSidebar = () => {
 }
 
 const navberList = reactive([
-  { id: 1, title: '每日刷题', icon: faCalendarDays, path: 'chat-view' },
-  { id: 2, title: '知识点图', icon: faFolderTree },
-  { id: 3, title: '笔记', icon: faPenToSquare },
-  { id: 4, title: '收藏', icon: faStar },
-  { id: 5, title: '模拟面试', icon: faUserTie },
+  { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
+  { id: 2, title: '知识点图', icon: siweidaotu },
+  { id: 3, title: '笔记', icon: penToSquare },
+  { id: 4, title: '收藏', icon: star },
+  { id: 5, title: '模拟面试', icon: userTie },
 ])
+
+const navToPage = (nav) => {
+  router.push({
+    name: nav.title,
+  })
+}
 
 // 当前选中的导航栏
 const seclectedNav = computed(() => route.name) // 让当前选中的导航栏路由名称
 
+// 当前选中的会话
+const seclectedSession = computed(() => +route.params.sessionId)
+
+const navToSession = (sessionId) => {
+  router.push({
+    name: '会话',
+    params: { sessionId }
+  })
+}
+
 onMounted(() => {
   // toggleSidebar()
+  sessionStore.getSessionList()
 })
 </script>
 
@@ -58,11 +84,21 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 列表区 -->
+      <!-- nav列表区 -->
       <div class="nav-list">
-        <div v-for="navbar in navberList" :key="navbar" :class="['navbar-item', navbar.title === seclectedNav && 'selected-nav']">
-          <font-awesome-icon :icon="navbar.icon" class="icon" />
+        <div v-for="navbar in navberList" :key="navbar" :class="['navbar-item', navbar.title === seclectedNav && 'selected-nav']" @click="navToPage(navbar)">
+          <img :src="navbar.icon" alt="" class="icon">
           <div>{{ navbar.title }}</div>
+        </div>
+      </div>
+
+      <!-- 历史对话区 -->
+      <div class="session-list">
+        <div class="history-top">
+          <div class="title">历史对话</div>
+        </div>
+        <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
+          <div>{{ session.title || session.surroundingPoint }}</div>
         </div>
       </div>
     </div>
@@ -136,6 +172,51 @@ onMounted(() => {
         border-radius: 10px;
         font-size: 15px;
         color: var(--text-color-1);
+
+        .icon {
+          margin-right: 10px;
+          width: 16px;
+          height: 16px;
+        }
+
+        &:hover:not(.selected-nav) {
+          background-color: var(--navber-hover);
+        }
+      }
+
+      .selected-nav {
+        background-color: var(--primary-bgc);
+        box-shadow: 1px 1px 5px 1px var(--box-shadow-color);
+      }
+    }
+
+    .session-list {
+      margin-top: 18px;
+      padding: 18px 0;
+      border-top: 1px solid var(--light-border-color-1);
+
+      .history-top {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 10px;
+        
+        .title {
+          font-size: 13px;
+          color: var(--text-color-4);
+        }
+      }
+
+      .session-item {
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        height: 35px;
+        padding: 0 10px;
+        margin: 5px 0;
+        border-radius: 10px;
+        font-size: 15px;
+        color: var(--text-color-1);
+        transition: all 0.3s ease;
 
         .icon {
           margin-right: 10px;

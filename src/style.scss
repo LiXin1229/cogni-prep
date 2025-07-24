@@ -1,3 +1,5 @@
+@import url('./cust-theme.scss');
+
 * {
   margin: 0;
   padding: 0;
@@ -16,7 +18,7 @@
   --main-color: #0c5fff;
   --light-main-color: #87a1d5;
   --main-bgc: #e5eeff;
-  --light-blue-color: #89b8de;
+  --light-blue-color: #008dff;
   --light-main-active-color: #dae4f7;
 
   --text-color-0: #111;
@@ -40,7 +42,7 @@
 
 /* 滚动条轨道 */
 ::-webkit-scrollbar-track {
-  background: #f1f1f1; 
+  display: none; // 不展示
   border-radius: 4px;
 }
 
@@ -53,4 +55,9 @@
 /* 鼠标悬停时的滑块 */
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+// 取消下拉菜单黑框
+.el-tooltip__trigger:focus-visible {
+  outline: unset;
 }

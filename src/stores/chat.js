@@ -1,11 +1,16 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useSessionStore } from '@/stores/session.js'
 import { request } from '@/utils/request.js'
 import API from '@/utils/API.js'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 
 export const useChatStore = defineStore('chat', () => {
+  const route = useRoute()
+  const sessionStore = useSessionStore()
+
   const MSG_TYPE = {
     'user': 0, // 用户发言
     'question': 1, // AI提问
@@ -17,10 +22,15 @@ export const useChatStore = defineStore('chat', () => {
   const chatList = ref([])
 
   // 会话ID
-  const sessionId = ref(5)
+  const sessionId = computed(() => +route.params.sessionId || '')
 
   // 当前展示的聊天记录
   const displayChat = ref([])
+
+  watch(() => sessionId.value, () => {
+    // console.log('watch sessionId', sessionId.value)
+    initDisplayChat()
+  })
 
   // 上一条消息
   const lastMessage = computed(() => {
@@ -62,38 +72,29 @@ export const useChatStore = defineStore('chat', () => {
 
   const initDisplayChat = async () => {
     const { data } = await axios({
-      url: API.initChatData,
+      url: API.getChatData,
       method: 'GET',
       params: {
         sessionId: sessionId.value
       }
     })
-    console.log('chatList', data)
+    // console.log('chatList', data)
     
     displayChat.value = data.data.chatList
-    console.log(chatStatus.value)
-  }
-
-  const initSession = async () => {
-    const { data } = await axios({
-      url: API.initSession,
-      method: 'POST',
-      data: {
-        userId: 1,
-        mainArea: '前端',
-        surroundingPoint: 'Vue3',
-      }
-    })
-
-    console.log('res_session', data)
-
-    sessionId.value = data.data.sessionId
+    console.log('状态', chatStatus.value)
   }
 
   const submit = async () => {
     // 初始化session
     if (!sessionId.value) {
-      initSession()
+      try {
+        await sessionStore.initSession()
+        await getAIquestion()
+      } catch (err) {
+        console.log(err)
+      }
+
+      return
     }
 
     // 发送请求让AI开始提问
@@ -103,9 +104,6 @@ export const useChatStore = defineStore('chat', () => {
 
     // 用户回答问题
     else if (chatStatus.value === MSG_TYPE['user']) {
-      // console.log(funcStatus.value)
-      // console.log(customContent.value)
-
       // 用户正常回答
       if (funcStatus.value === 0) {
         userAnwer()
@@ -120,21 +118,25 @@ export const useChatStore = defineStore('chat', () => {
 
   // 发送请求让AI开始提问
   const getAIquestion = async () => {
-    const { data } = await axios({
-      url: API.interviewStart,
-      method: 'POST',
-      data: {
-        sessionId: sessionId.value,
-        customContent: customContent.value
-      }
-    })
-    // console.log(data)
+    try {
+      const { data } = await axios({
+        url: API.interviewStart,
+        method: 'POST',
+        data: {
+          sessionId: sessionId.value,
+          customContent: customContent.value
+        }
+      })
+      // console.log(data)
 
-    displayChat.value.push(data.data)
+      displayChat.value.push(data.data)
 
-    // console.log(displayChat.value)
+      // console.log(displayChat.value)
 
-    console.log(chatStatus.value)
+      console.log(chatStatus.value)
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   // 用户正常回答

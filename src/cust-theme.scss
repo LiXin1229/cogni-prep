@@ -1,0 +1,12 @@
+//重写element plus 全局主题颜色
+@forward "element-plus/theme-chalk/src/common/var.scss" with (
+  $colors: (
+    "primary": (
+      "base": #008dff
+    ),
+    "success": (
+      "base": #008dff
+    )
+  )
+);
+@use "element-plus/theme-chalk/src/index.scss" as *;

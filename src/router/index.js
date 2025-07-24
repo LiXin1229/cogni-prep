@@ -9,11 +9,16 @@ const router = createRouter({
     {
       path: '/',
       component: Layout,
-      redirect: '/chat-view',
+      redirect: '/chat',
       children: [
         {
-          path: 'chat-view',
+          path: 'chat',
           name: '每日刷题',
+          component: ChatView
+        },
+        {
+          path: 'chat/:sessionId',
+          name: '会话',
           component: ChatView
         }
       ]

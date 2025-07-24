@@ -2,6 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { faChevronDown, faPaperPlane } from '@fortawesome/free-solid-svg-icons'
+import { parseMarkdown } from '@/utils/markdown'
+// import hljs from 'highlight.js'
+// import 'highlight.js/styles/github-dark.css' // 导入代码高亮样式
 
 const chatStore = useChatStore()
 
@@ -11,6 +14,7 @@ const chatList = computed(() => chatStore.displayChat)
 
 onMounted(() => {
   chatStore.initDisplayChat()
+  // console.log('displayChat', chatStore.displayChat)
 })
 
 const quillRef = ref(null)
@@ -57,7 +61,6 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
 
 <template>
   <div class="chat-view">
-  
     <!-- 顶部区 -->
     <div class="top"></div>
 
@@ -65,18 +68,45 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
     <div class="scroll-view" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}">
       <!-- 对话内容区 -->
       <div class="text-view">
-        <!-- 每条聊天记录包裹层 -->
-        <div :class="['text-wrapper', chat.messageType === 0 ? 'user-wrapper' : 'system-wrapper']" v-for="chat in chatList" :key="chat.id">
-          <div :class="[chat.messageType === 0 ? 'user' : 'system']">{{ chat.content }}</div>
 
-          <!-- 功能按键 -->
-          <div class="functionList">
-            <button @click="nextQuestion">@下一题</button>
-            <button @click="funcBtn(1)" v-if="chat.messageType === 1">@回答模板</button>
-            <button @click="funcBtn(2)" v-if="chat.messageType === 1">@标准答案</button>
-            <button @click="funcBtn(3)" v-if="chat.messageType === 1">@模板+答案</button>
+        <!-- 每条聊天记录包裹层 -->
+        <template v-for="chat in chatList" :key="chat.id">
+          <!-- 用户发言wrapper -->
+          <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
+            <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>
+
+            <!-- 功能按键 -->
+            
           </div>
-        </div>
+
+          <!-- 助手发言wrapper -->
+          <div class="text-wrapper assistant-wrapper" v-else>
+            <div class="assistant" v-html="parseMarkdown(chat.content)"></div>
+
+            <!-- 功能按钮 -->
+            <div class="functionList">
+              <!-- 帮助按钮 -->
+              <el-dropdown placement="right" v-if="chat.messageType === 1">
+                <div class="btn help">
+                  <img src="../../assets/svgs/help.svg" alt="" class="icon">
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="funcBtn(1)">
+                      回答模板
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="funcBtn(2)">
+                      标准答案
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="funcBtn(3)">
+                      模板+答案
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -146,7 +176,9 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
       margin: 0 auto;
 
       .text-wrapper {
+        margin-bottom: 30px;
         color: var(--text-color-0);
+        line-height: 1.5;
 
         .user {
           display: inline-block;
@@ -154,6 +186,34 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
           padding: 10px 15px;
           border-radius: 10px;
         }
+
+        .functionList {
+          display: flex;
+          justify-content: left;
+          margin: 10px 0;
+
+          .btn {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+
+            &:hover {
+              background-color: var(--uesr-bubble-bgc);
+            }
+          }
+
+          .icon {
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+
+      .assistant-wrapper {
+        line-height: 2;
       }
 
       .text-wrapper.user-wrapper {
