@@ -188,6 +188,7 @@ const deleteText = (length, position = 0) => {
 const resetForm = (length) => {
   deleteText(length, 0)
   chatStore.funcStatus = 0
+  chatStore.customContent = ''
   updateEditorHeight()
 }
 

@@ -35,7 +35,7 @@ export const useSessionStore = defineStore('session', () => {
         data: {
           userId: 1,
           mainArea: '前端',
-          surroundingPoint: '跨域问题',
+          surroundingPoint: 'ES6规范',
         }
       })
       // console.log('res_session', data)

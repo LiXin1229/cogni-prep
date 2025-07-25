@@ -44,7 +44,7 @@ export const useChatStore = defineStore('chat', () => {
     return lastMsg?.content || ''
   })
 
-  // 当前的发言状态(0: 用户待发言  1: AI待发言)
+  // 当前的发言状态
   const chatStatus = computed(() => {
     if (displayChat.value.length <= 0) return MSG_TYPE['question']
 
@@ -56,6 +56,10 @@ export const useChatStore = defineStore('chat', () => {
       return MSG_TYPE['user']
     }
 
+    if (lastMessage.value.messageType === MSG_TYPE['evaluation']) {
+      return MSG_TYPE['user']
+    }
+
     return MSG_TYPE['question']
   })
 
@@ -63,7 +67,7 @@ export const useChatStore = defineStore('chat', () => {
   const customContent = ref('')
 
   // 特殊功能列表
-  const funcType = reactive(['标准', '@回答模板 ', '@标准答案 ', '@模板+答案 '])
+  const funcType = reactive(['标准', '@回答思路 ', '@标准答案 ', '@思路+答案 '])
 
   // 选择的特殊功能
   const funcStatus = ref(0)

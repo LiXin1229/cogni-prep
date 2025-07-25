@@ -1,25 +1,23 @@
 <script setup>
+import InputBox from './InputBox.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
-import { faChevronDown, faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 import { parseMarkdown } from '@/utils/markdown'
-// import hljs from 'highlight.js'
-// import 'highlight.js/styles/github-dark.css' // 导入代码高亮样式
 
 const emit = defineEmits(['toggleSidebar'])
 
 const chatStore = useChatStore()
 
-const sendBtnActive = ref(true)
-
 const chatList = computed(() => chatStore.displayChat)
 
 onMounted(() => {
   chatStore.initDisplayChat()
-  // console.log('displayChat', chatStore.displayChat)
 })
 
-const quillRef = ref(null)
+const inputRef = ref(null)
+
+const quillRef = computed(() => inputRef.value.quillRef)
+const inputHeight = computed(() => inputRef.value?.inputHeight)
 
 const funcBtn = (type) => {
   // 不能重复按相同按钮
@@ -37,28 +35,6 @@ const funcBtn = (type) => {
   quillRef.value?.insertText(chatStore.funcType[type])
   chatStore.customContent = chatStore.funcType[type] + chatStore.customContent
 }
-
-// 下一题
-const nextQuestion = () => {
-  chatStore.getAIquestion()
-}
-
-const submit = () => {
-  chatStore.submit()
-
-  // 重置输入框
-  quillRef.value?.resetForm(chatStore.customContent.length)
-}
-
-const inputHeight = ref(52)
-const textareaHeight = ref(null)
-
-watch(() => textareaHeight.value, (newHeight, oldHeight) => {
-  if (newHeight === oldHeight) return
-  // console.log(newHeight)
-
-  inputHeight.value = Math.min(Math.max(newHeight, 52), 210)
-})
 
 </script>
 
@@ -98,13 +74,13 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="funcBtn(1)">
-                      回答模板
+                      回答思路
                     </el-dropdown-item>
                     <el-dropdown-item @click="funcBtn(2)">
                       标准答案
                     </el-dropdown-item>
                     <el-dropdown-item @click="funcBtn(3)">
-                      模板+答案
+                      思路+答案
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -116,39 +92,7 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
     </div>
 
     <!-- 输入框区 -->
-    <div class="input-box">
-      <div class="input-panel" :style="{height: `${inputHeight + 65}px`}">
-
-        <!-- 功能按钮区 -->
-        <div class="tool-btns">
-          <div class="left">
-            <div class="main-area">
-              前端
-              <font-awesome-icon :icon="faChevronDown" />
-            </div>
-            <div class="surrounding-point">
-              知识点
-              <font-awesome-icon :icon="faChevronDown" />
-            </div>
-          </div>
-          <div class="right">
-            <div :class="['send-btn', sendBtnActive && 'active']" @click="submit">
-              <font-awesome-icon :icon="faPaperPlane" class="icon" />
-            </div>
-          </div>
-        </div>
-
-        <!-- 文字输入区 -->
-        <div class="text-area">
-          <cust-textarea
-            ref="quillRef"
-            v-model="chatStore.customContent"
-            v-model:height="textareaHeight"
-            :placeholder="chatStore.chatStatus ? '开始提问' : '回答问题'"
-          />
-        </div>
-      </div>
-    </div>
+    <input-box ref="inputRef" />
   </div>
 </template>
 
@@ -157,6 +101,7 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
   width: 100%;
   height: 100%;
   background-color: var(--primary-bgc);
+  position: relative;
 
   .top {
     height: 50px;
@@ -223,83 +168,13 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
         }
       }
 
-      .assistant-wrapper {
+      .text-wrapper.assistant-wrapper {
         line-height: 2;
+        font-size: 1.1em;
       }
 
       .text-wrapper.user-wrapper {
         text-align: end;
-      }
-    }
-  }
-
-  .input-box {
-    // height: 161px;
-
-    .input-panel {
-      width: 960px;
-      // height: 125px;
-      background-color: #fff;
-      border: 1px solid var(--light-border-color-1);
-      margin: 0 auto;
-      border-radius: 20px;
-      box-shadow: 0 2px 8px var(--box-shadow-color);
-      padding: 5px 0;
-
-      .tool-btns {
-        height: 50px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 15px;
-
-        .left {
-          display: flex;
-          justify-content: left;
-          font-size: 15px;
-
-          .main-area {
-            background-color: var(--main-bgc);
-            padding: 5px 10px;
-            border: 1px solid var(--light-blue-color);
-            color: var(--main-color);
-            border-radius: 10px;
-            margin-right: 10px;
-          }
-
-          .surrounding-point {
-            padding: 5px 10px;
-            border: 1px solid var(--light-border-color-1);
-            border-radius: 10px;
-            color: var(--text-color-2)
-          }
-        }
-
-        .right {
-          .send-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: var(--btn-locked);
-            position: relative;
-
-            .icon {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-60%, -60%);
-              color: #fff;
-            }
-          }
-
-          .active {
-            background-color: var(--main-color);
-          }
-        }
-      }
-
-      .text-area {
-        padding: 0 15px;
       }
     }
   }
