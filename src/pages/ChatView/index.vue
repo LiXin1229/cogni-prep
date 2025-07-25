@@ -6,6 +6,8 @@ import { parseMarkdown } from '@/utils/markdown'
 // import hljs from 'highlight.js'
 // import 'highlight.js/styles/github-dark.css' // 导入代码高亮样式
 
+const emit = defineEmits(['toggleSidebar'])
+
 const chatStore = useChatStore()
 
 const sendBtnActive = ref(true)
@@ -57,12 +59,15 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
 
   inputHeight.value = Math.min(Math.max(newHeight, 52), 210)
 })
+
 </script>
 
 <template>
   <div class="chat-view">
     <!-- 顶部区 -->
-    <div class="top"></div>
+    <div class="top">
+      <div class="toggleSidebar" @click="emit('toggleSidebar')">打开侧栏</div>
+    </div>
 
     <!-- 滚动聊天记录区 -->
     <div class="scroll-view" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}">
@@ -155,6 +160,12 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
 
   .top {
     height: 50px;
+
+    .toggleSidebar {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+    }
   }
 
   .scroll-view {

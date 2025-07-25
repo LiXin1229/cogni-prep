@@ -21,16 +21,6 @@ const isSidebarFolded = ref(false)
 
 const toggleSidebar = () => {
   isSidebarFolded.value = !isSidebarFolded.value
-  
-  if (isSidebarFolded.value) {
-    sidebarRef.value.style.transform = 'translateX(-100%)'
-    mainViewRef.value.style.marginLeft = '0'
-    // mainViewRef.value.style.transform = 'translateX(-260px)'
-    // mainViewRef.value.style.width = 'calc(100vw - 260px)'
-  } else {
-    sidebarRef.value.style.transform = 'translateX(0)'
-    mainViewRef.value.style.marginLeft = '260px'
-  }
 }
 
 const navberList = reactive([
@@ -68,7 +58,7 @@ onMounted(() => {
 
 <template>
   <div class="layout">
-    <div class="sidebar" ref="sidebarRef">
+    <div :class="['sidebar', isSidebarFolded && 'sidebar-folded']" ref="sidebarRef">
       <div class="tooltips">
         <div @click="toggleSidebar">收起侧栏</div>
       </div>
@@ -102,8 +92,8 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="main-view" ref="mainViewRef">
-      <router-view />
+    <div :class="['main-view', isSidebarFolded && 'main-folded']" ref="mainViewRef">
+      <router-view @toggleSidebar="toggleSidebar" />
     </div>
   </div>
 </template>
@@ -111,6 +101,8 @@ onMounted(() => {
 <style scoped lang="scss">
 .layout {
   display: flex;
+  overflow: hidden;
+  position: relative;
 
   .sidebar {
     width: 260px;
@@ -119,10 +111,10 @@ onMounted(() => {
     background-color: var(--siderbar-bgc);
     border-right: 1px solid var(--light-border-color-1);
     transition: transform 0.3s ease;
-    will-change: transform; // transform 提示浏览器优化
-    position: relative;
-    z-index: 1;
-    flex-shrink: 0; // 防止侧栏意外收缩
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
 
     .tooltips {
       height: 50px;
@@ -237,14 +229,22 @@ onMounted(() => {
 
   .main-view {
     width: calc(100vw - 260px);
-    transition: margin-left 0.3s ease;
+    height: 100vh;
+    transition: all 0.3s ease;
     margin: 0 auto;
-    // display: flex;
-    // flex-grow: 1;
-    // justify-content: center;
+    margin-left: 260px;
     background-color: var(--siderbar-bgc);
     padding: 5px;
     padding-left: 0;
+  }
+
+  .sidebar-folded {
+    transform: translateX(-100%);
+  }
+
+  .main-folded {
+    width: 100vw;
+    margin-left: 0;
   }
 }
 </style>
