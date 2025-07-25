@@ -25,10 +25,10 @@ const toggleSidebar = () => {
 
 const navberList = reactive([
   { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
-  { id: 2, title: '知识点图', icon: siweidaotu },
-  { id: 3, title: '笔记', icon: penToSquare },
-  { id: 4, title: '收藏', icon: star },
-  { id: 5, title: '模拟面试', icon: userTie },
+  { id: 2, title: '知识点图', icon: siweidaotu, path: 'mindmap' },
+  { id: 3, title: '笔记', icon: penToSquare, path: 'note' },
+  { id: 4, title: '收藏', icon: star, path: 'prefer' },
+  { id: 5, title: '模拟面试', icon: userTie, path: 'interview' },
 ])
 
 const navToPage = (nav) => {
