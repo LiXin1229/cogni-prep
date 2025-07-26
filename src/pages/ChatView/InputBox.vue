@@ -1,27 +1,41 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
+import { useUserInfoStore } from '@/stores/user'
+import { useSessionStore } from '../../stores/session'
 import { faChevronDown, faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 
 const emit = defineEmits(['toggleSidebar'])
 
 const chatStore = useChatStore()
+const userStore = useUserInfoStore()
+const sessionStore = useSessionStore()
 
 const sendBtnActive = ref(true)
 const showAreaPopup = ref(false)
 
 const togglePopup = (e) => {
-  console.log(e.target.className.includes('toggle'))
   if (e.target.className.includes('toggle')) {
-    console.log(showAreaPopup.value)
     showAreaPopup.value = !showAreaPopup.value
   } else {
     showAreaPopup.value = false
   }
 }
 
-onMounted(() => {
-})
+// 打开添加领域输入框
+const addArea = () => {
+  userStore.showDialog = 'selectArea'
+  showAreaPopup.value = false
+}
+
+// 当前领域
+const mainArea = computed(() => sessionStore.currSession?.mainArea || userStore.mainArea)
+
+// 选择领域
+const setArea = (areaId) => {
+  userStore.setArea(areaId)
+  showAreaPopup.value = false
+}
 
 const quillRef = ref(null)
 
@@ -35,6 +49,14 @@ const submit = () => {
 
   // 重置输入框
   quillRef.value?.resetForm(chatStore.customContent.length)
+}
+
+// 围绕知识点
+const surroundingPoint = computed(() => userStore.surroundingPoint || '内容不限')
+
+// 设置知识点
+const setPoint = () => {
+  userStore.showDialog = 'selectPoint'
 }
 
 const inputHeight = ref(52)
@@ -61,35 +83,36 @@ defineExpose({
         <div class="left">
           <cust-popup :position="{ bottom: '55px', left: '-15px' }">
             <div class="main-area toggle" @click.stop="togglePopup" >
-              前端
+              {{ mainArea }}
               <img src="../../assets/svgs/arrow-main-color.svg" alt="" class="icon toggle">
             </div>
 
             <template #popup>
               <div class="area-list" v-show="showAreaPopup" v-click-outside.stop="togglePopup">
-                <div class="item add-area">
+                <div class="item add-area" @click="addArea">
                   <img src="../../assets/svgs/add.svg" alt="" style="width: 16px; height: 16px; margin: 0 5px 0 -8px;">
                   <div>添加领域</div>
                 </div>
-                <div class="item area-item">
-                  <div>前端</div>
-                  <img src="../../assets/svgs/gou.svg" alt="" class="icon" style="width: 16px; height: 16px;">
+                <div class="item area-item" v-for="area in userStore.areaList" :key="area.id" @click="setArea(area.id)">
+                  <div style="margin-right: 10px;">{{ area.name }}</div>
+                  <img src="../../assets/svgs/gou.svg" alt="" class="icon" style="width: 16px; height: 16px;" v-if="area.name === mainArea">
                 </div>
               </div>
             </template>
           </cust-popup>
 
-          <div class="surrounding-point">
-            内容不限
-            <img src="../../assets/svgs/arrow.svg" alt="" class="icon">
+          <div class="surrounding-point" @click="setPoint">
+            {{ surroundingPoint }}
+            <!-- <img src="../../assets/svgs/arrow.svg" alt="" class="icon"> -->
           </div>
         </div>
 
         <div class="right">
           <div class="nextquestion" @click="nextQuestion">
-            下一题
+            <img src="../../assets/svgs/next.svg" alt="" class="icon"></img>
+            <div class="text">下一题</div>
           </div>
-          <div :class="['send-btn', sendBtnActive && 'active']" @click="submit">
+          <div :class="['send-btn', sendBtnActive && 'active']" @click.stop="submit">
             <font-awesome-icon :icon="faPaperPlane" class="icon" />
           </div>
         </div>
@@ -148,6 +171,10 @@ defineExpose({
           border: 1px solid var(--light-border-color-1);
           border-radius: 10px;
           color: var(--text-color-4);
+
+          &:hover {
+            background-color: var(--uesr-bubble-bgc);
+          }
         }
 
         .area-list {
@@ -158,18 +185,18 @@ defineExpose({
           white-space: nowrap;
           color: var(--text-color-2);
 
-          .add-area {
-            display: flex;
-            justify-content: left;
-            color: var(--light-blue-color);
-          }
-
           .item {
             height: 40px;
             padding: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+          }
+
+          .add-area {
+            display: flex;
+            justify-content: left;
+            color: var(--light-blue-color);
           }
         }
 
@@ -183,6 +210,28 @@ defineExpose({
       .right {
         display: flex;
         justify-content: left;
+        align-items: center;
+
+        .nextquestion {
+          margin-right: 20px;
+          font-size: 15px;
+          color: var(--main-color);
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 2px 8px 2px 6px;
+          border: 1.5px solid var(--main-color);
+          border-radius: 50px;
+
+          .icon {
+            width: 17px;
+            height: 17px;
+          }
+
+          .text {
+            transform: translateY(-5%);
+          }
+        }
 
         .send-btn {
           width: 32px;

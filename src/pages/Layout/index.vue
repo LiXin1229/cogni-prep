@@ -1,8 +1,11 @@
 <script setup>
-import { faMagnifyingGlass, faCalendarDays, faFolderTree, faPenToSquare, faStar, faUserTie } from '@fortawesome/free-solid-svg-icons'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useSessionStore } from '../../stores/session'
+import { useSessionStore } from '@/stores/session'
+import { useUserInfoStore } from '@/stores/user'
+import SelectAreaDialog from './SelectAreaDialog.vue'
+import SelectPointDialog from './SelectPointDialog.vue'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
@@ -13,6 +16,7 @@ import userTie from '@/assets/svgs/user-tie.svg'
 const router = useRouter()
 const route = useRoute()
 const sessionStore = useSessionStore()
+const userStore = useUserInfoStore()
 
 const sidebarRef = ref(null)
 const mainViewRef = ref(null)
@@ -50,9 +54,10 @@ const navToSession = (sessionId) => {
   })
 }
 
-onMounted(() => {
+onMounted(async() => {
   // toggleSidebar()
-  sessionStore.getSessionList()
+  await userStore.getUserInfo()
+  await sessionStore.getSessionList()
 })
 </script>
 
@@ -92,9 +97,15 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 主视图区 -->
     <div :class="['main-view', isSidebarFolded && 'main-folded']" ref="mainViewRef">
       <router-view @toggleSidebar="toggleSidebar" />
     </div>
+
+    <!-- Dialog -->
+    <select-area-dialog :showDialog="userStore.showDialog === 'selectArea'" />
+    <select-point-dialog :showDialog="userStore.showDialog === 'selectPoint'" />
   </div>
 </template>
 

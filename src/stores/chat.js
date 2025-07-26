@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session.js'
+import { useUserInfoStore } from '@/stores/user.js'
 import { request } from '@/utils/request.js'
 import API from '@/utils/API.js'
 import axios from 'axios'
@@ -10,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 export const useChatStore = defineStore('chat', () => {
   const route = useRoute()
   const sessionStore = useSessionStore()
+  const userStore = useUserInfoStore()
 
   const MSG_TYPE = {
     'user': 0, // 用户发言
@@ -89,6 +91,9 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const submit = async () => {
+    // console.log(userStore.mainArea)
+    if (!checkArea()) return
+
     // 初始化session
     if (!sessionId.value) {
       try {
@@ -120,8 +125,52 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  // 检查是否选择领域
+  const checkArea = () => {
+    if (userStore.mainArea === '未选择领域') {
+      ElMessage({
+        message: '请选择领域',
+        type: 'info'
+      })
+      userStore.showDialog = 'selectArea'
+      return false
+    }
+    return true
+  }
+
   // 发送请求让AI开始提问
   const getAIquestion = async () => {
+    if (!checkArea()) return
+
+    if (!sessionId.value) {
+      await sessionStore.initSession()
+    }
+
+    console.log(userStore.surroundingPoint)
+
+    // 没有surroundingPoint则进入
+    if (!userStore.surroundingPoint) {
+      try {
+        const { data } = await axios({
+          url: API.interviewDaily,
+          method: 'POST',
+          data: {
+            sessionId: sessionId.value,
+            customContent: customContent.value,
+            areaId: userStore.selectedAreaId
+          }
+        })
+        // console.log(data)
+
+        displayChat.value.push(data.data)
+
+        console.log(chatStatus.value)
+      } catch (err) {
+        console.log(err)
+      }
+      return
+    }
+
     try {
       const { data } = await axios({
         url: API.interviewStart,
@@ -134,8 +183,6 @@ export const useChatStore = defineStore('chat', () => {
       // console.log(data)
 
       displayChat.value.push(data.data)
-
-      // console.log(displayChat.value)
 
       console.log(chatStatus.value)
     } catch (err) {
@@ -160,7 +207,7 @@ export const useChatStore = defineStore('chat', () => {
         sessionId: sessionId.value,
         question: lastQuestion.value,
         answer: customContent.value,
-        mainArea: '前端'
+        mainArea: userStore.mainArea
       }
     })
     // console.log(data.data)
@@ -186,7 +233,7 @@ export const useChatStore = defineStore('chat', () => {
         question: lastQuestion.value,
         funcType: funcStatus.value,
         customContent: customContent.value,
-        mainArea: '前端'
+        mainArea: userStore.mainArea
       }
     })
     // console.log(data.data)
@@ -204,6 +251,7 @@ export const useChatStore = defineStore('chat', () => {
     chatStatus,
     funcStatus,
     funcType,
+    sessionId,
     submit,
     customContent,
     getAIquestion

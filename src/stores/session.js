@@ -1,17 +1,23 @@
 import { defineStore } from 'pinia'
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserInfoStore } from './user.js'
+import { useChatStore } from './chat'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
 export const useSessionStore = defineStore('session', () => {
   const router = useRouter()
+  const userStore = useUserInfoStore()
+  const chatStore = useChatStore()
 
   // 会话列表
   const sessionList = ref([])
 
   // 当前的会话
-  const currSession = ref(null)
+  const currSession = computed(() => {
+    return sessionList.value.find(item => item.sessionId === chatStore.sessionId)
+  })
 
   const getSessionList = async () => {
     const { data } = await axios({
@@ -34,8 +40,8 @@ export const useSessionStore = defineStore('session', () => {
         method: 'POST',
         data: {
           userId: 1,
-          mainArea: '前端',
-          surroundingPoint: 'ES6规范',
+          mainArea: userStore.mainArea,
+          surroundingPoint: userStore.surroundingPoint,
         }
       })
       // console.log('res_session', data)
@@ -52,6 +58,7 @@ export const useSessionStore = defineStore('session', () => {
   return {
     sessionList,
     getSessionList,
-    initSession
+    initSession,
+    currSession
   }
 })

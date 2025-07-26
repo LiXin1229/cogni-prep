@@ -14,6 +14,7 @@
   --primary-bgc: #fcfcfc;
   --box-shadow-color: rgba(0, 0, 0, 0.1);
   --search-bgc: #e5ebf7;
+  --normal-bgc: #fff;
   --navber-hover: #e9eaec;
 
   --main-color: #0c5fff;
@@ -27,6 +28,7 @@
   --text-color-2: #343538;
   --text-color-3: #606266;
   --text-color-4: #a0a2a7;
+  --theme-color-1: #191919;
 
   --text-placeholder: #9CA3AF;
 
@@ -58,7 +60,7 @@
   background: #a8a8a8;
 }
 
-// 取消下拉菜单黑框
+/* 取消下拉菜单黑框 */
 .el-tooltip__trigger:focus-visible {
   outline: unset;
 }
