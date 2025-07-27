@@ -1,19 +1,19 @@
 const express = require('express')
 const router = express.Router()
-const sendToDS = require('../../utils/useDeepseek')
-const { useInterviewSentence } = require('../../utils/sentence')
 const pool = require('../../db')
+const formatDate = require('../../utils/formatDate')
 
 // 新建会话
 router.post('/initSession', async (req, res) => {
-  const { userId, mainArea, surroundingPoint } = req.body
+  const { userId, mainArea, areaId, surroundingPoint } = req.body
 
-  const title = `${mainArea} - ${surroundingPoint}相关`
+  console.log('areaId', areaId)
+  const title = surroundingPoint ? `${mainArea} - ${surroundingPoint}相关` : `${mainArea} - ${formatDate()}`
 
   try {
     const [result] = await pool.query(
-      'INSERT INTO sessions (user_id, title, main_area, surrounding_point) VALUES (?, ?, ?, ?)',
-      [userId, title, mainArea, surroundingPoint]
+      'INSERT INTO sessions (user_id, title, main_area, area_id, surrounding_point) VALUES (?, ?, ?, ?, ?)',
+      [userId, title, mainArea, areaId, surroundingPoint]
     )
     // console.log(result)
 
@@ -25,6 +25,7 @@ router.post('/initSession', async (req, res) => {
         title,
         prefer: 0,
         mainArea,
+        areaId,
         surroundingPoint
       }
     })
@@ -50,6 +51,7 @@ router.get('/getSessionList', async (req, res) => {
         sessionId: row.session_id,
         title: row.title,
         mainArea: row.main_area,
+        areaId: row.area_id,
         surroundingPoint: row.surrounding_point,
         prefer: row.prefer,
         updatedTime: row.updated_at,

@@ -16,8 +16,7 @@ const MSG_TYPE = {
 // 开始提问
 router.post('/start', async (req, res) => {
   const { sessionId, customContent } = req.body
-
-  console.log('sessionId', sessionId)
+  // console.log('sessionId', sessionId)
 
   let system = ''
   let content = ''
@@ -30,11 +29,15 @@ router.post('/start', async (req, res) => {
       sessionId
     )
 
-    const sessionData = rows[0]; // 获取第一条记录
-    console.log('查询结果:', sessionData)
+    const sessionData = rows[0] // 获取第一条记录
+    // console.log('查询结果:', sessionData)
   
-    system = useSystemSentence('startquest', sessionData.main_area, sessionData.surrounding_point)
-    console.log('system', system)
+    if (sessionData.surrounding_point) {
+      system = useSystemSentence('startquest', sessionData.main_area, sessionData.surrounding_point)
+    } else {
+      system = useSystemSentence('dailyquest', sessionData.main_area)
+    }
+    // console.log('system', system)
   } catch (err) {
     console.log(err)
   }
@@ -49,7 +52,7 @@ router.post('/start', async (req, res) => {
 
     rows.forEach(row => {
       if (row.message_type === MSG_TYPE['question']) {
-        questions.push(row.content)
+        questions.push(row.point)
       }
     })
   } catch (err) {
@@ -64,8 +67,77 @@ router.post('/start', async (req, res) => {
   // 将AI的结果存入数据库
   try {
     const [insertRes] = await pool.query(
-      'INSERT INTO chats (session_id, message_type, content) VALUES (?, ?, ?)',
-      [sessionId, MSG_TYPE['question'], result.question]
+      'INSERT INTO chats (session_id, message_type, content, point) VALUES (?, ?, ?, ?)',
+      [sessionId, MSG_TYPE['question'], result.question, result.point]
+    )
+
+    res.send({
+      code: 200,
+      success: true,
+      data: {
+        id: insertRes.insertId,
+        content: result.question,
+        sessionId: sessionId,
+        messageType: MSG_TYPE['question']
+      }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+})
+
+// 每日提问
+router.post('/daily', async (req, res) => {
+  const { sessionId, customContent, areaId } = req.body
+  // console.log('sessionId', sessionId)
+
+  let system = ''
+  let content = ''
+  const questions = []
+
+  // 获取session的system设定(如此会话将围绕system展开)
+  try {
+    const [rows, fields] = await pool.query(
+      'SELECT main_area, surrounding_point FROM sessions WHERE session_id = ?',
+      sessionId
+    )
+
+    const sessionData = rows[0] // 获取第一条记录
+    // console.log('查询结果:', sessionData)
+  
+    system = useSystemSentence('dailyquest', sessionData.main_area)
+    // console.log('system', system)
+  } catch (err) {
+    console.log(err)
+  }
+
+  // 获取上下文
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM chats WHERE area_id = ?',
+      areaId
+    )
+    // console.log('查询结果:', rows)
+
+    rows.forEach(row => {
+      if (row.message_type === MSG_TYPE['question']) {
+        questions.push(row.point)
+      }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+
+  content = `已经问过的问题：【${questions.join('；').toString()}】。开始下一个问题${customContent ? `，${customContent}。` : '。'}`
+
+  const result = await sendToDS(system, content)
+  // console.log('AI返回结果', result)
+
+  // 将AI的结果存入数据库
+  try {
+    const [insertRes] = await pool.query(
+      'INSERT INTO chats (session_id, message_type, content, area_id, point) VALUES (?, ?, ?, ?, ?)',
+      [sessionId, MSG_TYPE['question'], result.question, areaId, result.point]
     )
 
     res.send({
