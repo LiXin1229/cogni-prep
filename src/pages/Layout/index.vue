@@ -100,7 +100,7 @@ onMounted(async() => {
 
     <!-- 主视图区 -->
     <div :class="['main-view', isSidebarFolded && 'main-folded']" ref="mainViewRef">
-      <router-view @toggleSidebar="toggleSidebar" />
+      <router-view @toggleSidebar="toggleSidebar" :isSidebarFolded="isSidebarFolded" />
     </div>
 
     <!-- Dialog -->
@@ -112,8 +112,8 @@ onMounted(async() => {
 <style scoped lang="scss">
 .layout {
   display: flex;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
 
   .sidebar {
     width: 260px;

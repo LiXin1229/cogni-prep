@@ -26,10 +26,9 @@ export const useUserInfoStore = defineStore('user', () => {
         id: 1
       }
     })
-
     // console.log(data.data)
+
     areaList.value = data.data.areaList
-    selectedAreaId.value = data.data.selectedArea
   }
 
   // 领域列表
@@ -48,23 +47,14 @@ export const useUserInfoStore = defineStore('user', () => {
     })
 
     if (data.success) {
-      areaList.value.push(data.data.newArea)
-      selectedAreaId.value = data.data.newArea.id
-      router.push({
+      await router.push({
         name: '每日刷题'
       })
+      areaList.value.push(data.data.newArea)
     }
 
     console.log(data.data)
   }
-
-  // 选中的领域
-  const selectedAreaId = ref(null)
-
-  const mainArea = computed(() => {
-    const area = areaList.value.find(item => item.id === selectedAreaId.value)
-    return area?.name || '未选择领域'
-  })
 
   // 设置选中领域
   const setArea = async (areaId) => {
@@ -78,19 +68,13 @@ export const useUserInfoStore = defineStore('user', () => {
     })
 
     if (data.success) {
-      selectedAreaId.value = areaId
       router.push({
         name: '每日刷题'
       })
     }
   }
 
-  // 围绕知识点
-  const surroundingPoint = ref('')
 
-  watch(() => sessionStore.currSession, (val) => {
-    surroundingPoint.value = val?.surroundingPoint || ''
-  })
 
   return {
     showDialog,
@@ -98,9 +82,6 @@ export const useUserInfoStore = defineStore('user', () => {
     getUserInfo,
     areaList,
     updateArea,
-    selectedAreaId,
     setArea,
-    mainArea,
-    surroundingPoint
   }
 })

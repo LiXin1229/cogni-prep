@@ -1,10 +1,10 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserInfoStore } from '@/stores/user'
+import { useSessionStore } from '@/stores/session'
 
 const router = useRouter()
-const userStore = useUserInfoStore()
+const sessionStore = useSessionStore()
 
 const props = defineProps({
   showDialog: {
@@ -20,20 +20,17 @@ const custom = ref('')
 const confirm = async () => {
   if (!custom.value) {
     ElMessage({
-      message: '请选择领域',
+      message: '请选择问题范围',
       type: 'info'
     })
     return
   }
 
-  // userStore.surroundingPoint = custom.value
   dialogRef.value.closeDialog()
 
-  await router.push({
-    name: '每日刷题'
-  })
+  await router.push({ name: '每日刷题' })
 
-  userStore.surroundingPoint = custom.value
+  sessionStore.surroundingPoint = custom.value
 }
 
 watch(() => props.showDialog, (showDialog) => {

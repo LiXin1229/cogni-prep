@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useUserInfoStore } from '@/stores/user'
 import { useSessionStore } from '../../stores/session'
@@ -7,15 +8,22 @@ import { faChevronDown, faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 
 const emit = defineEmits(['toggleSidebar'])
 
+const router = useRouter()
 const chatStore = useChatStore()
 const userStore = useUserInfoStore()
 const sessionStore = useSessionStore()
 
-const sendBtnActive = ref(true)
+// const sendBtnActive = ref(true)
+const sendBtnActive = computed(() => {
+  // console.log('!!!', userStore.selectedAreaId)
+  // if (!userStore.selectedAreaId) return false
+  return true
+})
 const showAreaPopup = ref(false)
 
 const togglePopup = (e) => {
-  if (e.target.className.includes('toggle')) {
+  // console.log(e.target.className)
+  if (e.target.className.includes('toggleAreaPopup')) {
     showAreaPopup.value = !showAreaPopup.value
   } else {
     showAreaPopup.value = false
@@ -29,11 +37,14 @@ const addArea = () => {
 }
 
 // 当前领域
-const mainArea = computed(() => sessionStore.currSession?.mainArea || userStore.mainArea)
+const mainArea = computed(() => sessionStore.mainArea)
 
 // 选择领域
-const setArea = (areaId) => {
-  userStore.setArea(areaId)
+const setArea = async (areaId) => {
+  await router.push({
+    name: '每日刷题'
+  })
+  sessionStore.mainArea = userStore.areaList.find((item) => item.areaId === areaId)
   showAreaPopup.value = false
 }
 
@@ -45,6 +56,7 @@ const nextQuestion = () => {
 }
 
 const submit = () => {
+  console.log('mainArea', sessionStore.mainArea)
   chatStore.submit()
 
   // 重置输入框
@@ -52,7 +64,7 @@ const submit = () => {
 }
 
 // 围绕知识点
-const surroundingPoint = computed(() => userStore.surroundingPoint || '内容不限')
+const surroundingPoint = computed(() => sessionStore.surroundingPoint || '内容不限')
 
 // 设置知识点
 const setPoint = () => {
@@ -82,9 +94,9 @@ defineExpose({
       <div class="tool-btns">
         <div class="left">
           <cust-popup :position="{ bottom: '55px', left: '-15px' }">
-            <div class="main-area toggle" @click.stop="togglePopup" >
-              {{ mainArea }}
-              <img src="../../assets/svgs/arrow-main-color.svg" alt="" class="icon toggle">
+            <div class="main-area toggleAreaPopup" @click.stop="togglePopup" >
+              {{ mainArea.name }}
+              <img src="../../assets/svgs/arrow-main-color.svg" alt="" class="icon toggleAreaPopup">
             </div>
 
             <template #popup>
@@ -93,9 +105,9 @@ defineExpose({
                   <img src="../../assets/svgs/add.svg" alt="" style="width: 16px; height: 16px; margin: 0 5px 0 -8px;">
                   <div>添加领域</div>
                 </div>
-                <div class="item area-item" v-for="area in userStore.areaList" :key="area.id" @click="setArea(area.id)">
+                <div class="item area-item" v-for="area in userStore.areaList" :key="area.areaId" @click="setArea(area.areaId)">
                   <div style="margin-right: 10px;">{{ area.name }}</div>
-                  <img src="../../assets/svgs/gou.svg" alt="" class="icon" style="width: 16px; height: 16px;" v-if="area.name === mainArea">
+                  <img src="../../assets/svgs/gou.svg" alt="" class="icon" style="width: 16px; height: 16px;" v-if="area.areaId === mainArea.areaId">
                 </div>
               </div>
             </template>

@@ -4,6 +4,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { parseMarkdown } from '@/utils/markdown'
 
+defineProps({
+  isSidebarFolded: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const emit = defineEmits(['toggleSidebar'])
 
 const chatStore = useChatStore()
@@ -42,7 +49,7 @@ const funcBtn = (type) => {
   <div class="chat-view">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggleSidebar" @click="emit('toggleSidebar')">打开侧栏</div>
+      <div class="toggleSidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">打开侧栏</div>
     </div>
 
     <!-- 滚动聊天记录区 -->
@@ -105,6 +112,9 @@ const funcBtn = (type) => {
 
   .top {
     height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
 
     .toggleSidebar {
       position: absolute;
@@ -114,8 +124,6 @@ const funcBtn = (type) => {
   }
 
   .scroll-view {
-    // height: calc(100vh - 50px - 172px);
-    // background-color: bisque;
     background-color: var(--primary-bgc);
     overflow-y: auto;
     padding-bottom: 50px;

@@ -91,7 +91,6 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const submit = async () => {
-    // console.log(userStore.mainArea)
     if (!checkArea()) return
 
     // 初始化session
@@ -127,7 +126,8 @@ export const useChatStore = defineStore('chat', () => {
 
   // 检查是否选择领域
   const checkArea = () => {
-    if (userStore.mainArea === '未选择领域') {
+    // console.log('sessionStore.mainArea', sessionStore.mainArea)
+    if (sessionStore.mainArea.areaId === null) {
       ElMessage({
         message: '请选择领域',
         type: 'info'
@@ -146,10 +146,8 @@ export const useChatStore = defineStore('chat', () => {
       await sessionStore.initSession()
     }
 
-    console.log(userStore.surroundingPoint)
-
     // 没有surroundingPoint则进入
-    if (!userStore.surroundingPoint) {
+    if (!sessionStore.surroundingPoint) {
       try {
         const { data } = await axios({
           url: API.interviewDaily,
@@ -157,7 +155,7 @@ export const useChatStore = defineStore('chat', () => {
           data: {
             sessionId: sessionId.value,
             customContent: customContent.value,
-            areaId: userStore.selectedAreaId
+            areaId: sessionStore.mainArea.areaId
           }
         })
         // console.log(data)
@@ -207,7 +205,7 @@ export const useChatStore = defineStore('chat', () => {
         sessionId: sessionId.value,
         question: lastQuestion.value,
         answer: customContent.value,
-        mainArea: userStore.mainArea
+        mainArea: sessionStore.mainArea.name
       }
     })
     // console.log(data.data)
@@ -233,7 +231,7 @@ export const useChatStore = defineStore('chat', () => {
         question: lastQuestion.value,
         funcType: funcStatus.value,
         customContent: customContent.value,
-        mainArea: userStore.mainArea
+        mainArea: sessionStore.mainArea.name
       }
     })
     // console.log(data.data)
