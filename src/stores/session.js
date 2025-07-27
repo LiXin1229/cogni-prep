@@ -28,7 +28,7 @@ export const useSessionStore = defineStore('session', () => {
   // })
 
   watch(() => currSession.value, (session) => {
-    console.log('currSession', currSession.value)
+    // console.log('currSession', currSession.value)
     if (session) {
       mainArea.value = {
         areaId: session.areaId,

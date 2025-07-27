@@ -17,12 +17,35 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   const selectedAreaId = ref(null)
 
+  const mindmapData = ref(null)
+
+  const getMindmapData = async () => {
+    if (!selectedAreaId.value) return
+
+    const { data } = await axios({
+      url: API.getMindmapData,
+      method: 'GET',
+      params: {
+        areaId: selectedAreaId.value
+      }
+    })
+
+    mindmapData.value = data.data.mindmap
+    console.log('mindmapData', mindmapData.value)
+  }
+
   watch(() => areaList.value, (list) => {
     selectedAreaId.value = list[list.length - 1]?.areaId
   }, { immediate: true })
 
+  watch(() => selectedAreaId.value, () => {
+    getMindmapData()
+  })
+
   return {
     areaList,
-    selectedAreaId
+    selectedAreaId,
+    getMindmapData,
+    mindmapData
   }
 })
