@@ -6,6 +6,8 @@ import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
 import SelectAreaDialog from './SelectAreaDialog.vue'
 import SelectPointDialog from './SelectPointDialog.vue'
+import UserAddNode from './UserAddNode.vue'
+import AIAddNode from './AIAddNode.vue'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
@@ -106,6 +108,8 @@ onMounted(async() => {
     <!-- Dialog -->
     <select-area-dialog :showDialog="userStore.showDialog === 'selectArea'" />
     <select-point-dialog :showDialog="userStore.showDialog === 'selectPoint'" />
+    <user-add-node :showDialog="userStore.showDialog === 'userAddNode'" />
+    <AI-add-node :showDialog="userStore.showDialog === 'AIAddNode'" />
   </div>
 </template>
 

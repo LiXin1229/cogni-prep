@@ -16,11 +16,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   const areaList = computed(() => userStore.areaList)
 
-  // const selectedAreaId = ref(null)
-  // 获取用户当前选择的领域
   const { value: selectedAreaId } = useSessionStorage('selectedAreaId', null)
-
-  // const mindmapData = ref(null)
 
   const getSelectedAreaId = async () => {
     await userStore.getUserInfo()
@@ -42,10 +38,39 @@ export const useMindmapStore = defineStore('mindmap', () => {
     return data.data.mindmap
   }
 
+  // 保存导图数据
+  const saveMindmapData = async (data) => {
+    await axios({
+      url: API.saveMindmapData,
+      method: 'POST',
+      data: {
+        areaId: selectedAreaId.value,
+        mindmap: data
+      }
+    })
+  }
+
+  // 添加节点
+  const componentCallback = ref({})
+
+  // 注册组件方法
+  const registerCallback = (funcName, callback) => {
+    componentCallback.value[funcName] = callback
+  }
+
+  // 触发组件方法
+  const triggerComponent = (funcName, data) => {
+    if (typeof componentCallback.value[funcName] === 'function') {
+      componentCallback.value[funcName](data) // 调用组件方法并传参
+    }
+  }
+
   return {
     areaList,
     selectedAreaId,
     getMindmapData,
-    // mindmapData
+    saveMindmapData,
+    registerCallback,
+    triggerComponent
   }
 })

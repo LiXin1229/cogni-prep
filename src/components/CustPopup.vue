@@ -28,9 +28,8 @@ defineProps({
 
   .popup {
     position: absolute;
-    // bottom: 60px;
-    // left: -15px;
     z-index: 10;
+    box-shadow: 0 2px 8px var(--box-shadow-color);
   }
 }
 </style>

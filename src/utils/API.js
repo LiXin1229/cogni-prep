@@ -9,7 +9,8 @@ const API = {
   getUserInfo: '/api/user/user/getUserInfo',
   updateArea: '/api/user/area/updateArea',
   setArea: '/api/user/area/setArea',
-  getMindmapData: '/api/mindmap/mindmap/getMindmapData'
+  getMindmapData: '/api/mindmap/mindmap/getMindmapData',
+  saveMindmapData: '/api/mindmap/mindmap/saveMindmapData'
 }
 
 export default API
