@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
+import { useSessionStorage } from '@/utils/useStorage'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
@@ -15,12 +16,20 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   const areaList = computed(() => userStore.areaList)
 
-  const selectedAreaId = ref(null)
+  // const selectedAreaId = ref(null)
+  // 获取用户当前选择的领域
+  const { value: selectedAreaId } = useSessionStorage('selectedAreaId', null)
 
-  const mindmapData = ref(null)
+  // const mindmapData = ref(null)
+
+  const getSelectedAreaId = async () => {
+    await userStore.getUserInfo()
+  }
 
   const getMindmapData = async () => {
-    if (!selectedAreaId.value) return
+    if (!selectedAreaId.value) {
+      await getSelectedAreaId()
+    }
 
     const { data } = await axios({
       url: API.getMindmapData,
@@ -30,22 +39,13 @@ export const useMindmapStore = defineStore('mindmap', () => {
       }
     })
 
-    mindmapData.value = data.data.mindmap
-    console.log('mindmapData', mindmapData.value)
+    return data.data.mindmap
   }
-
-  watch(() => areaList.value, (list) => {
-    selectedAreaId.value = list[list.length - 1]?.areaId
-  }, { immediate: true })
-
-  watch(() => selectedAreaId.value, () => {
-    getMindmapData()
-  })
 
   return {
     areaList,
     selectedAreaId,
     getMindmapData,
-    mindmapData
+    // mindmapData
   }
 })

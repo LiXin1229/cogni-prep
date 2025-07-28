@@ -3,6 +3,7 @@ import { reactive, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
+import { useSessionStorage } from '../utils/useStorage'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
@@ -17,6 +18,8 @@ export const useUserInfoStore = defineStore('user', () => {
     userId: '',
     username: ''
   })
+
+  // const { value: areaList } = useSessionStorage('areaList', [])
 
   const getUserInfo = async () => {
     const { data } = await axios({

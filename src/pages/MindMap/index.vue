@@ -2,6 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useUserInfoStore } from '@/stores/user'
 import { useMindmapStore } from '@/stores/mindmap'
+import { getTextWidth } from '@/utils/getTextWidth'
 import * as d3 from 'd3'
 
 const userStore = useUserInfoStore()
@@ -24,12 +25,24 @@ const selectArea = (id) => {
   console.log('selectedAreaId', mindmapStore.selectedAreaId)
 }
 
-// 图表容器
-const chartRef = ref(null)
+onMounted(async () => {
+  initChart()
+  const { mindmap } = await mindmapStore.getMindmapData()
+  treeData.value = mindmap
+  console.log(treeData.value)
+  updateData()
+})
 
-let chartGroup, svg // D3核心对象（全局存储）
-let chartWidth, chartHeight
-let currentTransform, zoom
+watch(() => mindmapStore.selectedAreaId, () => {
+  updateData()
+})
+
+const treeData = ref(null) // 树数据（响应式存储）
+const chartRef = ref(null) // D3绘图容器
+let chartWidth, chartHeight // 画布尺寸
+let nodeId = 100 // 节点自增ID（非响应式，仅用于生成新节点）
+let svg, chartGroup, zoom // D3核心对象
+let currentTransform // 当前缩放状态
 
 // 初始化图表
 const initChart = () => {
@@ -49,7 +62,14 @@ const initChart = () => {
     .append('svg')
     .attr('width', chartWidth)
     .attr('height', chartHeight)
-
+  
+  // svg.append('rect')
+  //   .attr('class', 'test-rect')
+  //   .attr('x', 0)
+  //   .attr('y', 0)
+  //   .attr('width', chartWidth)
+  //   .attr('height', chartHeight)
+  
   // 创建可缩放/移动的图表组
   chartGroup = svg.append('g')
 
@@ -59,26 +79,27 @@ const initChart = () => {
   // 初始化缩放行为
   zoom = d3.zoom()
     .scaleExtent([0.1, 5])
-    .on("zoom", (event) => {
+    .on('zoom', (event) => {
       currentTransform = event.transform
-      chartGroup.attr("transform", currentTransform)
+      chartGroup.attr('transform', currentTransform)
     })
 
   svg.call(zoom)
 }
 
 // 更新数据
-const updateData = (data) => { 
+const updateData = async () => {
+  // 清除旧元素
   chartGroup.selectAll("*").remove()
 
-  const root = d3.hierarchy(data)
+  // 加工原始数据(删除要折叠的节点的子节点)
+  const foldedData = removeFoldedNodes(treeData.value)
+
+  const root = d3.hierarchy(foldedData)
 
   console.log('初始化', root)
 
-  // 计算树形图实际需要的尺寸
-  const treeLayout = d3.tree().size([chartWidth, chartWidth])
-
-  treeLayout(root)
+  d3.tree().size([chartWidth, chartWidth]) (root)
 
   const svgDimensions = calculateSVGDimensions(root)
 
@@ -89,7 +110,6 @@ const updateData = (data) => {
   // 应用初始缩放
   applyInitialZoom(svgDimensions)
 
-  // 绘制连线
   chartGroup.selectAll('.link')
     .data(root.links())
     .enter()
@@ -107,121 +127,117 @@ const updateData = (data) => {
     .attr('class', 'node')
     .attr('transform', d => `translate(${d.y},${d.x})`)
 
-  // 外层透明矩形（定义总宽度=内容+内边距）
-  node.append('rect')
-    .attr('class', 'padding-rect')
-    .attr('width', 115) // 75(内容) + 30(内边距)
-    .attr('height', 30)
-    .attr('transform', 'translate(-57.5, -15)') // 居中：105/2=52.5
-    .attr('opacity', 0.5) // 完全透明
+  // 筛选出isFolded == 0的节点
+  node.filter(d => d.data.isFolded == 0)
+    .append('circle')
+    .attr('r', (d) => d.data.isFolded < 100 ? 12 : 16)
+    .attr('transform', (d) => `translate(${getTextWidth(d.data.name) + 10}, 0)`)
+    .attr('class', 'unfolded-circle')
+    .on('click', click)
 
-  node.append('circle')
-    .attr('r', 8)
-    .attr('transform', 'translate(50, 0)')
-    .attr('class', 'temp-circle') // 添加类名标识
-    .attr('opacity', 0)
-    .on('click', (event, d) => {
-      // console.log('点击圆', d)
-      console.log(d.data)
+  // 筛选出isFolded > 0的节点
+  node.filter(d => d.data.isFolded > 0)
+    .append('circle')
+    .attr('r', (d) => d.data.isFolded < 100 ? 12 : 16)
+    .attr('transform', (d) => `translate(${getTextWidth(d.data.name) + 10}, 0)`)
+    .attr('class', 'folded-circle')
+    .on('click', click)
 
-      // const res = removeChildrenById(data, d.data.id)
-      // console.log('删除子节点', res)
-      // renderChart(res)
-
-      // 添加子节点
-      const res = addChildrenById(data, d.data.id, {
-        "id": 114,
-        "name": `新节点`,
-        "children": []
-      })
-      updateData(res)
-    })
+  // 在圆形内部添加文本
+  node.filter(d => d.data.isFolded > 0) // 同样只给isFolded>0的节点添加文本
+    .append('text')
+    .attr('class', 'folded-circle-text')
+    // .attr('font-size', (d) => d.data.isFolded < 10 ? 24 : 16)
+    .attr('transform', (d) => `translate(${getTextWidth(d.data.name) + 10}, 0)`) // 和圆形位置一致
+    .attr('dy', '.35em')
+    .text(d => d.data.isFolded) // 显示isFolded的值
+    .on('click', click)
 
   // 内层可见矩形（内容区）
   node.append('rect')
     .attr('class', 'content-rect')
-    .attr('width', 75)
+    .attr('width', (d) => {
+      // console.log(d.data.name)
+      const width = getTextWidth(d.data.name)
+      return width + 15
+    })
     .attr('height', 30)
     .attr('rx', 10) // 圆角
     .attr('ry', 10)
-    .attr('transform', 'translate(-37.5, -15)') // 居中于外层矩形左侧
+    .attr('transform', (d) => `translate(-${(getTextWidth(d.data.name) + 15) / 2}, -15)`) // 居中于外层矩形左侧
     .attr('fill', '#fff')
     .attr('stroke', 'steelblue')
 
   // 添加文本标签（仅显示非叶节点或特定层级的标签）
-  const text = node.append('text')
+  node.append('text')
     .attr('dy', '.35em')
     .style('text-anchor', 'middle')
     .text(d => d.data.name)
-
-  // 添加交互
-  node.on('mouseover', (event, d) => {
-    d3.select(event.currentTarget).attr("fill", "orange")
-
-    d3.select(event.currentTarget)
-      .selectAll('.temp-circle')
-      .attr('opacity', 1)
-    
-  })
-  .on("mouseout", (event, d) => {
-    d3.select(event.currentTarget).attr("fill", "#333")
-
-    d3.select(event.currentTarget)
-      .selectAll('.temp-circle')
-      .attr('opacity', 0)
-  })
 }
-
-watch(() => mindmapStore.mindmapData, (data) => {
-  console.log(data)
-  updateData(data)
-})
-
-onMounted(async () => {
-  initChart()
-  await mindmapStore.getMindmapData()
-})
 
 onUnmounted(() => {
   d3.select(chartRef.value).selectAll('*').remove()
 })
 
-// 计算SVG实际需要的尺寸（根据树的大小动态调整）
-const calculateSVGDimensions = (root) => {
-  const descendants = root.descendants()
-  const minX = d3.min(descendants, d => d.x)
-  const maxX = d3.max(descendants, d => d.x)
-  const minY = d3.min(descendants, d => d.y)
-  const maxY = d3.max(descendants, d => d.y)
-  
-  // 计算需要的额外空间
-  const extraWidth = Math.max(0, maxY - minY - chartWidth + 200)
-  const extraHeight = Math.max(0, maxX - minX - chartHeight + 100)
-  
-  return {
-    width: chartWidth + extraWidth,
-    height: chartHeight + extraHeight
-  }
+const click = (event, d) => {
+  console.log('click', d.data)
+  treeData.value = toggleFoldedNodes(d.data)
+  updateData()
 }
 
-const applyInitialZoom = (svgDimensions) => {
-  const scale = Math.min(
-    chartWidth / svgDimensions.width,
-    chartHeight / svgDimensions.height
-  ); // 留出边距
+const toggleFoldedNodes = (node) => {
+  // 深拷贝数据以避免修改原对象
+  const newTreeData = JSON.parse(JSON.stringify(treeData.value));
+
+  const targetId = node.id
   
-  const translateX = (chartWidth - svgDimensions.width * scale) / 2;
-  const translateY = (chartHeight - svgDimensions.height * scale) / 2;
+  // 递归查找并更新目标节点
+  function findAndUpdate(node) {
+      if (node.id === targetId) {
+          // 根据当前isFolded状态切换
+          if (node.isFolded === 0) {
+              // 设为子节点数量
+              node.isFolded = node.children ? node.children.length : 0;
+          } else {
+              // 重置为0
+              node.isFolded = 0;
+          }
+          return true; // 找到并更新，停止递归
+      }
+      
+      // 递归查找子节点
+      if (node.children && node.children.length > 0) {
+          for (let child of node.children) {
+              if (findAndUpdate(child)) {
+                  return true;
+              }
+          }
+      }
+      
+      return false;
+  }
   
-  currentTransform = d3.zoomIdentity
-    .translate(translateX, translateY)
-    .scale(scale);
+  // 从根节点开始查找
+  findAndUpdate(newTreeData);
   
-  // 平滑过渡到初始视图
-  chartGroup.attr("transform", currentTransform);
+  return newTreeData;
+}
+
+// 折叠节点
+const removeFoldedNodes = (node) => {
+  // 深拷贝当前节点，避免修改原数据
+  const newNode = JSON.parse(JSON.stringify(node))
   
-  // 更新缩放行为的状态
-  svg.call(zoom.transform, currentTransform);
+  // 检查当前节点的isFolded是否不为0
+  if (newNode.isFolded !== 0) {
+    // 清空子节点
+    newNode.children = []
+  } else if (newNode.children && newNode.children.length) {
+    // 如果有子节点且isFolded为0，则递归处理每个子节点
+    newNode.children = newNode.children.map(child => removeFoldedNodes(child))
+  }
+  
+  return newNode
 }
 
 // 添加节点
@@ -254,6 +270,44 @@ const addChildrenById = (treeData, parentId, newNode) => {
 
   // 4. 返回添加结果：若成功，返回修改后的新树；否则返回 null
   return isAdded ? newTree : null;
+}
+
+// 计算SVG实际需要的尺寸（根据树的大小动态调整）
+const calculateSVGDimensions = (root) => {
+  const descendants = root.descendants()
+  const minX = d3.min(descendants, d => d.x)
+  const maxX = d3.max(descendants, d => d.x)
+  const minY = d3.min(descendants, d => d.y)
+  const maxY = d3.max(descendants, d => d.y)
+  
+  // 计算需要的额外空间
+  const extraWidth = Math.max(0, maxY - minY - chartWidth)
+  const extraHeight = Math.max(0, maxX - minX - chartHeight + 500)
+  
+  return {
+    width: chartWidth + extraWidth,
+    height: chartHeight + extraHeight
+  }
+}
+
+const applyInitialZoom = (svgDimensions) => {
+  const scale = Math.min(
+    chartWidth / svgDimensions.width,
+    chartHeight / svgDimensions.height
+  ) // 留出边距
+  
+  const translateX = (chartWidth - svgDimensions.width * scale) / 2
+  const translateY = (chartHeight - svgDimensions.height * scale) / 2
+  
+  currentTransform = d3.zoomIdentity
+    .translate(translateX, translateY)
+    .scale(scale);
+  
+  // 平滑过渡到初始视图
+  chartGroup.attr("transform", currentTransform)
+  
+  // 更新缩放行为的状态
+  svg.call(zoom.transform, currentTransform)
 }
 </script>
 
@@ -322,28 +376,41 @@ const addChildrenById = (treeData, parentId, newNode) => {
   .map-container {
     height: calc(100% - 50px);
 
-    .chart-wrapper {
+    :deep(.chart-wrapper) {
       width: 100%;
       height: 100%;
       // background-color: aqua;
+
+      .test-rect {
+        fill: var(--light-main-color);
+      }
 
       .link {
         fill: none;
         stroke: #bbb;
         stroke-width: 1px;
       }
+
       .node circle {
         fill: #fff;
         stroke: steelblue;
-        stroke-width: 1px;
+        stroke-width: 2px;
       }
+
       .node rect {
         fill: #fff;
         stroke: steelblue;
         stroke-width: 2px;
       }
+
       .node text {
-        font: 10px sans-serif;
+        font: 16px sans-serif;
+      }
+
+      .node .folded-circle-text {
+        font: 16px sans-serif;
+        color: #222;
+        text-anchor: middle;
       }
     }
   }
