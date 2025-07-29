@@ -10,7 +10,8 @@ const API = {
   updateArea: '/api/user/area/updateArea',
   setArea: '/api/user/area/setArea',
   getMindmapData: '/api/mindmap/mindmap/getMindmapData',
-  saveMindmapData: '/api/mindmap/mindmap/saveMindmapData'
+  saveMindmapData: '/api/mindmap/mindmap/saveMindmapData',
+  getSubcategory: '/api/mindmap/mindmap/getSubcategory'
 }
 
 export default API

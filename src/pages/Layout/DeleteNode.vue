@@ -18,9 +18,24 @@ const formData = ref({
   name: ''
 })
 
+const verifyName = (rule, value, callback) => {
+  if (mindmapStore.selectedNode.isRoot) callback(new Error('根节点不能删除'))
+  callback()
+}
+
+const rules = reactive({
+  name: [
+    { validator: verifyName, trigger: 'blur' }
+  ]
+})
+
 const confirm = async () => {
-  mindmapStore.triggerComponent('deleteNode', formData.value)
-  dialogRef.value.closeDialog()
+  const isValid = await ruleFormRef.value.validate()
+  
+  if (isValid) {
+    mindmapStore.triggerComponent('deleteNode')
+    dialogRef.value.closeDialog()
+  }
 }
 
 watch(() => props.showDialog, (showDialog) => {
@@ -36,7 +51,7 @@ watch(() => props.showDialog, (showDialog) => {
   <div class="user-add-node" v-if="showDialog">
     <cust-dialog ref="dialogRef" title="确认删除该节点吗" @confirm="confirm">
       <div class="content">
-        <el-form :model="formData" >
+        <el-form ref="ruleFormRef" :model="formData" :rules="rules" >
           <el-form-item label="名称" prop="name"> 
             <div class="custom">
               <el-input v-model="formData.name" placeholder="自定义节点" disabled />

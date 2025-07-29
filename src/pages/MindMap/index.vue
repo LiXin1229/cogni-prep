@@ -26,7 +26,6 @@ const selectArea = async (id) => {
   if (id === mindmapStore.selectedAreaId) return
 
   // 保存上一次数据
-  // mindmapStore.saveMindmapData(treeData.value)
   saveData()
 
   mindmapStore.selectedAreaId = id
@@ -45,6 +44,7 @@ const updateData = async () => {
 }
 
 const saveData = () => {
+  if (!treeData.value) return
   mindmapStore.saveMindmapData(treeData.value)
   isEdited.value = false
 }
@@ -70,7 +70,6 @@ onMounted(async () => {
 
 // 调整图表尺寸
 const adjustChartSize = () => {
-  console.log('调整图表尺寸')
   if (!chartRef.value || !svg) return
   
   // 获取新的容器尺寸
@@ -117,7 +116,7 @@ const initChart = () => {
   chartWidth = chartContainer.node().clientWidth
   chartHeight = chartContainer.node().clientHeight
 
-  console.log(chartWidth, chartHeight)
+  // console.log(chartWidth, chartHeight)
 
   // 创建SVG容器
   svg = chartContainer
@@ -146,7 +145,7 @@ const initChart = () => {
 const renderChart = () => {
   // 清除旧元素
   chartGroup.selectAll("*").remove()
-  console.log('treeData', treeData.value)
+  // console.log('treeData', treeData.value)
 
   // 加工原始数据(删除要折叠的节点的子节点)
   const foldedData = removeFoldedNodes(treeData.value)
@@ -422,8 +421,8 @@ onUnmounted(() => {
       :isEdited="isEdited"
       @resetView="resetView"
       @saveView="saveData"
-      @userAddNode="openDialog('userAddNode')"
       @AIAddNode="openDialog('AIAddNode')"
+      @userAddNode="openDialog('userAddNode')"
       @editNode="openDialog('editNode')"
       @deleteNode="openDialog('deleteNode')"
     />

@@ -41,6 +41,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // 保存导图数据
   const saveMindmapData = async (data) => {
+    if (!selectedAreaId.value) return
+
     await axios({
       url: API.saveMindmapData,
       method: 'POST',
@@ -54,7 +56,24 @@ export const useMindmapStore = defineStore('mindmap', () => {
   // 右键选中的节点
   const selectedNode = ref(null)
 
-  // 添加节点
+  const getSubcategory = async (number, pointList) => {
+    console.log(selectedNode.value)
+    const childrenPoints = [...pointList, ...selectedNode.value.children]
+    const { data } = await axios({
+      url: API.getSubcategory,
+      method: 'POST',
+      data: {
+        mainArea: areaList.value.find(item => item.areaId === selectedAreaId.value).name,
+        surroundingPoint: selectedNode.value.name,
+        childrenPoints: childrenPoints,
+        number: number
+      }
+    })
+
+    console.log(data.data)
+  }
+
+  // 组件回调
   const componentCallback = ref({})
 
   // 注册组件方法
@@ -76,6 +95,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     saveMindmapData,
     selectedNode,
     registerCallback,
-    triggerComponent
+    triggerComponent,
+    getSubcategory
   }
 })
