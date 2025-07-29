@@ -12,10 +12,14 @@ const props = defineProps({
   position: {
     type: Object,
     default: () => ({ x: 0, y: 0 })
+  },
+  isEdited: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emits = defineEmits(['update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode'])
+const emits = defineEmits(['update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode'])
 
 // 关闭菜单
 const closeMenu = () => {
@@ -70,6 +74,18 @@ const AIAddNode = () => {
   emits('AIAddNode')
   closeMenu()
 }
+
+// 编辑节点
+const editNode = () => {
+  emits('editNode')
+  closeMenu()
+}
+
+// 删除节点
+const deleteNode = () => {
+  emits('deleteNode')
+  closeMenu()
+}
 </script>
 
 <template>
@@ -82,13 +98,13 @@ const AIAddNode = () => {
     <div class="menu-item" @click="AIAddNode">AI生成子节点</div>
     <div class="menu-item" @click="userAddNode">自定义子节点</div>
     <div class="br"></div>
-    <div class="menu-item">编辑节点</div>
-    <div class="menu-item">删除节点</div>
+    <div class="menu-item" @click="editNode">编辑节点</div>
+    <div class="menu-item" @click="deleteNode">删除节点</div>
     <div class="br"></div>
     <div class="menu-item">开始对话</div>
     <div class="menu-item">查看笔记</div>
     <div class="br"></div>
-    <div class="menu-item" @click="resetView">重置视图</div>
+    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '重置视图'}}</div>
     <div class="menu-item" @click="saveView">保存视图</div>
   </div>
 
@@ -98,7 +114,7 @@ const AIAddNode = () => {
     v-click-outside.stop="closeMenu"
     :style="positionStyle"
   >
-    <div class="menu-item" @click="resetView">重置视图</div>
+    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '重置视图'}}</div>
     <div class="menu-item" @click="saveView">保存视图</div>
   </div>
 </template>

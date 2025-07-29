@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
-import { useSessionStorage } from '@/utils/useStorage'
+import { useLocalStorage } from '@/utils/useStorage'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
@@ -16,7 +16,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   const areaList = computed(() => userStore.areaList)
 
-  const { value: selectedAreaId } = useSessionStorage('selectedAreaId', null)
+  const { value: selectedAreaId } = useLocalStorage('selectedAreaId', null)
 
   const getSelectedAreaId = async () => {
     await userStore.getUserInfo()
@@ -25,6 +25,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
   const getMindmapData = async () => {
     if (!selectedAreaId.value) {
       await getSelectedAreaId()
+      selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].id
     }
 
     const { data } = await axios({
@@ -50,6 +51,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
     })
   }
 
+  // 右键选中的节点
+  const selectedNode = ref(null)
+
   // 添加节点
   const componentCallback = ref({})
 
@@ -70,6 +74,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     selectedAreaId,
     getMindmapData,
     saveMindmapData,
+    selectedNode,
     registerCallback,
     triggerComponent
   }

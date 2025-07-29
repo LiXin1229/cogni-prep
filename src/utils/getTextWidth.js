@@ -16,7 +16,7 @@ export const getTextWidth = (text, style = {}) => {
   // 4. 应用自定义样式（与目标文本保持一致）
   // 默认样式（可根据需求调整）
   const defaultStyle = {
-    fontSize: '16px',
+    fontSize: '20px',
     fontFamily: 'Arial, sans-serif',
     fontWeight: 'normal',
     letterSpacing: 'normal'

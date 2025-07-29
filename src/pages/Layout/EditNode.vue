@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 
 const mindmapStore = useMindmapStore()
@@ -34,7 +34,7 @@ const confirm = async () => {
   const isValid = await ruleFormRef.value.validate()
   
   if (isValid) {
-    mindmapStore.triggerComponent('addNodes', formData.value)
+    mindmapStore.triggerComponent('editNode', formData.value)
     dialogRef.value.closeDialog()
   }
 }
@@ -42,8 +42,8 @@ const confirm = async () => {
 watch(() => props.showDialog, (showDialog) => {
   if (showDialog) {
     formData.value = {
-      name: '',
-      rating: 0
+      name: mindmapStore.selectedNode.name,
+      rating: mindmapStore.selectedNode.frequency
     }
   }
 })
@@ -51,7 +51,7 @@ watch(() => props.showDialog, (showDialog) => {
 
 <template>
   <div class="user-add-node" v-if="showDialog">
-    <cust-dialog ref="dialogRef" title="添加子节点" @confirm="confirm">
+    <cust-dialog ref="dialogRef" title="编辑节点" @confirm="confirm">
       <div class="content">
         <el-form ref="ruleFormRef" :model="formData" :rules="rules" >
           <el-form-item label="名称" prop="name"> 

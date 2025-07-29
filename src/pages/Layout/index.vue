@@ -8,6 +8,8 @@ import SelectAreaDialog from './SelectAreaDialog.vue'
 import SelectPointDialog from './SelectPointDialog.vue'
 import UserAddNode from './UserAddNode.vue'
 import AIAddNode from './AIAddNode.vue'
+import EditNode from './EditNode.vue'
+import DeleteNode from './DeleteNode.vue'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
@@ -110,6 +112,8 @@ onMounted(async() => {
     <select-point-dialog :showDialog="userStore.showDialog === 'selectPoint'" />
     <user-add-node :showDialog="userStore.showDialog === 'userAddNode'" />
     <AI-add-node :showDialog="userStore.showDialog === 'AIAddNode'" />
+    <edit-node :showDialog="userStore.showDialog === 'editNode'" />
+    <delete-node :showDialog="userStore.showDialog === 'deleteNode'" />
   </div>
 </template>
 
