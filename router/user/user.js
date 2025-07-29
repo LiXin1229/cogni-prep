@@ -18,7 +18,7 @@ router.get('/getUserInfo', async (req, res) => {
       }
     })
 
-    console.log(areaList)
+    // console.log(areaList)
 
     res.send({
       code: 200,

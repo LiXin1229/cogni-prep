@@ -32,7 +32,12 @@ const useUserSentence = (type, ...args) => {
   }
 }
 
+const useSubcategorySentence = (...args) => {
+  return `${args[0]}面试中，关于${args[1]}有哪些知识点，列出${args[2]}点，并给出面试考察频率1-3分，已有 【${args[3].join('；').toString()}】，主要使用中文，按照JSON{"response": [{"title": <第一点>, "frequency": <频率分值>}, {"title": <第二点>, "frequency": <频率分值>}, ...]}格式返回`
+}
+
 module.exports = {
   useSystemSentence,
   useUserSentence,
+  useSubcategorySentence
 }
