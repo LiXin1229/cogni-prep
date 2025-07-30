@@ -69,7 +69,14 @@ const funcBtn = (type) => {
 
           <!-- 助手发言wrapper -->
           <div class="text-wrapper assistant-wrapper" v-else>
-            <div class="assistant" v-html="parseMarkdown(chat.content)"></div>
+            <!-- 问题 -->
+            <template v-if="chat.messageType === 1">
+              <div class="assistant-question">{{ chat.content }}</div>
+            </template>
+
+            <template v-else>
+              <div class="assistant-help" v-html="parseMarkdown(chat.content)"></div>
+            </template>
 
             <!-- 功能按钮 -->
             <div class="functionList">
@@ -179,6 +186,12 @@ const funcBtn = (type) => {
       .text-wrapper.assistant-wrapper {
         line-height: 2;
         font-size: 1.1em;
+
+        .assistant-question {
+          color: var(--theme-color-1);
+          font-size: 20px;
+          font-weight: bold;
+        }
       }
 
       .text-wrapper.user-wrapper {

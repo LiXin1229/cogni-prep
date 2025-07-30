@@ -105,7 +105,7 @@ export const useSessionStore = defineStore('session', () => {
       })
       // console.log('res_session', data)
 
-      sessionList.value.push(data.data)
+      sessionList.value.unshift(data.data)
 
       // 更新sessionId
       await router.push(`/chat/${data.data.sessionId}`)

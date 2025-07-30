@@ -12,15 +12,11 @@ const props = defineProps({
   position: {
     type: Object,
     default: () => ({ x: 0, y: 0 })
-  },
-  isEdited: {
-    type: Boolean,
-    default: false
   }
 })
 
 const emits = defineEmits([
-  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren'
+  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren', 'startChat'
 ])
 
 // 关闭菜单
@@ -94,6 +90,12 @@ const deleteChildren = () => {
   emits('deleteChildren')
   closeMenu()
 }
+
+// 开始对话
+const startChat = () => {
+  emits('startChat')
+  closeMenu()
+}
 </script>
 
 <template>
@@ -116,11 +118,11 @@ const deleteChildren = () => {
       </div>
     </div>
     <div class="br"></div>
-    <div class="menu-item">开始对话</div>
+    <div class="menu-item" @click="startChat">开始对话</div>
     <div class="menu-item">查看笔记</div>
     <div class="br"></div>
     <div class="menu-item" @click="saveView">保存视图</div>
-    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '刷新视图'}}</div>
+    <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
   </div>
 
   <div
@@ -130,7 +132,7 @@ const deleteChildren = () => {
     :style="positionStyle"
   >
   <div class="menu-item" @click="saveView">保存视图</div>
-    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '刷新视图'}}</div>
+    <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
   </div>
 </template>
 

@@ -33,7 +33,7 @@ export const calculateDynamicTreeSize = (tree, options = {}) => {
     // 计算密度因子（基于节点分布密度）
     // 密度 = 总节点数 / 最大深度，归一化到0-3范围
     const density = treeStats.totalNodes / treeStats.maxDepth;
-    const densityFactor = Math.min(1 + (density - 1) * 0.12, 8);
+    const densityFactor = Math.min(1 + (density - 1) * 0.12, 6);
     
     // 计算分支因子（基于平均子节点数）
     // 平均子节点数越多，需要的空间越大

@@ -98,7 +98,7 @@ onMounted(async() => {
           <div class="title">历史对话</div>
         </div>
         <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
-          <div>{{ session.title || session.surroundingPoint }}</div>
+          <div class="title">{{ session.title }}</div>
         </div>
       </div>
     </div>
@@ -214,8 +214,13 @@ onMounted(async() => {
         padding: 0 10px;
         
         .title {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           font-size: 13px;
           color: var(--text-color-4);
+          height: 30px;
+          margin-bottom: 5px;
         }
       }
 
@@ -231,9 +236,10 @@ onMounted(async() => {
         color: var(--text-color-1);
         transition: all 0.3s ease;
 
-        .icon {
-          margin-right: 10px;
-          color: var(--text-color-2);
+        .title {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         &:hover:not(.selected-nav) {

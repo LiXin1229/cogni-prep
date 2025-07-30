@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useUserInfoStore } from '@/stores/user'
 import { useSessionStore } from '../../stores/session'
-import { faChevronDown, faPaperPlane } from '@fortawesome/free-solid-svg-icons'
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 
 const emit = defineEmits(['toggleSidebar'])
 
@@ -45,6 +45,7 @@ const setArea = async (areaId) => {
     name: '每日刷题'
   })
   sessionStore.mainArea = userStore.areaList.find((item) => item.areaId === areaId)
+  sessionStore.surroundingPoint = ''
   showAreaPopup.value = false
 }
 

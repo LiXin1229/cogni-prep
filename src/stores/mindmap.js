@@ -57,6 +57,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
     })
   }
 
+  // 是否正在编辑
+  const isEdited = ref(false)
+
   // 右键选中的节点
   const selectedNode = ref(null)
 
@@ -112,6 +115,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     treeData,
     getMindmapData,
     saveMindmapData,
+    isEdited,
     selectedNode,
     registerCallback,
     triggerComponent,
