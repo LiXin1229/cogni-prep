@@ -22,8 +22,9 @@ const sendBtnActive = computed(() => {
 const showAreaPopup = ref(false)
 
 const togglePopup = (e) => {
-  // console.log(e.target.className)
-  if (e.target.className.includes('toggleAreaPopup')) {
+  const svgs = ['svg', 'path', 'g', 'circle', 'rect']
+  if (svgs.includes(e.target.tagName)) return
+  if (e.target.className?.includes('toggleAreaPopup')) {
     showAreaPopup.value = !showAreaPopup.value
   } else {
     showAreaPopup.value = false

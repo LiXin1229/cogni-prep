@@ -30,8 +30,6 @@ const selectArea = async (id) => {
   await mindMapRef.value.updateData()
   mindMapRef.value.renderChart()
 }
-
-
 </script>
 
 <template>

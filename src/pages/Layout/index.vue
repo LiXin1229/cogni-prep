@@ -11,6 +11,7 @@ import AIAddNode from './AIAddNode.vue'
 import EditNode from './EditNode.vue'
 import DeleteNode from './DeleteNode.vue'
 import DeleteChildren from './DeleteChildren.vue'
+import QuoteMindmap from './QuoteMindmap.vue'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
@@ -116,6 +117,7 @@ onMounted(async() => {
     <edit-node :showDialog="userStore.showDialog === 'editNode'" />
     <delete-node :showDialog="userStore.showDialog === 'deleteNode'" />
     <delete-children :showDialog="userStore.showDialog === 'deleteChildren'" />
+    <quote-mindmap :showDialog="userStore.showDialog === 'quoteMindmap'" />
   </div>
 </template>
 

@@ -1,8 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useMindmapStore } from '../stores/mindmap'
+import { useUserInfoStore } from '../stores/user'
 
 const mindmapStore = useMindmapStore()
+const userStore = useUserInfoStore()
 
 const props = defineProps({
   showCustMenu: {
@@ -12,11 +14,15 @@ const props = defineProps({
   position: {
     type: Object,
     default: () => ({ x: 0, y: 0 })
+  },
+  node: {
+    type: Object,
+    default: () => ({})
   }
 })
 
 const emits = defineEmits([
-  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren', 'startChat'
+  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren', 'startChat', 'selectNode'
 ])
 
 // 关闭菜单
@@ -48,6 +54,12 @@ const positionStyle = computed(() => {
     width: width + 'px'
   }
 })
+
+// 选择节点
+const selectNode = () => {
+  emits('selectNode')
+  closeMenu()
+}
 
 // 重置视图
 const resetView = () => {
@@ -105,6 +117,10 @@ const startChat = () => {
     v-click-outside.stop="closeMenu"
     :style="positionStyle"
   >
+    <template v-if="userStore.showDialog === 'quoteMindmap'">
+      <div class="menu-item" @click="selectNode">选择该节点</div>
+      <div class="br"></div>
+    </template>
     <div class="menu-item" @click="AIAddNode">AI生成子节点</div>
     <div class="menu-item" @click="userAddNode">自定义子节点</div>
     <div class="br"></div>
@@ -131,7 +147,7 @@ const startChat = () => {
     v-click-outside.stop="closeMenu"
     :style="positionStyle"
   >
-  <div class="menu-item" @click="saveView">保存视图</div>
+    <div class="menu-item" @click="saveView">保存视图</div>
     <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
   </div>
 </template>

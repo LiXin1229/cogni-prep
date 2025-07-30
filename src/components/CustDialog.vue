@@ -7,6 +7,10 @@ defineProps({
   title: {
     type: String,
     default: '标题'
+  },
+  exitBottom: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -38,7 +42,7 @@ defineExpose({
       <slot></slot>
     </div>
 
-    <div class="bottom">
+    <div class="bottom" v-if="exitBottom">
       <div class="cancel-btn btn" @click="closeDialog">取消</div>
       <div class="confirm-btn btn" @click="confirm">确定</div>
     </div>

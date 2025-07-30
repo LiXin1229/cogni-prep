@@ -1,11 +1,15 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserInfoStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
+import { useMindmapStore } from '@/stores/mindmap'
 import { faAngleRight } from '@fortawesome/free-solid-svg-icons'
 
 const router = useRouter()
+const userStore = useUserInfoStore()
 const sessionStore = useSessionStore()
+const mindmapStore = useMindmapStore()
 
 const props = defineProps({
   showDialog: {
@@ -18,8 +22,9 @@ const dialogRef = ref(null)
 
 const custom = ref('')
 
-const quote = () => {
-
+const openQuoteMindmapDialog = () => {
+  mindmapStore.selectedAreaId = sessionStore.mainArea.areaId
+  userStore.showDialog = 'quoteMindmap'
 }
 
 const noLimit = async () => {
@@ -66,7 +71,7 @@ watch(() => props.showDialog, (showDialog) => {
           <el-input v-model="custom" placeholder="自定义知识点" style="--el-input-focus-border-color: var(--theme-color-1);" />
         </div>
 
-        <div class="quote layer" @click="quote">
+        <div class="quote layer" @click="openQuoteMindmapDialog">
           <div class="text">从导图中引用</div>
           <div class="icon">
             <font-awesome-icon :icon="faAngleRight" />

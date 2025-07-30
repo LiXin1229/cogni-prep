@@ -17,6 +17,22 @@ const mindmapStore = useMindmapStore()
 const sessionStore = useSessionStore()
 const { debounce } = useDebounce()
 
+const props = defineProps({
+  style: {
+    type: Object,
+    default: () => ({
+      height: 'calc(100% - 50px)'
+    })
+  },
+  mouseFacter: { // 鼠标修正值
+    type: Object,
+    default: () => ({
+      x: -260,
+      y: -5
+    })
+  }
+})
+
 // 更新数据
 const updateData = async () => {
   const { mindmap } = await mindmapStore.getMindmapData()
@@ -183,17 +199,6 @@ const renderChart = () => {
     .attr('class', 'node')
     .attr('transform', d => `translate(${d.y},${d.x})`)
 
-  // 外层透明矩形（定义总宽度=内容+内边距）
-  // node.append('rect')
-  //   .attr('class', 'padding-rect')
-  //   .attr('width', (d) => {
-  //     // console.log(d.data.name)
-  //     const width = getTextWidth(d.data.name)
-  //     return width + 35
-  //   })
-  //   .attr('height', 30)
-  //   .attr('transform', (d) => `translate(${-(getTextWidth(d.data.name) + 15) / 2}, -15)`)
-
   // 展开的节点
   const foldedNodes = node.filter(d => d.data.isFolded === 0 && d.data.children.length > 0);
 
@@ -339,8 +344,8 @@ const openCustMenu = (e, type, node) => {
   e.stopPropagation()
   e.preventDefault()
   position.value = {
-    x: e.clientX - 260,
-    y: e.clientY - 5
+    x: e.clientX + props.mouseFacter.x,
+    y: e.clientY + props.mouseFacter.y
   }
   showCustMenu.value = type
 
@@ -352,6 +357,14 @@ const openCustMenu = (e, type, node) => {
 // 打开对话框
 const openDialog = (type) => {
   userStore.showDialog = type
+}
+
+// 选中节点
+const selectNode = async () => {
+  userStore.showDialog = ''
+  await router.push({ name: '每日刷题' })
+  sessionStore.surroundingPoint = mindmapStore.selectedNode.name
+  sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
 }
 
 // 取消更改
@@ -418,7 +431,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="map-container">
+  <div class="map-container" :style="style">
     <div ref="chartRef" class="chart-wrapper" @contextmenu.stop="(e) => openCustMenu(e, 'normal')"></div>
   </div>
 
@@ -426,6 +439,8 @@ defineExpose({
   <cust-menu
     v-model:showCustMenu="showCustMenu"
     :position="position"
+    :node="mindmapStore.selectedNode"
+    @selectNode="selectNode"
     @resetView="resetView"
     @saveView="saveData"
     @AIAddNode="openDialog('AIAddNode')"
@@ -439,7 +454,7 @@ defineExpose({
 
 <style scoped lang="scss">
 .map-container {
-  height: calc(100% - 50px);
+  overflow: hidden;
 
   :deep(.chart-wrapper) {
     width: 100%;
