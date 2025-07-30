@@ -5,6 +5,7 @@ import { useUserInfoStore } from './user'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
 import { useLocalStorage } from '@/utils/useStorage'
+import { findAncestorsById } from '@/utils/treeUtils'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
@@ -21,6 +22,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
   const getSelectedAreaId = async () => {
     await userStore.getUserInfo()
   }
+
+  // 展示的树数据
+  const treeData = ref({})
 
   const getMindmapData = async () => {
     if (!selectedAreaId.value) {
@@ -56,21 +60,35 @@ export const useMindmapStore = defineStore('mindmap', () => {
   // 右键选中的节点
   const selectedNode = ref(null)
 
-  const getSubcategory = async (number, pointList) => {
+  // AI生成子节点
+  const getSubcategory = async (formData, pointList) => {
     console.log(selectedNode.value)
     const childrenPoints = [...pointList, ...selectedNode.value.children]
+
+    let surroundingPoint = ''
+    const { parent, grandparent } = findAncestorsById(treeData.value, selectedNode.value.id)
+    
+    if (parent && grandparent) {
+      surroundingPoint = `“${grandparent.name}”中的“${parent.name}”下的“${selectedNode.value.name}”`
+    } else if (parent) {
+      surroundingPoint = `“${parent.name}”下的“${selectedNode.value.name}”`
+    } else {
+      surroundingPoint = `“${selectedNode.value.name}”`
+    }
+
     const { data } = await axios({
       url: API.getSubcategory,
       method: 'POST',
       data: {
         mainArea: areaList.value.find(item => item.areaId === selectedAreaId.value).name,
-        surroundingPoint: selectedNode.value.name,
-        childrenPoints: childrenPoints,
-        number: number
+        surroundingPoint,
+        childrenPoints,
+        number: formData.number,
+        auto: formData.auto
       }
     })
 
-    console.log(data.data)
+    return data
   }
 
   // 组件回调
@@ -91,6 +109,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
   return {
     areaList,
     selectedAreaId,
+    treeData,
     getMindmapData,
     saveMindmapData,
     selectedNode,

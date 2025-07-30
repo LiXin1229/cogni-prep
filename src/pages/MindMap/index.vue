@@ -1,10 +1,11 @@
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useUserInfoStore } from '@/stores/user'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useDebounce } from '@/utils/useDebounce'
 import { getTextWidth } from '@/utils/getTextWidth'
 import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById } from '@/utils/treeUtils'
+import { calculateDynamicTreeSize } from '@/utils/dynamicTreeSize'
 import * as d3 from 'd3'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -90,7 +91,10 @@ const adjustChartSize = () => {
   }
 }
 
-const treeData = ref(null) // 树数据（响应式存储）
+const treeData = computed({
+  get: () => mindmapStore.treeData,
+  set: (value) => mindmapStore.treeData = value 
+}) // 树数据
 const chartRef = ref(null) // D3绘图容器
 let root
 let chartWidth, chartHeight // 画布尺寸
@@ -136,6 +140,7 @@ const initChart = () => {
     .on('zoom', (event) => {
       currentTransform = event.transform
       chartGroup.attr('transform', currentTransform)
+      // console.log('currentTransform', currentTransform)
     })
 
   svg.call(zoom)
@@ -150,11 +155,25 @@ const renderChart = () => {
   // 加工原始数据(删除要折叠的节点的子节点)
   const foldedData = removeFoldedNodes(treeData.value)
 
+  let sizeFactor = 1
+
+  try {
+    sizeFactor = calculateDynamicTreeSize(foldedData)
+    console.log('sizeFactor', sizeFactor)
+  } catch (err) {
+    console.log(err)
+  }
+
   root = d3.hierarchy(foldedData)
 
   console.log('初始化', root)
 
-  d3.tree().size([chartWidth, chartWidth]) (root)
+  const treeLayout = d3.tree()
+  .size([chartHeight * sizeFactor, chartWidth * sizeFactor])
+
+  treeLayout(root)
+
+  console.log('calculateDynamicTreeSize', calculateDynamicTreeSize(root))
 
   const svgDimensions = calculateSVGDimensions(root)
 
@@ -183,15 +202,15 @@ const renderChart = () => {
     .attr('transform', d => `translate(${d.y},${d.x})`)
 
   // 外层透明矩形（定义总宽度=内容+内边距）
-  node.append('rect')
-    .attr('class', 'padding-rect')
-    .attr('width', (d) => {
-      // console.log(d.data.name)
-      const width = getTextWidth(d.data.name)
-      return width + 35
-    })
-    .attr('height', 30)
-    .attr('transform', (d) => `translate(${-(getTextWidth(d.data.name) + 15) / 2}, -15)`)
+  // node.append('rect')
+  //   .attr('class', 'padding-rect')
+  //   .attr('width', (d) => {
+  //     // console.log(d.data.name)
+  //     const width = getTextWidth(d.data.name)
+  //     return width + 35
+  //   })
+  //   .attr('height', 30)
+  //   .attr('transform', (d) => `translate(${-(getTextWidth(d.data.name) + 15) / 2}, -15)`)
 
   // 筛选出isFolded == 0的节点
   const foldedNodes = node.filter(d => d.data.isFolded === 0 && d.data.children.length > 0);
@@ -200,6 +219,7 @@ const renderChart = () => {
   foldedNodes.append('circle')
     .attr('r', 10) // 圆半径（12或16）
     .attr('transform', d => `translate(${(getTextWidth(d.data.name) + 50) / 2}, 0)`) // 定位到文本右侧
+    .attr('fill', (d) => colorMap[d.data.frequency])
     .attr('class', 'unfolded-circle')
     .style('cursor', 'pointer')
     .on('click', clickBtn)
@@ -223,7 +243,7 @@ const renderChart = () => {
   // 筛选出isFolded > 0的节点
   node.filter(d => d.data.isFolded > 0)
     .append('circle')
-    .attr('r', (d) => d.data.isFolded < 100 ? 12 : 16)
+    .attr('r', (d) => d.data.isFolded < 100 ? 14 : 16)
     .attr('transform', (d) => `translate(${(getTextWidth(d.data.name) + 50) / 2}, 0)`)
     .attr('class', 'folded-circle')
     .style('cursor', 'pointer')
@@ -251,7 +271,10 @@ const renderChart = () => {
     .attr('rx', 10) // 圆角
     .attr('ry', 10)
     .attr('transform', (d) => `translate(-${(getTextWidth(d.data.name) + 15) / 2}, -15)`) // 居中于外层矩形左侧
-    .attr('stroke', (d) => colorMap[d.data.frequency])
+    .attr('stroke', (d) => {
+      if (d.data.isRoot) return '#191919'
+      return colorMap[d.data.frequency]
+    })
     .style('cursor', 'pointer')
     .on('contextmenu', (e, d) => openCustMenu(e, 'node', d.data))
     .on('click', (e, d) => openCustMenu(e, 'node', d.data))
@@ -260,7 +283,6 @@ const renderChart = () => {
   node.append('text')
     .attr('dy', '.35em')
     .style('text-anchor', 'middle')
-    .attr("fill", (d) => colorMap[d.data.frequency])
     .text(d => d.data.name)
     .style('pointer-events', 'none')
     .on('contextmenu', (e, d) => openCustMenu(e, 'node', d.data))
@@ -312,7 +334,7 @@ const applyInitialZoom = (svgDimensions) => {
     // 向右移动200px
     const rootOffset = 200
     translateX += rootOffset
-    translateY -= rootOffset * 2
+    translateY -= rootOffset
   }
   
   currentTransform = d3.zoomIdentity
@@ -359,10 +381,10 @@ const resetView = async () => {
 
 // 添加节点
 const addNodes = (data) => {
-  // console.log('addNodes', data)
-  const newNode = { id: uuidv4(), name: data.name, children: [], isFolded: 0, frequency: data.rating }
-  console.log('selectedNode', mindmapStore.selectedNode.id)
-  treeData.value = addChildrenById(treeData.value, mindmapStore.selectedNode.id, newNode)
+  const dataArray = Array.isArray(data) ? data : [data]
+  const newNodes = dataArray.map(node => ({ id: uuidv4(), name: node.name, children: [], isFolded: 0, frequency: node.frequency }))
+  // console.log('newNodes', newNodes)
+  treeData.value = addChildrenById(treeData.value, mindmapStore.selectedNode.id, newNodes)
   renderChart()
   isEdited.value = true
 }
@@ -382,10 +404,18 @@ const deleteNode = () => {
   isEdited.value = true
 }
 
+// 删除子节点
+const deleteChildren = () => {
+  treeData.value = deleteNodeById(treeData.value, mindmapStore.selectedNode.id, 'children')
+  renderChart()
+  isEdited.value = true
+}
+
 // store注册方法, 便于在Dialog组件中触发
 mindmapStore.registerCallback('addNodes', addNodes)
 mindmapStore.registerCallback('editNode', editNode)
 mindmapStore.registerCallback('deleteNode', deleteNode)
+mindmapStore.registerCallback('deleteChildren', deleteChildren)
 
 onUnmounted(() => {
   mindmapStore.registerCallback({})
@@ -425,6 +455,7 @@ onUnmounted(() => {
       @userAddNode="openDialog('userAddNode')"
       @editNode="openDialog('editNode')"
       @deleteNode="openDialog('deleteNode')"
+      @deleteChildren="openDialog('deleteChildren')"
     />
   </div>
 </template>
@@ -489,7 +520,6 @@ onUnmounted(() => {
     :deep(.chart-wrapper) {
       width: 100%;
       height: 100%;
-      // background-color: aqua;
 
       .test-rect {
         fill: var(--light-main-color);
@@ -512,7 +542,6 @@ onUnmounted(() => {
       }
 
       .node .unfolded-circle {
-        fill: #bbb;
         stroke: none;
       }
 
@@ -522,7 +551,7 @@ onUnmounted(() => {
       }
 
       .node .folded-circle {
-        fill: #bbb;
+        fill: #aaa;
       }
 
       .node .folded-circle-text {

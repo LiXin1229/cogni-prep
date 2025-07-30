@@ -14,26 +14,29 @@ const props = defineProps({
 const dialogRef = ref(null)
 
 const formData = ref({
-  number: 1
+  number: 1,
+  auto: false
 })
 
-const submit = () => {
+const submit = async () => {
   console.log('submit')
-  mindmapStore.getSubcategory(formData.value.number, pointList.value)
+  const res = await mindmapStore.getSubcategory(formData.value, pointList.value)
+
+  if (res.success) {
+    pointList.value = [...pointList.value, ...res.data.pointList]
+  }
 }
 
 const pointList = ref([])
 
 const confirm = async () => {
-  // mindmapStore.triggerComponent('addNodes', formData.value)
+  mindmapStore.triggerComponent('addNodes', pointList.value)
   dialogRef.value.closeDialog()
 }
 
 watch(() => props.showDialog, (showDialog) => {
   if (showDialog) {
-    formData.value = {
-      number: 1
-    }
+    pointList.value = []
   }
 })
 </script>
@@ -44,11 +47,21 @@ watch(() => props.showDialog, (showDialog) => {
       <div class="content">
         <el-form :model="formData">
           <el-form-item label="添加个数" prop="number">
-            <el-input-number v-model="formData.number" :min="1" :max="30" style="--el-input-focus-border-color: var(--theme-color-1);" />
+            <el-input-number v-model="formData.number" :min="1" :max="30" :disabled="formData.auto" />
+
+            <el-radio-group v-model="formData.auto" class="radio-btn">
+              <el-radio :value="true" border>自动</el-radio>
+            </el-radio-group>
 
             <el-button type="primary" @click="submit" class="submit-btn">生成</el-button>
           </el-form-item>
         </el-form>
+
+        <div class="point-list">
+          <div class="point-item" v-for="(point, index) in pointList" :key="index">
+            {{ point }}
+          </div>
+        </div>
       </div>
     </cust-dialog>
   </div>
@@ -58,6 +71,10 @@ watch(() => props.showDialog, (showDialog) => {
 .add-node-dialog {
   .content {
     padding: 15px 0;
+
+    .radio-btn {
+      margin-left: 10px;
+    }
 
     .submit-btn {
       margin-left: 10px;

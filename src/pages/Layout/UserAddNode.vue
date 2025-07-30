@@ -16,7 +16,7 @@ const ruleFormRef = ref(null)
 
 const formData = ref({
   name: '',
-  rating: 0
+  frequency: 0
 })
 
 const verifyName = (rule, value, callback) => {
@@ -43,7 +43,7 @@ watch(() => props.showDialog, (showDialog) => {
   if (showDialog) {
     formData.value = {
       name: '',
-      rating: 0
+      frequency: 0
     }
   }
 })
@@ -61,7 +61,7 @@ watch(() => props.showDialog, (showDialog) => {
           </el-form-item>
 
           <el-form-item label="重要性">
-            <el-rate v-model="formData.rating" size="large" :max="3" clearable  />
+            <el-rate v-model="formData.frequency" size="large" :max="3" clearable  />
           </el-form-item>
         </el-form>
       </div>

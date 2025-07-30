@@ -23,11 +23,11 @@ const confirm = () => {
     })
     return
   } else if (userStore.areaList.map(ele => ele.name).includes(custom.value)) {
-    ElMessage({
-      message: '已添加过该领域',
-      type: 'info'
-    })
-    return
+    // ElMessage({
+    //   message: '已添加过该领域',
+    //   type: 'info'
+    // })
+    // return
   }
 
   userStore.updateArea(custom.value)

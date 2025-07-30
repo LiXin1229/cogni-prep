@@ -1,6 +1,5 @@
 // 展开或折叠节点
 export const toggleFoldedNodes = (treeData, node) => {
-  // 深拷贝数据以避免修改原对象
   const newTreeData = JSON.parse(JSON.stringify(treeData));
 
   const targetId = node.id
@@ -39,7 +38,6 @@ export const toggleFoldedNodes = (treeData, node) => {
 
 // 折叠节点
 export const removeFoldedNodes = (node) => {
-  // 深拷贝当前节点，避免修改原数据
   const newNode = JSON.parse(JSON.stringify(node))
   
   // 检查当前节点的isFolded是否不为0
@@ -55,16 +53,19 @@ export const removeFoldedNodes = (node) => {
 }
 
 // 添加节点
-export const addChildrenById = (treeData, parentId, newNode) => {
+export const addChildrenById = (treeData, parentId, newNodes) => {
   const newTree = JSON.parse(JSON.stringify(treeData))
+  // 统一处理为数组，方便后续操作
+  const nodesToAdd = Array.isArray(newNodes) ? newNodes : [newNodes]
 
   // 定义递归函数（处理单个节点及其子节点）
   const findAndAdd = (node) => {
-    // 若当前节点是目标父节点，直接添加子节点
+    // 若当前节点是目标父节点，添加子节点
     if (node.id === parentId) {
       // 确保 children 存在（避免 undefined.push 错误）
       if (!node.children) node.children = []
-      node.children.push(newNode)
+      // 添加所有节点（单个或多个）
+      node.children.push(...nodesToAdd)
       return true; // 标记已添加
     }
 
@@ -79,7 +80,7 @@ export const addChildrenById = (treeData, parentId, newNode) => {
     return false // 未找到父节点
   }
 
-  // 从根节点开始查找（因为 treeData 是单个根节点对象）
+  // 从根节点开始查找
   const isAdded = findAndAdd(newTree)
 
   // 返回添加结果：若成功，返回修改后的新树；否则返回 null
@@ -87,7 +88,6 @@ export const addChildrenById = (treeData, parentId, newNode) => {
 }
 
 export const modifyNode = (treeData, targetId, newName, newFrequency) => {
-  // 深拷贝原对象，避免修改源数据
   const newTree = JSON.parse(JSON.stringify(treeData));
   
   // 递归查找并修改节点
@@ -117,41 +117,89 @@ export const modifyNode = (treeData, targetId, newName, newFrequency) => {
   return newTree;
 }
 
-export const deleteNodeById = (treeData, targetId) => {
-  // 深拷贝原对象，避免修改源数据
+export const deleteNodeById = (treeData, targetId, mode = 'node') => {
   const newTree = JSON.parse(JSON.stringify(treeData));
 
   // 递归查找并删除节点
-  function traverse(parentNode) {
-    // 如果当前父节点没有子节点，直接返回
+  const traverse = (parentNode) => {
     if (!parentNode.children || parentNode.children.length === 0) {
       return false;
     }
 
-    // 遍历子节点，查找目标ID
     for (let i = 0; i < parentNode.children.length; i++) {
       const currentNode = parentNode.children[i];
       
-      // 找到目标节点：从父节点的children中删除该节点（及其子节点）
+      // 找到目标节点
       if (currentNode.id === targetId) {
-        parentNode.children.splice(i, 1); // 从数组中移除当前节点
-        return true; // 标记已删除，终止后续查找
+        if (mode === 'node') {
+          // 模式1：删除节点本身（及其子节点）
+          parentNode.children.splice(i, 1);
+        } else if (mode === 'children') {
+          // 模式2：仅删除节点的所有子节点（保留节点本身）
+          currentNode.children = []; // 清空子节点数组
+        }
+        return true;
       }
 
-      // 未找到目标节点，递归遍历当前节点的子节点
+      // 递归查找子节点
       const isDeleted = traverse(currentNode);
       if (isDeleted) {
-        return true; // 子节点中已删除，终止上层遍历
+        return true;
       }
     }
 
-    // 遍历完所有子节点仍未找到
     return false;
   }
 
-  // 从根节点的子节点开始查找（根节点本身一般不删除，除非明确需要）
-  // 如果要允许删除根节点，可添加判断：if (newTree.id === targetId) return {};
+  // 处理根节点特殊情况
+  if (newTree.id === targetId) {
+    if (mode === 'node') {
+      // 若删除根节点，返回空对象（或根据业务需求返回默认根节点）
+      return {};
+    } else if (mode === 'children') {
+      // 清空根节点的子节点
+      newTree.children = [];
+      return newTree;
+    }
+  }
+
+  // 从根节点的子节点开始查找
   traverse(newTree);
 
   return newTree;
 }
+
+// 查找祖先节点
+export const findAncestorsById = (treeData, targetId) => {
+  // 存储查找结果
+  const result = {
+    parent: null,
+    grandparent: null
+  };
+
+  // 递归遍历树结构
+  function traverse(node, parentNode, grandparentNode) {
+    // 若当前节点是目标节点，记录其父节点和爷节点
+    if (node.id === targetId) {
+      result.parent = parentNode;
+      result.grandparent = grandparentNode;
+      return true; // 找到目标，终止递归
+    }
+
+    // 若当前节点有子节点，继续递归查找
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        // 递归时更新父节点为当前节点，爷节点为当前节点的父节点
+        const found = traverse(child, node, parentNode);
+        if (found) return true; // 找到后终止遍历
+      }
+    }
+
+    return false; // 未找到目标节点
+  }
+
+  // 从根节点开始遍历（根节点的父节点和爷节点均为null）
+  traverse(treeData, null, null);
+
+  return result;
+};

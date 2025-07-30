@@ -26,7 +26,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="cust-dialog">
+  <div class="cust-dialog" v-bind="$attrs">
     <div class="top">
       <div class="title">{{ title }}</div>
       <div class="close-btn" @click="closeDialog">
@@ -58,7 +58,6 @@ defineExpose({
   background-color: var(--normal-bgc);
   border-radius: 10px;
   min-width: 300px;
-  // min-height: 200px;
 
   .top {
     display: flex;

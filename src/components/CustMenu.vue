@@ -19,7 +19,9 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(['update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode'])
+const emits = defineEmits([
+  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren'
+])
 
 // 关闭菜单
 const closeMenu = () => {
@@ -28,7 +30,7 @@ const closeMenu = () => {
 
 const sizeMap = {
   'node': {
-    width: 120,
+    width: 140,
     height: 350
   },
   'normal': {
@@ -86,6 +88,12 @@ const deleteNode = () => {
   emits('deleteNode')
   closeMenu()
 }
+
+// 删除子节点
+const deleteChildren = () => { 
+  emits('deleteChildren')
+  closeMenu()
+}
 </script>
 
 <template>
@@ -99,13 +107,20 @@ const deleteNode = () => {
     <div class="menu-item" @click="userAddNode">自定义子节点</div>
     <div class="br"></div>
     <div class="menu-item" @click="editNode">编辑节点</div>
-    <div class="menu-item" @click="deleteNode">删除节点</div>
+    <div class="parent-menu">
+      <div class="menu-item">删除节点/子节点</div>
+      <!-- 子菜单 - 鼠标悬浮时显示 -->
+      <div class="submenu">
+        <div class="menu-item" @click.stop="deleteNode">删除节点</div>
+        <div class="menu-item" @click.stop="deleteChildren">删除子节点</div>
+      </div>
+    </div>
     <div class="br"></div>
     <div class="menu-item">开始对话</div>
     <div class="menu-item">查看笔记</div>
     <div class="br"></div>
-    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '重置视图'}}</div>
     <div class="menu-item" @click="saveView">保存视图</div>
+    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '刷新视图'}}</div>
   </div>
 
   <div
@@ -114,8 +129,8 @@ const deleteNode = () => {
     v-click-outside.stop="closeMenu"
     :style="positionStyle"
   >
-    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '重置视图'}}</div>
-    <div class="menu-item" @click="saveView">保存视图</div>
+  <div class="menu-item" @click="saveView">保存视图</div>
+    <div class="menu-item" @click="resetView">{{ isEdited ? '取消更改' : '刷新视图'}}</div>
   </div>
 </template>
 
@@ -148,6 +163,35 @@ const deleteNode = () => {
     margin-left: 8px;
     margin-right: 8px;
     transform: scaleY(0.5); /* 对Y轴缩放，在2倍屏上等效1px物理像素 */
+  }
+
+  .parent-menu {
+    position: relative;
+    padding: 0;
+    margin: 0;
+
+    .submenu {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      min-width: 105px;
+      margin-left: 4px;
+      margin-top: -8px;
+      background-color: var(--normal-bgc);
+      border: 1px solid var(--light-border-color-1);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--box-shadow-color);
+      padding: 8px;
+      z-index: 101;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.2s;
+    }
+
+    &:hover .submenu {
+      visibility: visible;
+      opacity: 1;
+    }
   }
 }
 </style>
