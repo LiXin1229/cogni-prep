@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 
 const mindmapStore = useMindmapStore()
@@ -23,13 +23,15 @@ const selectArea = async (id) => {
   mindMapRef.value.saveData()
 
   mindmapStore.selectedAreaId = id
-  
-  console.log('selectedAreaId', mindmapStore.selectedAreaId)
 
   // 更新图表
   await mindMapRef.value.updateData()
   mindMapRef.value.renderChart()
 }
+
+onMounted(() => {
+  mindmapStore.getMindmapData()
+})
 </script>
 
 <template>
@@ -63,10 +65,13 @@ const selectArea = async (id) => {
   position: relative;
 
   .top {
+    width: 100%;
     height: 50px;
     display: flex;
     align-items: center;
     padding: 0 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
 
     .toggleSidebar {
       position: absolute;
@@ -85,6 +90,7 @@ const selectArea = async (id) => {
         font-weight: bold;
         font-size: 15px;
         position: relative;
+        white-space: nowrap;
       }
 
       .selected-area {

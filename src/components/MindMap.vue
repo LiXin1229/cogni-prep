@@ -164,7 +164,7 @@ const renderChart = () => {
 
   root = d3.hierarchy(foldedData)
 
-  console.log('初始化', root)
+  // console.log('初始化', root)
 
   const treeLayout = d3.tree()
   .size([chartHeight * sizeFactor, chartWidth * sizeFactor])
@@ -280,7 +280,7 @@ onUnmounted(() => {
   saveData()
   d3.select(chartRef.value).selectAll('*').remove()
 
-  resizeObserver.value.disconnect()
+  if (resizeObserver.value) resizeObserver.value.disconnect()
 })
 
 const clickBtn = (event, d) => {

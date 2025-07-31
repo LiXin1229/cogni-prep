@@ -98,8 +98,10 @@ onMounted(async() => {
         <div class="history-top">
           <div class="title">历史对话</div>
         </div>
-        <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
-          <div class="title">{{ session.title }}</div>
+        <div class="session-warpper">
+          <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
+            <div class="title">{{ session.title }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -226,32 +228,50 @@ onMounted(async() => {
         }
       }
 
-      .session-item {
-        display: flex;
-        justify-content: left;
-        align-items: center;
-        height: 35px;
-        padding: 0 10px;
-        margin: 5px 0;
-        border-radius: 10px;
-        font-size: 15px;
-        color: var(--text-color-1);
-        transition: all 0.3s ease;
+      .session-warpper {
+        overflow: auto;
+        height: calc(100vh - 390px);
 
-        .title {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        .session-item {
+          display: flex;
+          justify-content: left;
+          align-items: center;
+          height: 35px;
+          padding: 0 10px;
+          margin: 5px 6px;
+          border-radius: 10px;
+          font-size: 15px;
+          color: var(--text-color-1);
+          transition: all 0.3s ease;
+
+          .title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          &:hover:not(.selected-nav) {
+            background-color: var(--navber-hover);
+          }
         }
 
-        &:hover:not(.selected-nav) {
-          background-color: var(--navber-hover);
+        .selected-nav {
+          background-color: var(--primary-bgc);
+          box-shadow: 1px 1px 5px 1px var(--box-shadow-color);
         }
-      }
 
-      .selected-nav {
-        background-color: var(--primary-bgc);
-        box-shadow: 1px 1px 5px 1px var(--box-shadow-color);
+        &::-webkit-scrollbar {
+          display: none;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #c1c1c188;
+        }
+
+        &:hover::-webkit-scrollbar {
+          width: 5px;
+          display: block;
+        }
       }
     }
   }

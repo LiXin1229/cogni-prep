@@ -17,7 +17,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   const areaList = computed(() => userStore.areaList)
 
-  const { value: selectedAreaId } = useLocalStorage('selectedAreaId', null)
+  const { value: selectedAreaId } = useLocalStorage('cogni_selectedAreaId', {})
 
   const getSelectedAreaId = async () => {
     await userStore.getUserInfo()
@@ -29,7 +29,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
   const getMindmapData = async () => {
     if (!selectedAreaId.value) {
       await getSelectedAreaId()
-      selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].id
+      selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
 
     const { data } = await axios({
@@ -40,7 +40,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
       }
     })
 
-    return data.data.mindmap
+    return data.data
   }
 
   // 保存导图数据

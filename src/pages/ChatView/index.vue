@@ -143,7 +143,7 @@ const funcBtn = (type) => {
     );
 
     .text-view {
-      width: 960px;
+      width: calc(75vw - 300px);
       margin: 0 auto;
 
       .text-wrapper {

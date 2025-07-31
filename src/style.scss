@@ -32,16 +32,15 @@
   --theme-color-1: #191919;
 
   --text-placeholder: #9CA3AF;
-
   --btn-locked: #cdcbcb;
-
   --uesr-bubble-bgc: #f5f5f5;
+  --tree-active-color: #ecf5ff;
 }
 
 /* 整个滚动条 */
 ::-webkit-scrollbar {
   width: 6px;  /* 垂直滚动条宽度 */
-  height: 6px; /* 水平滚动条高度 */
+  height: 0px; /* 水平滚动条高度 */
 }
 
 /* 滚动条轨道 */
