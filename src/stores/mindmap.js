@@ -103,9 +103,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
   }
 
   // 触发组件方法
-  const triggerComponent = (funcName, data) => {
+  const triggerComponent = (funcName, ...args) => {
     if (typeof componentCallback.value[funcName] === 'function') {
-      componentCallback.value[funcName](data) // 调用组件方法并传参
+      componentCallback.value[funcName](...args) // 调用组件方法并传参
     }
   }
 

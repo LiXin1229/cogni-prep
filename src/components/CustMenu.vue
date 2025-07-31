@@ -105,7 +105,7 @@ const deleteChildren = () => {
 
 // 开始对话
 const startChat = () => {
-  emits('startChat')
+  emits('startChat', props.node.chatId)
   closeMenu()
 }
 </script>
@@ -119,26 +119,27 @@ const startChat = () => {
   >
     <template v-if="userStore.showDialog === 'quoteMindmap'">
       <div class="menu-item" @click="selectNode">选择该节点</div>
-      <div class="br"></div>
     </template>
-    <div class="menu-item" @click="AIAddNode">AI生成子节点</div>
-    <div class="menu-item" @click="userAddNode">自定义子节点</div>
-    <div class="br"></div>
-    <div class="menu-item" @click="editNode">编辑节点</div>
-    <div class="parent-menu">
-      <div class="menu-item">删除节点/子节点</div>
-      <!-- 子菜单 - 鼠标悬浮时显示 -->
-      <div class="submenu">
-        <div class="menu-item" @click.stop="deleteNode">删除节点</div>
-        <div class="menu-item" @click.stop="deleteChildren">删除子节点</div>
+    <template v-else>
+      <div class="menu-item" @click="AIAddNode">AI生成子节点</div>
+      <div class="menu-item" @click="userAddNode">自定义子节点</div>
+      <div class="br"></div>
+      <div class="menu-item" @click="editNode">编辑节点</div>
+      <div class="parent-menu">
+        <div class="menu-item">删除节点/子节点</div>
+        <!-- 子菜单 - 鼠标悬浮时显示 -->
+        <div class="submenu">
+          <div class="menu-item" @click.stop="deleteNode">删除节点</div>
+          <div class="menu-item" @click.stop="deleteChildren">删除子节点</div>
+        </div>
       </div>
-    </div>
-    <div class="br"></div>
-    <div class="menu-item" @click="startChat">开始对话</div>
-    <div class="menu-item">查看笔记</div>
-    <div class="br"></div>
-    <div class="menu-item" @click="saveView">保存视图</div>
-    <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
+      <div class="br"></div>
+      <div class="menu-item" @click="startChat">{{ node.chatId ? '继续对话' : '开始对话' }}</div>
+      <div class="menu-item">查看笔记</div>
+      <div class="br"></div>
+      <div class="menu-item" @click="saveView">保存视图</div>
+      <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
+    </template>
   </div>
 
   <div

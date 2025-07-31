@@ -6,7 +6,7 @@ import { useMindmapStore } from '@/stores/mindmap'
 import { useSessionStore } from '@/stores/session'
 import { useDebounce } from '@/utils/useDebounce'
 import { getTextWidth } from '@/utils/getTextWidth'
-import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById } from '@/utils/treeUtils'
+import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById, modifyTreeNodeProp } from '@/utils/treeUtils'
 import { calculateDynamicTreeSize } from '@/utils/dynamicTreeSize'
 import * as d3 from 'd3'
 import { v4 as uuidv4 } from 'uuid'
@@ -365,6 +365,9 @@ const selectNode = async () => {
   await router.push({ name: '每日刷题' })
   sessionStore.surroundingPoint = mindmapStore.selectedNode.name
   sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
+
+  console.log(sessionStore.mainArea, sessionStore.surroundingPoint)
+  sessionStore.markNode = true
 }
 
 // 取消更改
@@ -377,7 +380,7 @@ const resetView = async () => {
 // 添加节点
 const addNodes = (data) => {
   const dataArray = Array.isArray(data) ? data : [data]
-  const newNodes = dataArray.map(node => ({ id: uuidv4(), name: node.name, children: [], isFolded: 0, frequency: node.frequency }))
+  const newNodes = dataArray.map(node => ({ id: uuidv4(), name: node.name, children: [], isFolded: 0, frequency: node.frequency, markId: null, chatId: null }))
   // console.log('newNodes', newNodes)
   treeData.value = addChildrenById(treeData.value, mindmapStore.selectedNode.id, newNodes)
   renderChart()
@@ -407,10 +410,28 @@ const deleteChildren = () => {
 }
 
 // 开始对话
-const startChat = async () => {
-  await router.push({ name: '每日刷题' })
-  sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
-  sessionStore.surroundingPoint = mindmapStore.selectedNode.name
+const startChat = async (chatId) => {
+  // 该节点没有chatId则开启新对话
+  if (chatId === null) {
+    await router.push({ name: '每日刷题' })
+    sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
+    sessionStore.surroundingPoint = mindmapStore.selectedNode.name
+    // 记录当前节点的ID
+    sessionStore.markNode = true
+  }
+  // 该节点有chatId则跳转
+  else {
+    router.push({
+      name: '会话',
+      params: { sessionId: chatId }
+    })
+  }
+}
+
+// 修改属性
+const modifyNodeProp = (propName) => {
+  treeData.value = modifyTreeNodeProp(treeData.value, mindmapStore.selectedNode.id, propName, sessionStore.currSession.sessionId)
+  mindmapStore.saveMindmapData(treeData.value)
 }
 
 // store注册方法, 便于在Dialog组件中触发
@@ -418,6 +439,7 @@ mindmapStore.registerCallback('addNodes', addNodes)
 mindmapStore.registerCallback('editNode', editNode)
 mindmapStore.registerCallback('deleteNode', deleteNode)
 mindmapStore.registerCallback('deleteChildren', deleteChildren)
+mindmapStore.registerCallback('modifyNodeProp', modifyNodeProp)
 
 onUnmounted(() => {
   mindmapStore.registerCallback({})

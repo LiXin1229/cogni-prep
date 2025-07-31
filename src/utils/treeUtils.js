@@ -203,3 +203,34 @@ export const findAncestorsById = (treeData, targetId) => {
 
   return result;
 };
+
+// 修改树结构中指定ID节点的属性
+export const modifyTreeNodeProp = (treeData, targetId, propName, propValue) => {
+  // 深拷贝原树，避免修改源数据
+  const newTree = JSON.parse(JSON.stringify(treeData));
+
+  // 递归查找并修改节点属性
+  const traverse = (node) => {
+    // 找到目标节点
+    if (node.id === targetId) {
+      // 修改指定属性（支持新增属性）
+      node[propName] = propValue;
+      return true; // 标记已找到并修改
+    }
+
+    // 若有子节点，递归查找
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        const found = traverse(child);
+        if (found) return true; // 找到后终止遍历
+      }
+    }
+
+    return false; // 未找到目标节点
+  };
+
+  // 从根节点开始查找
+  traverse(newTree);
+
+  return newTree;
+}

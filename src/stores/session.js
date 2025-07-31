@@ -3,13 +3,16 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user.js'
 import { useChatStore } from './chat'
+import { useMindmapStore } from './mindmap.js'
 import axios from 'axios'
 import API from '@/utils/API.js'
+import { ta } from 'element-plus/es/locales.mjs'
 
 export const useSessionStore = defineStore('session', () => {
   const router = useRouter()
   const userStore = useUserInfoStore()
   const chatStore = useChatStore()
+  const mindmapStore = useMindmapStore()
 
   // 会话列表
   const sessionList = ref([])
@@ -88,6 +91,9 @@ export const useSessionStore = defineStore('session', () => {
     sessionList.value = data.data.sessionList
   }
 
+  // 标记是否有节点需要挂载sessionId
+  const markNode = ref(false)
+
   // 新建会话
   const initSession = async () => {
     // console.log('mainArea', mainArea.value)
@@ -100,7 +106,7 @@ export const useSessionStore = defineStore('session', () => {
           userId: 1,
           mainArea: mainArea.value.name,
           areaId: mainArea.value.areaId,
-          surroundingPoint: surroundingPoint.value,
+          surroundingPoint: surroundingPoint.value
         }
       })
       // console.log('res_session', data)
@@ -109,14 +115,25 @@ export const useSessionStore = defineStore('session', () => {
 
       // 更新sessionId
       await router.push(`/chat/${data.data.sessionId}`)
+
+      // 清空目标节点
+      if (markNode.value) {
+        mindmapStore.triggerComponent('modifyNodeProp', 'chatId')
+        markNode.value = false
+      }
     } catch (err) {
       throw err
     }
   }
 
+  watch(() => surroundingPoint.value, () => {
+    markNode.value = false
+  }, { flush: 'sync' })
+
   return {
     sessionList,
     getSessionList,
+    markNode,
     initSession,
     currSession,
     mainArea,
