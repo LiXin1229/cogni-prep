@@ -22,6 +22,7 @@ const sendBtnActive = computed(() => {
 const showAreaPopup = ref(false)
 
 const togglePopup = (e) => {
+  // console.log(e)
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
   if (svgs.includes(e.target.tagName)) return
   if (e.target.className?.includes('toggleAreaPopup')) {
@@ -135,6 +136,7 @@ defineExpose({
       <!-- 文字输入区 -->
       <div class="text-area">
         <cust-textarea
+          class="quill"
           ref="quillRef"
           v-model="chatStore.customContent"
           v-model:height="textareaHeight"
@@ -150,7 +152,7 @@ defineExpose({
   // height: 161px;
 
   .input-panel {
-    width: 960px;
+    width: calc(75vw - 300px);
     // height: 125px;
     background-color: #fff;
     border: 1px solid var(--light-border-color-1);

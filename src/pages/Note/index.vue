@@ -1,7 +1,7 @@
 <script setup>
 import { useNoteStore } from '@/stores/note'
-import { area } from 'd3'
 import { computed, onMounted, ref, watch } from 'vue'
+import { parseMarkdown } from '@/utils/markdown'
 
 const noteStore = useNoteStore()
 
@@ -60,19 +60,62 @@ const handleNodeClick = (data) => {
       nodeId: data.id
     })
   }
+  // console.log(noteStore.selectKey)
 }
 
 // popup框
 const showNodePopup = ref('')
 
 const togglePopup = (e, data) => {
+  // console.log(e)
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
   if (svgs.includes(e.target.tagName)) return
   if (e.target.className?.includes('toggleNodePopup')) {
-    console.log('data', data)
-    showNodePopup.value = data.id
+    showNodePopup.value === data.id ? showNodePopup.value = '' : showNodePopup.value = data.id
   } else {
     showNodePopup.value = ''
+  }
+}
+
+// 生成笔记
+const createNote = (node) => {
+  noteStore.getNote(node)
+}
+
+// 复制按钮
+const handleClick = (e) => {
+  console.log(e.target.closest('.copy-btn'))
+  const copyBtn = e.target.closest('.copy-btn')
+  if (!copyBtn) return
+
+  const preElement = copyBtn.closest('pre')
+  const codeElement = preElement?.querySelector('code')
+
+  if (codeElement) {
+    // 执行复制逻辑
+    navigator.clipboard.writeText(codeElement.textContent)
+      .then(() => {
+        const imgElement = copyBtn.querySelector('img.icon')
+        if (!imgElement) return
+
+        const originalSrc = imgElement.src
+
+        // 切换为"已复制"图片
+        imgElement.src = '/src/assets/svgs/gou.svg'
+
+        setTimeout(() => {
+          imgElement.src = originalSrc
+          imgElement.classList.remove('copied-animation')
+        }, 5000)
+      })
+      .catch((err) => {
+        console.log(err)
+        ElMessage({
+          message: '复制失败',
+          type: 'info'
+        })
+        return
+      })
   }
 }
 </script>
@@ -111,7 +154,7 @@ const togglePopup = (e, data) => {
             :expand-on-click-node="false"
           >
             <template #default="{ node, data }">
-              <div class="custom-tree-node">
+              <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                 <div class="text">{{ node.label }}</div>
                 <cust-popup :position="{ top: '0px', left: '-80px' }">
                   <div class="func-btn toggleNodePopup" @click.stop="(e) => togglePopup(e, data)" >
@@ -120,8 +163,8 @@ const togglePopup = (e, data) => {
                   </div>
 
                   <template #popup>
-                    <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="togglePopup">
-                      <div class="menu-item">生成笔记</div>
+                    <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e) => togglePopup(e, data)">
+                      <div class="menu-item" @click="() => createNote(data)">生成笔记</div>
                     </div>
                   </template>
                 </cust-popup>
@@ -133,133 +176,15 @@ const togglePopup = (e, data) => {
 
       <!-- 笔记内容区 -->
       <div class="mark-content">
-        <div class="text-view">
-          请解释JavaScript中的事件循环机制，并说明宏任务和微任务的区别。
-
-@思路+答案
-回答思路
-理解事件循环的基本概念：首先解释JavaScript的事件循环是什么，以及它在JavaScript执行模型中的作用。
-区分宏任务和微任务：明确宏任务和微任务的定义，以及它们在事件循环中的不同处理顺序。
-举例说明：通过具体的例子来说明宏任务和微任务在实际代码中的表现，帮助理解。
-总结区别：最后总结宏任务和微任务的主要区别，强调它们在事件循环中的优先级和执行顺序。
-标准答案
-JavaScript的事件循环机制是其非阻塞I/O操作和异步编程的核心。事件循环允许JavaScript在执行代码、处理事件和执行异步任务时保持高效。
-
-事件循环机制
-事件循环的工作方式是不断检查调用栈是否为空。如果调用栈为空，事件循环会从任务队列中取出第一个任务来执行。这个过程不断重复，因此称为“事件循环”。
-
-宏任务和微任务的区别
-宏任务（MacroTask）：包括整体代码script、setTimeout、setInterval、I/O操作、UI渲染等。宏任务在每次事件循环的迭代中执行一个。
-微任务（MicroTask）：包括Promise.then、process.nextTick（Node.js环境）、MutationObserver等。微任务在当前宏任务执行完毕后立即执行，即在当前事件循环的末尾执行。
-关键区别
-执行顺序：在一个事件循环中，微任务总是在宏任务之前执行。
-优先级：微任务有更高的优先级，这意味着一旦当前宏任务完成，所有微任务都会在下一个宏任务开始之前执行完毕。
-示例
-console.log('script start'); // 宏任务
-
-setTimeout(function() {
-  console.log('setTimeout'); // 宏任务
-}, 0);
-
-Promise.resolve().then(function() {
-  console.log('promise1'); // 微任务
-}).then(function() {
-  console.log('promise2'); // 微任务
-});
-
-console.log('script end'); // 宏任务
-输出顺序：script start -> script end -> promise1 -> promise2 -> setTimeout。
-
-总结
-宏任务和微任务的主要区别在于它们的执行时机和优先级。微任务在当前宏任务执行完毕后立即执行，而宏任务则在事件循环的下一个迭代中执行。理解这一点对于编写高效的异步JavaScript代码至关重要。
-
-请解释什么是虚拟DOM以及它在现代前端框架中的作用请解释JavaScript中的事件循环机制，并说明宏任务和微任务的区别。
-
-@思路+答案
-回答思路
-理解事件循环的基本概念：首先解释JavaScript的事件循环是什么，以及它在JavaScript执行模型中的作用。
-区分宏任务和微任务：明确宏任务和微任务的定义，以及它们在事件循环中的不同处理顺序。
-举例说明：通过具体的例子来说明宏任务和微任务在实际代码中的表现，帮助理解。
-总结区别：最后总结宏任务和微任务的主要区别，强调它们在事件循环中的优先级和执行顺序。
-标准答案
-JavaScript的事件循环机制是其非阻塞I/O操作和异步编程的核心。事件循环允许JavaScript在执行代码、处理事件和执行异步任务时保持高效。
-
-事件循环机制
-事件循环的工作方式是不断检查调用栈是否为空。如果调用栈为空，事件循环会从任务队列中取出第一个任务来执行。这个过程不断重复，因此称为“事件循环”。
-
-宏任务和微任务的区别
-宏任务（MacroTask）：包括整体代码script、setTimeout、setInterval、I/O操作、UI渲染等。宏任务在每次事件循环的迭代中执行一个。
-微任务（MicroTask）：包括Promise.then、process.nextTick（Node.js环境）、MutationObserver等。微任务在当前宏任务执行完毕后立即执行，即在当前事件循环的末尾执行。
-关键区别
-执行顺序：在一个事件循环中，微任务总是在宏任务之前执行。
-优先级：微任务有更高的优先级，这意味着一旦当前宏任务完成，所有微任务都会在下一个宏任务开始之前执行完毕。
-示例
-console.log('script start'); // 宏任务
-
-setTimeout(function() {
-  console.log('setTimeout'); // 宏任务
-}, 0);
-
-Promise.resolve().then(function() {
-  console.log('promise1'); // 微任务
-}).then(function() {
-  console.log('promise2'); // 微任务
-});
-
-console.log('script end'); // 宏任务
-输出顺序：script start -> script end -> promise1 -> promise2 -> setTimeout。
-
-总结
-宏任务和微任务的主要区别在于它们的执行时机和优先级。微任务在当前宏任务执行完毕后立即执行，而宏任务则在事件循环的下一个迭代中执行。理解这一点对于编写高效的异步JavaScript代码至关重要。
-
-请解释什么是虚拟DOM以及它在现代前端框架中的作用
-          请解释JavaScript中的事件循环机制，并说明宏任务和微任务的区别。
-
-@思路+答案
-回答思路
-理解事件循环的基本概念：首先解释JavaScript的事件循环是什么，以及它在JavaScript执行模型中的作用。
-区分宏任务和微任务：明确宏任务和微任务的定义，以及它们在事件循环中的不同处理顺序。
-举例说明：通过具体的例子来说明宏任务和微任务在实际代码中的表现，帮助理解。
-总结区别：最后总结宏任务和微任务的主要区别，强调它们在事件循环中的优先级和执行顺序。
-标准答案
-JavaScript的事件循环机制是其非阻塞I/O操作和异步编程的核心。事件循环允许JavaScript在执行代码、处理事件和执行异步任务时保持高效。
-
-事件循环机制
-事件循环的工作方式是不断检查调用栈是否为空。如果调用栈为空，事件循环会从任务队列中取出第一个任务来执行。这个过程不断重复，因此称为“事件循环”。
-
-宏任务和微任务的区别
-宏任务（MacroTask）：包括整体代码script、setTimeout、setInterval、I/O操作、UI渲染等。宏任务在每次事件循环的迭代中执行一个。
-微任务（MicroTask）：包括Promise.then、process.nextTick（Node.js环境）、MutationObserver等。微任务在当前宏任务执行完毕后立即执行，即在当前事件循环的末尾执行。
-关键区别
-执行顺序：在一个事件循环中，微任务总是在宏任务之前执行。
-优先级：微任务有更高的优先级，这意味着一旦当前宏任务完成，所有微任务都会在下一个宏任务开始之前执行完毕。
-示例
-console.log('script start'); // 宏任务
-
-setTimeout(function() {
-  console.log('setTimeout'); // 宏任务
-}, 0);
-
-Promise.resolve().then(function() {
-  console.log('promise1'); // 微任务
-}).then(function() {
-  console.log('promise2'); // 微任务
-});
-
-console.log('script end'); // 宏任务
-输出顺序：script start -> script end -> promise1 -> promise2 -> setTimeout。
-
-总结
-宏任务和微任务的主要区别在于它们的执行时机和优先级。微任务在当前宏任务执行完毕后立即执行，而宏任务则在事件循环的下一个迭代中执行。理解这一点对于编写高效的异步JavaScript代码至关重要。
-
-请解释什么是虚拟DOM以及它在现代前端框架中的作用
-        </div>
+        <div class="text-view" v-html="parseMarkdown(noteStore.note)" @click="handleClick"></div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@import "@/minix.scss";
+
 .note {
   width: 100%;
   height: 100%;
@@ -406,7 +331,9 @@ console.log('script end'); // 宏任务
     }
   }
 
-  .mark-content {
+  :deep(.mark-content) {
+    @include code-box;
+
     flex: 1;
     overflow-y: auto;
 

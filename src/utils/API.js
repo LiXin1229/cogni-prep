@@ -11,7 +11,8 @@ const API = {
   setArea: '/api/user/area/setArea',
   getMindmapData: '/api/mindmap/mindmap/getMindmapData',
   saveMindmapData: '/api/mindmap/mindmap/saveMindmapData',
-  getSubcategory: '/api/mindmap/mindmap/getSubcategory'
+  getSubcategory: '/api/mindmap/mindmap/getSubcategory',
+  getNote: '/api/note/note/getNote'
 }
 
 export default API

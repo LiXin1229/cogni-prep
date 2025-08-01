@@ -1,0 +1,59 @@
+@mixin code-box {
+  /* 代码块容器样式（框体效果） */
+  pre {
+    /* 基础框体样式 */
+    background-color: var(--code-bgc);
+    border: 1px solid var(--light-border-color-1);
+    border-radius: 6px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  /* 代码块内文本样式 */
+  pre code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    color: #24292e;
+    background-color: var(--code-bgc);
+  }
+
+  /* 行内代码样式（与块级代码区分） */
+  p code,
+  li code {
+    background-color: var(--code-bgc);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 85%;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  // 代码块头部
+  .code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f3f4f6;
+    padding: 5px 16px;
+    height: 40px;
+    // border-radius: 6px;
+
+    .copy-btn {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 5px;
+
+      .icon {
+        width: 15px;
+        height: 15px;
+      }
+
+      &:hover {
+        background-color: var(--light-border-color-2);
+      }
+    }
+  }
+}

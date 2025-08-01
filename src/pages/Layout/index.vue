@@ -128,11 +128,14 @@ onMounted(async() => {
   display: flex;
   position: relative;
   overflow: hidden;
+  // background-color: aqua;
+  // height: 100vh;
+  // width: 100vw;
 
   .sidebar {
     width: 260px;
     height: 100vh;
-    padding: 12px;
+    padding: 0 12px;
     background-color: var(--siderbar-bgc);
     border-right: 1px solid var(--light-border-color-1);
     transition: transform 0.3s ease;

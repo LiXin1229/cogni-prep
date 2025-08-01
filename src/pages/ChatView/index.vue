@@ -1,8 +1,9 @@
 <script setup>
 import InputBox from './InputBox.vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { parseMarkdown } from '@/utils/markdown'
+import { stickBlockTop } from '@/utils/stickBlockTop'
 
 defineProps({
   isSidebarFolded: {
@@ -43,6 +44,54 @@ const funcBtn = (type) => {
   chatStore.customContent = chatStore.funcType[type] + chatStore.customContent
 }
 
+// 复制按钮
+const handleClick = (e) => {
+  console.log(e.target.closest('.copy-btn'))
+  const copyBtn = e.target.closest('.copy-btn')
+  if (!copyBtn) return
+
+  const preElement = copyBtn.closest('pre')
+  const codeElement = preElement?.querySelector('code')
+
+  if (codeElement) {
+    // 执行复制逻辑
+    navigator.clipboard.writeText(codeElement.textContent)
+      .then(() => {
+        const imgElement = copyBtn.querySelector('img.icon')
+        if (!imgElement) return
+
+        const originalSrc = imgElement.src
+
+        // 切换为"已复制"图片
+        imgElement.src = '/src/assets/svgs/gou.svg'
+
+        setTimeout(() => {
+          imgElement.src = originalSrc
+          imgElement.classList.remove('copied-animation')
+        }, 5000)
+      })
+      .catch((err) => {
+        console.log(err)
+        ElMessage({
+          message: '复制失败',
+          type: 'info'
+        })
+        return
+      })
+  }
+}
+
+// 代码块吸顶
+const scrollRef = ref(null)
+onMounted(() => {
+  scrollRef.value.addEventListener('scroll', stickBlockTop)
+  // 初始检查一次
+  stickBlockTop()
+})
+// 卸载时移除滚动监听
+onUnmounted(() => {
+  if (scrollRef.value) scrollRef.value.removeEventListener('scroll', stickBlockTop)
+})
 </script>
 
 <template>
@@ -53,7 +102,7 @@ const funcBtn = (type) => {
     </div>
 
     <!-- 滚动聊天记录区 -->
-    <div class="scroll-view" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}">
+    <div class="scroll-view" ref="scrollRef" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}">
       <!-- 对话内容区 -->
       <div class="text-view">
 
@@ -75,7 +124,8 @@ const funcBtn = (type) => {
             </template>
 
             <template v-else>
-              <div class="assistant-help" v-html="parseMarkdown(chat.content)"></div>
+              <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleClick"></div>
+              <!-- <highlightjs :language="javascript" :code="chat.content"></highlightjs>  -->
             </template>
 
             <!-- 功能按钮 -->
@@ -111,6 +161,8 @@ const funcBtn = (type) => {
 </template>
 
 <style scoped lang="scss">
+@import "@/minix.scss";
+
 .chat-view {
   width: 100%;
   height: 100%;
@@ -183,7 +235,9 @@ const funcBtn = (type) => {
         }
       }
 
-      .text-wrapper.assistant-wrapper {
+      :deep(.text-wrapper.assistant-wrapper ){
+        @include code-box;
+
         line-height: 2;
         font-size: 1.1em;
 
