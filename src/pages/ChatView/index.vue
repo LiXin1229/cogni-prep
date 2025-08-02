@@ -161,7 +161,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-@import "@/minix.scss";
+@use "@/styles/mixin.scss" as *;
 
 .chat-view {
   width: 100%;

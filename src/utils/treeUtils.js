@@ -206,6 +206,7 @@ export const findAncestorsById = (treeData, targetId) => {
 
 // 修改树结构中指定ID节点的属性
 export const modifyTreeNodeProp = (treeData, targetId, propName, propValue) => {
+  // console.log('函数内部', treeData, targetId, propName, propValue)
   // 深拷贝原树，避免修改源数据
   const newTree = JSON.parse(JSON.stringify(treeData));
 

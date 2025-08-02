@@ -31,8 +31,16 @@ const initTreeData = async () => {
   if (node) treeRef.value.setCurrentKey(node.nodeId)
 }
 
-onMounted(() => {
-  initTreeData()
+// 初始化当前节点笔记
+const initNote = async () => {
+  const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
+  const markId = node?.markId
+  await noteStore.getNoteData({ markId })
+}
+
+onMounted(async () => {
+  await initTreeData()
+  initNote()
 })
 
 watch(() => noteStore.selectedAreaId, () => {
@@ -51,15 +59,11 @@ const selectKey = computed(() => noteStore.selectKey)
 // 点击节点
 const handleNodeClick = (data) => {
   // console.log(data)
-  const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
-  if (node) {
-    node.nodeId = data.id
-  } else {
-    noteStore.selectKey.push({
-      areaId: noteStore.selectedAreaId,
-      nodeId: data.id
-    })
-  }
+  // 获取当前节点笔记
+  noteStore.getNoteData(data)
+
+  // 更新当前节点缓存
+  noteStore.updateSelectKey(data)
   // console.log(noteStore.selectKey)
 }
 
@@ -84,7 +88,7 @@ const createNote = (node) => {
 
 // 复制按钮
 const handleClick = (e) => {
-  console.log(e.target.closest('.copy-btn'))
+  // console.log(e.target.closest('.copy-btn'))
   const copyBtn = e.target.closest('.copy-btn')
   if (!copyBtn) return
 
@@ -155,10 +159,9 @@ const handleClick = (e) => {
           >
             <template #default="{ node, data }">
               <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
-                <div class="text">{{ node.label }}</div>
+                <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
                 <cust-popup :position="{ top: '0px', left: '-80px' }">
                   <div class="func-btn toggleNodePopup" @click.stop="(e) => togglePopup(e, data)" >
-                    <!-- <img src="../../assets/svgs/arrow-main-color.svg" alt="" class="icon toggleNodePopup"> -->
                     <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                   </div>
 
@@ -183,7 +186,7 @@ const handleClick = (e) => {
 </template>
 
 <style scoped lang="scss">
-@import "@/minix.scss";
+@use "@/styles/mixin.scss" as *;
 
 .note {
   width: 100%;
@@ -258,6 +261,10 @@ const handleClick = (e) => {
         white-space: nowrap;
         text-overflow: ellipsis;
         width: calc(100% - 30px);
+      }
+
+      .has-note {
+        color: var(--light-blue-color);
       }
 
       .cust-popup {

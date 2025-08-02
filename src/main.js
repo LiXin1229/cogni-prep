@@ -5,7 +5,7 @@ import App from './App.vue'
 import router from './router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import 'element-plus/dist/index.css'
-import './style.scss'
+import './styles/main.scss'
 
 import { clickOutside } from '@/utils/clickOutside'
 

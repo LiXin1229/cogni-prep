@@ -5,7 +5,7 @@ import { useUserInfoStore } from './user'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
 import { useLocalStorage } from '@/utils/useStorage'
-import { findAncestorsById } from '@/utils/treeUtils'
+import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
@@ -94,6 +94,13 @@ export const useMindmapStore = defineStore('mindmap', () => {
     return data
   }
 
+  // 节点修改属性
+  const modifyNodeProp = (targetId, propName, id) => {
+    console.log('!!!', treeData.value, targetId, propName, id)
+    treeData.value = modifyTreeNodeProp(treeData.value, targetId, propName, id)
+    saveMindmapData(treeData.value)
+  }
+
   // 组件回调
   const componentCallback = ref({})
 
@@ -119,6 +126,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     selectedNode,
     registerCallback,
     triggerComponent,
-    getSubcategory
+    getSubcategory,
+    modifyNodeProp
   }
 })

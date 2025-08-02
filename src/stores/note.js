@@ -6,7 +6,7 @@ import { useMindmapStore } from './mindmap'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
 import { useLocalStorage } from '@/utils/useStorage'
-import { findAncestorsById } from '@/utils/treeUtils.js'
+import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
@@ -49,7 +49,24 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // 本地存储展开的树节点
-  const { value: selectKey } = useLocalStorage('cogni_selectKey', []) 
+  const { value: selectKey } = useLocalStorage('cogni_selectKey', [])
+
+  // 更新当前选中的树节点
+  const updateSelectKey = (data) => {
+    if (!data) return
+    const node = selectKey.value.find(item => item.areaId === selectedAreaId.value)
+
+    if (node) {
+      node.nodeId = data.id
+      node.markId = data.markId
+    } else {
+      selectKey.value.push({
+        areaId: selectedAreaId.value,
+        nodeId: data.id,
+        markId: data.markId
+      })
+    }
+  }
 
   // 当前笔记
   const note = ref('')
@@ -79,9 +96,50 @@ export const useNoteStore = defineStore('note', () => {
         point
       }
     })
+    // console.log('data', data.data)
 
-    console.log(data.data)
     note.value = data.data.result
+    modifyNodeProp(node.id, 'markId',  data.data.noteId)
+  }
+
+  // 获取节点笔记
+  const getNoteData = async (node) => {
+    if (!node.markId) {
+      note.value = '### 暂无笔记'
+      return
+    }
+
+    const { data } = await axios({
+      url: API.getNoteData,
+      method: 'GET',
+      params: {
+        markId: node.markId
+      }
+    })
+
+    // console.log('获取节点笔记', data)
+    note.value = data.data.content
+  }
+
+  // 修改节点属性
+  const modifyNodeProp = (targetId, propName, id) => {
+    // console.log('!!!', treeData.value, targetId, propName, id)
+    treeData.value = modifyTreeNodeProp(treeData.value, targetId, propName, id)
+    saveMindmapData(treeData.value)
+  }
+
+  // 保存导图数据
+  const saveMindmapData = async (data) => {
+    if (!selectedAreaId.value) return
+
+    await axios({
+      url: API.saveMindmapData,
+      method: 'POST',
+      data: {
+        areaId: selectedAreaId.value,
+        mindmap: data
+      }
+    })
   }
 
   return {
@@ -91,6 +149,8 @@ export const useNoteStore = defineStore('note', () => {
     getTreeData,
     selectKey,
     getNote,
-    note
+    note,
+    getNoteData,
+    updateSelectKey
   }
 })

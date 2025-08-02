@@ -118,7 +118,7 @@ export const useSessionStore = defineStore('session', () => {
 
       // 清空目标节点
       if (markNode.value) {
-        mindmapStore.triggerComponent('modifyNodeProp', 'chatId')
+        mindmapStore.modifyNodeProp(mindmapStore.selectedNode.id, 'chatId', currSession.value.sessionId)
         markNode.value = false
       }
     } catch (err) {

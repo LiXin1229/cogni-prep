@@ -22,7 +22,7 @@ const props = defineProps({
 })
 
 const emits = defineEmits([
-  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren', 'startChat', 'selectNode'
+  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren', 'startChat', 'selectNode', 'startNote'
 ])
 
 // 关闭菜单
@@ -108,6 +108,12 @@ const startChat = () => {
   emits('startChat', props.node.chatId)
   closeMenu()
 }
+
+// 生成笔记
+const startNote = () => { 
+  emits('startNote', props.node.id, props.node.markId)
+  closeMenu()
+}
 </script>
 
 <template>
@@ -135,7 +141,7 @@ const startChat = () => {
       </div>
       <div class="br"></div>
       <div class="menu-item" @click="startChat">{{ node.chatId ? '继续对话' : '开始对话' }}</div>
-      <div class="menu-item">{{ node.markId ? '查看笔记' : '生成笔记' }}</div>
+      <div class="menu-item" @click="startNote">{{ node.markId ? '查看笔记' : '生成笔记' }}</div>
       <div class="br"></div>
       <div class="menu-item" @click="saveView">保存视图</div>
       <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>

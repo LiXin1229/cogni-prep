@@ -4,9 +4,10 @@ import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/user'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useSessionStore } from '@/stores/session'
+import { useNoteStore } from '@/stores/note'
 import { useDebounce } from '@/utils/useDebounce'
 import { getTextWidth } from '@/utils/getTextWidth'
-import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById, modifyTreeNodeProp } from '@/utils/treeUtils'
+import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById } from '@/utils/treeUtils'
 import { calculateDynamicTreeSize } from '@/utils/dynamicTreeSize'
 import * as d3 from 'd3'
 import { v4 as uuidv4 } from 'uuid'
@@ -15,6 +16,7 @@ const router = useRouter()
 const userStore = useUserInfoStore()
 const mindmapStore = useMindmapStore()
 const sessionStore = useSessionStore()
+const noteStore = useNoteStore()
 const { debounce } = useDebounce()
 
 const props = defineProps({
@@ -428,10 +430,10 @@ const startChat = async (chatId) => {
   }
 }
 
-// 修改属性
-const modifyNodeProp = (propName) => {
-  treeData.value = modifyTreeNodeProp(treeData.value, mindmapStore.selectedNode.id, propName, sessionStore.currSession.sessionId)
-  mindmapStore.saveMindmapData(treeData.value)
+// 生成笔记
+const startNote = async (id, markId) => {
+  await router.push({ name: '笔记' })
+  noteStore.updateSelectKey({ id, markId })
 }
 
 // store注册方法, 便于在Dialog组件中触发
@@ -439,7 +441,6 @@ mindmapStore.registerCallback('addNodes', addNodes)
 mindmapStore.registerCallback('editNode', editNode)
 mindmapStore.registerCallback('deleteNode', deleteNode)
 mindmapStore.registerCallback('deleteChildren', deleteChildren)
-mindmapStore.registerCallback('modifyNodeProp', modifyNodeProp)
 
 onUnmounted(() => {
   mindmapStore.registerCallback({})
@@ -471,6 +472,7 @@ defineExpose({
     @deleteNode="openDialog('deleteNode')"
     @deleteChildren="openDialog('deleteChildren')"
     @startChat="startChat"
+    @startNote="startNote"
   />
 </template>
 

@@ -12,7 +12,8 @@ const API = {
   getMindmapData: '/api/mindmap/mindmap/getMindmapData',
   saveMindmapData: '/api/mindmap/mindmap/saveMindmapData',
   getSubcategory: '/api/mindmap/mindmap/getSubcategory',
-  getNote: '/api/note/note/getNote'
+  getNote: '/api/note/note/getNote',
+  getNoteData: '/api/note/note/getNoteData'
 }
 
 export default API
