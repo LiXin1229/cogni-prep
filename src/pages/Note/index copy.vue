@@ -1,10 +1,12 @@
 <script setup>
 import { useNoteStore } from '@/stores/note'
-import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
+import { computed, onMounted, ref, watch, shallowRef } from 'vue'
 import { parseMarkdown } from '@/utils/markdown'
-import Quill from 'quill'
-import Delta from 'quill-delta'
-import 'quill/dist/quill.bubble.css'
+import 'quill/dist/quill.snow.css'
+import { marked } from 'marked'
+import TurndownService from 'turndown'
+import '@wangeditor/editor/dist/css/style.css' // 引入 css
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const noteStore = useNoteStore()
 
@@ -38,7 +40,6 @@ const initTreeData = async () => {
 const initNote = async () => {
   const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
   const markId = node?.markId
-  // console.log(node)
   await noteStore.getNoteData({ markId })
 }
 
@@ -56,14 +57,10 @@ const defaultProps = {
 const selectKey = computed(() => noteStore.selectKey)
 
 // 点击节点
-const handleNodeClick = async (data) => {
+const handleNodeClick = (data) => {
   // console.log(data)
   // 获取当前节点笔记
-  await noteStore.getNoteData(data)
-
-  if (!isMarkdownMode.value) {
-    insertText(noteStore.note)
-  }
+  noteStore.getNoteData(data)
 
   // 更新当前节点缓存
   noteStore.updateSelectKey(data)
@@ -125,90 +122,76 @@ const handleClick = (e) => {
   }
 }
 
-const isMarkdownMode = ref(true)
-const isModified = ref(false)
 
-// 切换模式
-const toggleMode = () => {
-  if (isMarkdownMode.value) {
-    insertText(noteStore.note)
-  } else {
-    const plainText = quillInstance.getText()
-    // console.log(plainText)
+const editorRef = shallowRef()
+const valueHtml = ref('')
 
-    noteStore.note = plainText
-  }
+const editorConfig = { placeholder: '请输入内容...' }
 
-  isMarkdownMode.value = !isMarkdownMode.value
+const toolbarConfig = {}
+
+const handleCreated = (editor) => {
+  editorRef.value = editor
 }
 
-const editorRef = ref(null)
-let quillInstance = null
+// 2. 创建自定义渲染器
+const renderer = new marked.Renderer();
+
+const escapeHtml = (html) => {
+  if (!html) return ''
+  return html
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+// 3. 重写代码块渲染方法（使用自定义转义函数）
+renderer.code = function(code, lang, escaped) {
+  const langClass = lang ? `language-${lang}` : '';
+
+  console.log('lang', lang)
+  
+  // 使用自定义的escapeHtml替代marked.escape
+  const escapedCode = code
+  
+  return `
+    <pre class="${langClass}">
+      <code class="${langClass}">${escapedCode}</code>
+    </pre>
+  `.trim();
+};
+
+marked.setOptions({
+  // renderer: renderer,
+  gfm: true,        // 支持表格、删除线等 GFM 语法（默认 true）
+  breaks: true,     // 支持换行符（\n 转换为 <br>）
+  tables: true,     // 支持表格（依赖 gfm: true）
+  taskLists: true   // 支持任务列表（依赖 gfm: true）
+});
+
+const turndownService = new TurndownService()
+
+const isMarkdownMode = ref(true)
+
+const toggleMode = () => {
+  if (isMarkdownMode.value) {
+    const html = marked.parse(noteStore.note)
+    console.log('html', html)
+    valueHtml.value = html
+  } else {
+    const markDown = turndownService.turndown(valueHtml.value)
+    console.log('markDown', markDown)
+    noteStore.note = markDown
+  }
+  isMarkdownMode.value = !isMarkdownMode.value
+}
 
 onMounted(async () => {
   await initTreeData()
   await initNote()
-
-  if (!editorRef.value) return
-  
-  quillInstance = new Quill(editorRef.value, {
-    theme: 'bubble',
-    modules: {
-      toolbar: false, // 禁用工具栏
-      clipboard: {
-        matchVisual: false, // 禁用视觉粘贴
-        matchers: [
-          [Node.ELEMENT_NODE, (node, delta) => {
-            // 提取纯文本
-            const text = delta.reduce((acc, op) => {
-              if (typeof op.insert === 'string') {
-                acc += op.insert
-              }
-              return acc
-            }, '')
-
-            // 返回纯文本Delta
-            return new Delta().insert(text)
-          }]
-        ]
-      }
-    }
-  })
-
-  quillInstance.on('text-change', (delta, oldContents, source) => {
-    if (source === 'user') { // 仅处理用户操作导致的变化
-      isModified.value = true
-    }
-  })
 })
-
-// 保存笔记
-const saveNote = async () => {
-  const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
-  const markId = node?.markId
-  // return
-  if (await noteStore.updateNoteData(markId)) {
-    isModified.value = false
-  }
-}
-
-// 插入文本
-const insertText = (text, position = 0) => {
-  if (!quillInstance) return
-  quillInstance.deleteText(0, quillInstance.getLength())
-  quillInstance.insertText(position, text)
-}
-
-// 在组件中注册插入方法
-noteStore.registerCallback('insertText', insertText)
-
-onUnmounted(() => {
-  if (quillInstance) {
-    quillInstance = null
-  }
-  noteStore.registerCallback({})
-})
-
 </script>
 
 <template>
@@ -247,7 +230,7 @@ onUnmounted(() => {
             <template #default="{ node, data }">
               <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                 <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
-                <cust-popup :position="{ top: '-5px', left: '-80px' }">
+                <cust-popup :position="{ top: '0px', left: '-80px' }">
                   <div class="func-btn toggleNodePopup" @click.stop="(e) => togglePopup(e, data)" >
                     <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                   </div>
@@ -266,21 +249,29 @@ onUnmounted(() => {
 
       <!-- 笔记内容区 -->
       <div class="mark-content">
-        <div class="button-container">
-          <!-- 左上角按钮 -->
-          <el-button @click="toggleMode" class="mode-toggle">
-            {{ isMarkdownMode ? '切换到编辑' : '切换到查看' }}
-          </el-button>
-          <!-- 右上角按钮 -->
-          <el-button @click="saveNote" class="save-btn" :disabled="!isModified">保存</el-button>
-        </div>
+        <!-- 模式切换按钮 -->
+        <el-button @click="toggleMode" class="mode-toggle">
+          {{ isMarkdownMode ? '切换到富文本模式' : '切换到 Markdown 模式' }}
+        </el-button>
 
-        <!-- 观察view -->
         <div class="text-view" v-html="parseMarkdown(noteStore.note)" @click="handleClick" v-show="isMarkdownMode"></div>
-        <!-- 编辑view -->
-        <div class="editor-view">
-          <div class="editor" ref="editorRef" v-show="!isMarkdownMode"></div>
-        </div>
+        <!-- 编辑器容器 -->
+        <!-- <div ref="editorContainer" class="editor-container" v-show="!isMarkdownMode"></div> -->
+         <Toolbar
+          style="border-bottom: 1px solid #ccc"
+          :editor="editorRef"
+          :defaultConfig="toolbarConfig"
+          mode="simple"
+          v-show="!isMarkdownMode"
+        />
+        <Editor
+          v-model="valueHtml"
+          :defaultConfig="editorConfig"
+          mode="simple"
+          @onCreated="handleCreated"
+          v-show="!isMarkdownMode"
+          style="height: calc(100% - 120px); overflow: hidden;"
+        />
       </div>
     </div>
   </div>
@@ -396,13 +387,13 @@ onUnmounted(() => {
           border: 1px solid var(--light-border-color-1);
           border-radius: 6px;
           box-shadow: 0 2px 8px var(--box-shadow-color);
-          padding: 4px;
+          padding: 5px;
           cursor: default;
           color: var(--text-color-0);
 
           .menu-item {
-            padding: 4px;
-            font-size: 13px;
+            padding: 5px;
+            font-size: 14px;
             border-radius: 4px;
 
             &:hover {
@@ -441,22 +432,14 @@ onUnmounted(() => {
 
   :deep(.mark-content) {
     @include code-box;
+
     flex: 1;
     overflow-y: auto;
 
-    .button-container {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .text-view, .editor-view {
-      line-height: 2;
+    .text-view {
       width: calc(70vw - 300px);
       margin: 0 auto;
-      padding-bottom: 30px;
+      padding: 30px 0;
     }
   }
 }

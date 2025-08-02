@@ -159,7 +159,7 @@ const renderChart = () => {
 
   try {
     sizeFactor = calculateDynamicTreeSize(foldedData)
-    console.log('sizeFactor', sizeFactor)
+    // console.log('sizeFactor', sizeFactor)
   } catch (err) {
     console.log(err)
   }
@@ -173,7 +173,7 @@ const renderChart = () => {
 
   treeLayout(root)
 
-  console.log('calculateDynamicTreeSize', calculateDynamicTreeSize(root))
+  // console.log('calculateDynamicTreeSize', calculateDynamicTreeSize(root))
 
   const svgDimensions = calculateSVGDimensions(root)
 
@@ -368,7 +368,7 @@ const selectNode = async () => {
   sessionStore.surroundingPoint = mindmapStore.selectedNode.name
   sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
 
-  console.log(sessionStore.mainArea, sessionStore.surroundingPoint)
+  // console.log(sessionStore.mainArea, sessionStore.surroundingPoint)
   sessionStore.markNode = true
 }
 
@@ -391,7 +391,7 @@ const addNodes = (data) => {
 
 // 修改节点
 const editNode = (data) => {
-  console.log('editNode', data)
+  // console.log('editNode', data)
   treeData.value = modifyNode(treeData.value, mindmapStore.selectedNode.id, data.name, data.rating)
   renderChart()
   isEdited.value = true

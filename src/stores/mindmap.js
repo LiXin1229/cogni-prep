@@ -65,7 +65,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // AI生成子节点
   const getSubcategory = async (formData, pointList) => {
-    console.log(selectedNode.value)
+    // console.log(selectedNode.value)
     const childrenPoints = [...pointList, ...selectedNode.value.children]
 
     let surroundingPoint = ''

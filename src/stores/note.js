@@ -1,10 +1,8 @@
 import { defineStore } from 'pinia'
-import { reactive, ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user'
 import { useMindmapStore } from './mindmap'
-import { useChatStore } from './chat'
-import { useSessionStore } from './session'
 import { useLocalStorage } from '@/utils/useStorage'
 import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
 import axios from 'axios'
@@ -14,8 +12,6 @@ export const useNoteStore = defineStore('note', () => {
   const router = useRouter()
   const userStore = useUserInfoStore()
   const mindmapStore = useMindmapStore()
-  const chatStore = useChatStore()
-  const sessionStore = useSessionStore()
 
   const areaList = computed(() => mindmapStore.areaList)
 
@@ -99,7 +95,9 @@ export const useNoteStore = defineStore('note', () => {
     // console.log('data', data.data)
 
     note.value = data.data.result
+    triggerComponent('insertText', note.value)
     modifyNodeProp(node.id, 'markId',  data.data.noteId)
+    updateSelectKey({ id: node.id, markId: data.data.noteId })
   }
 
   // 获取节点笔记
@@ -116,9 +114,30 @@ export const useNoteStore = defineStore('note', () => {
         markId: node.markId
       }
     })
-
     // console.log('获取节点笔记', data)
+
     note.value = data.data.content
+  }
+
+  // 修改节点笔记
+  const updateNoteData = async (markId) => {
+    if (!markId) return
+
+    const { data } = await axios({
+      url: API.updateNote,
+      method: 'POST',
+      data: {
+        noteId: markId,
+        content: note.value
+      }
+    })
+    // console.log('修改节点笔记', data)
+
+    if (data.success) {
+      return true
+    }
+
+    return false
   }
 
   // 修改节点属性
@@ -142,6 +161,21 @@ export const useNoteStore = defineStore('note', () => {
     })
   }
 
+  // 组件回调
+  const componentCallback = ref({})
+
+  // 注册组件方法
+  const registerCallback = (funcName, callback) => {
+    componentCallback.value[funcName] = callback
+  }
+
+  // 触发组件方法
+  const triggerComponent = (funcName, ...args) => {
+    if (typeof componentCallback.value[funcName] === 'function') {
+      componentCallback.value[funcName](...args) // 调用组件方法并传参
+    }
+  }
+
   return {
     areaList,
     selectedAreaId,
@@ -151,6 +185,8 @@ export const useNoteStore = defineStore('note', () => {
     getNote,
     note,
     getNoteData,
-    updateSelectKey
+    updateSelectKey,
+    updateNoteData,
+    registerCallback
   }
 })

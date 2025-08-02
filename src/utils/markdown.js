@@ -1,9 +1,7 @@
-import { marked } from 'marked';
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
-import hljs from 'highlight.js';
-// import 'highlight.js/styles/github.css';
-// import 'highlight.js/styles/base16/dracula.css'
-// import 'highlight.js/styles/base16/github.css'
+import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-light.css'
 
 // 配置 marked 使用 highlight.js 高亮代码
@@ -15,14 +13,38 @@ marked.use(markedHighlight({
   }
 }))
 
+// 配置DOMPurify允许的标签和属性，限制安全范围
+const sanitizeOptions = {
+  // 允许的HTML标签
+  ADD_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'li', 
+             'strong', 'em', 'code', 'pre', 'blockquote', 'br', 'table', 
+             'thead', 'tbody', 'tr', 'th', 'td'],
+  // 允许的属性
+  ADD_ATTR: ['class', 'href', 'src', 'alt', 'title'],
+  // 禁止的标签
+  FORBID_TAGS: ['script', 'iframe', 'video', 'audio', 'style'],
+  // 禁止的属性
+  FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus'],
+  // 禁止未知协议，防止javascript:等危险协议
+  ALLOW_UNKNOWN_PROTOCOLS: false,
+  // 净化URL，确保链接安全
+  SANITIZE_URI: true
+}
+
 // 处理代码块，添加头部标题
 export const parseMarkdown = (content) => {
+  if (typeof content !== 'string') {
+    return '';
+  }
+
   // 先解析原始Markdown
   let html = marked(content)
   
+  const sanitizedHtml = DOMPurify.sanitize(html, sanitizeOptions)
+
   // 创建临时DOM元素处理HTML
   const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = html
+  tempDiv.innerHTML = sanitizedHtml
   
   // 找到所有代码块
   const codeBlocks = tempDiv.querySelectorAll('pre')
@@ -37,7 +59,12 @@ export const parseMarkdown = (content) => {
       const classList = codeElement.className.split(' ')
       classList.forEach(cls => {
         if (cls.startsWith('language-')) {
-          language = cls.substring(9) // 提取language-后面的部分
+          // 提取并验证语言名称
+          const lang = cls.substring(9).toLowerCase()
+          // 只允许字母、数字和连字符
+          if (/^[a-z0-9-]+$/.test(lang)) {
+            language = lang
+          }
         }
       })
     }
@@ -54,6 +81,9 @@ export const parseMarkdown = (content) => {
     const image = document.createElement('img')
     image.src = '/src/assets/svgs/copy.svg'
     image.className = 'icon'
+    image.alt = '复制'
+    // 防止图片加载失败的事件注入
+    image.removeAttribute('onerror')
     copyIcon.appendChild(image)
 
     header.appendChild(title)
@@ -68,5 +98,5 @@ export const parseMarkdown = (content) => {
     }
   })
   
-  return tempDiv.innerHTML
+  return DOMPurify.sanitize(tempDiv.innerHTML, sanitizeOptions)
 }
