@@ -46,7 +46,7 @@ const funcBtn = (type) => {
 
 // 复制按钮
 const handleClick = (e) => {
-  console.log(e.target.closest('.copy-btn'))
+  // console.log(e.target.closest('.copy-btn'))
   const copyBtn = e.target.closest('.copy-btn')
   if (!copyBtn) return
 

@@ -3,15 +3,19 @@ import { reactive, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
+import { useMindmapStore } from './mindmap'
+import { useLocalStorage } from '@/utils/useStorage'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
 export const useUserInfoStore = defineStore('user', () => {
   const router = useRouter()
   const chatStore = useChatStore()
+  const mindmapStore = useMindmapStore()
   const sessionStore = useSessionStore()
 
   const showDialog = ref('')
+  const ableClose = ref(true)
 
   const userInfo = reactive({
     userId: '',
@@ -32,7 +36,7 @@ export const useUserInfoStore = defineStore('user', () => {
   }
 
   // 领域列表
-  const areaList = ref([])
+  const { value: areaList } = useLocalStorage('cogni_areaList', []) 
 
   // 新增领域
   const updateArea = async (area) => {
@@ -47,10 +51,12 @@ export const useUserInfoStore = defineStore('user', () => {
     })
 
     if (data.success) {
-      await router.push({
+      areaList.value.push(data.data.newArea)
+      mindmapStore.selectedAreaId = data.data.newArea.areaId
+      sessionStore.mainArea = data.data.newArea
+      router.push({
         name: '每日刷题'
       })
-      areaList.value.push(data.data.newArea)
     }
 
     console.log(data.data)
@@ -78,6 +84,7 @@ export const useUserInfoStore = defineStore('user', () => {
 
   return {
     showDialog,
+    ableClose,
     userInfo,
     getUserInfo,
     areaList,

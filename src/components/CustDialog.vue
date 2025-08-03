@@ -1,9 +1,10 @@
 <script setup>
 import { useUserInfoStore } from '@/stores/user'
+import { computed } from 'vue'
 
 const userStore = useUserInfoStore()
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: '标题'
@@ -20,7 +21,10 @@ const confirm = () => {
   emits('confirm')
 }
 
+const ableClose = computed(() => userStore.ableClose)
+
 const closeDialog = () => {
+  if (!ableClose.value) return
   userStore.showDialog = ''
 }
 
@@ -33,7 +37,7 @@ defineExpose({
   <div class="cust-dialog" v-bind="$attrs">
     <div class="top">
       <div class="title">{{ title }}</div>
-      <div class="close-btn" @click="closeDialog">
+      <div class="close-btn" @click="closeDialog" v-if="ableClose">
         <img src="../assets/svgs/close.svg" alt="" style="width: 16px; height: 16px;">
       </div>
     </div>
@@ -43,7 +47,7 @@ defineExpose({
     </div>
 
     <div class="bottom" v-if="exitBottom">
-      <div class="cancel-btn btn" @click="closeDialog">取消</div>
+      <div class="cancel-btn btn" @click="closeDialog" v-if="ableClose">取消</div>
       <div class="confirm-btn btn" @click="confirm">确定</div>
     </div>
   </div>

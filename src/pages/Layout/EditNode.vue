@@ -60,7 +60,7 @@ watch(() => props.showDialog, (showDialog) => {
             </div>
           </el-form-item>
 
-          <el-form-item label="重要性">
+          <el-form-item label="重要程度">
             <el-rate v-model="formData.rating" size="large" :max="3" clearable  />
           </el-form-item>
         </el-form>

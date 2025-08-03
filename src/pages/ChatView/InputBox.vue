@@ -140,7 +140,6 @@ defineExpose({
           ref="quillRef"
           v-model="chatStore.customContent"
           v-model:height="textareaHeight"
-          :placeholder="chatStore.chatStatus ? '开始提问' : '回答问题'"
         />
       </div>
     </div>

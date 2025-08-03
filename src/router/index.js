@@ -7,6 +7,8 @@ import Note from '@/pages/Note/index.vue'
 import Prefer from '@/pages/Prefer/index.vue'
 import Interview from '@/pages/Interview/index.vue'
 
+import { useUserInfoStore } from '../stores/user'
+
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
@@ -48,6 +50,20 @@ const router = createRouter({
       ]
     }
   ]
+})
+
+router.afterEach(async (to, from) => {
+  const userStore = useUserInfoStore()
+
+  // console.log('全局后置守卫', userStore.areaList)
+  if (userStore.areaList.length === 0) {
+    await userStore.getUserInfo()
+
+    if (userStore.areaList.length === 0) {
+      userStore.showDialog = 'selectArea'
+      userStore.ableClose = false
+    }
+  }
 })
 
 export default router

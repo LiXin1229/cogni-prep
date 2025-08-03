@@ -19,16 +19,8 @@ const props = defineProps({
   funcStatus: {
     type: Number,
     default: 0
-  },
-  placeholder: {
-    type: String,
-    default: ''
   }
 })
-
-watch(() => props.placeholder, () => {
-  console.log('props.placeholder', props.placeholder)
-}, { immediate: true })
 
 const emit = defineEmits(['update:modelValue', 'update:height'])
 
@@ -69,7 +61,7 @@ onMounted(() => {
   
   quillInstance = new Quill(editorRef.value, {
     theme: 'bubble',
-    placeholder: props.placeholder,
+    placeholder: '点击 Enter 回答问题',
     modules: {
       toolbar: false, // 禁用工具栏
       clipboard: {

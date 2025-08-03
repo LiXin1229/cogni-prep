@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user.js'
 import { useChatStore } from './chat'
 import { useMindmapStore } from './mindmap.js'
 import axios from 'axios'
 import API from '@/utils/API.js'
-import { ta } from 'element-plus/es/locales.mjs'
 
 export const useSessionStore = defineStore('session', () => {
   const router = useRouter()
@@ -30,7 +29,7 @@ export const useSessionStore = defineStore('session', () => {
   //   sessionList.value[0].
   // })
 
-  watch(() => currSession.value, (session) => {
+  watch(() => currSession.value, async (session) => {
     // console.log('currSession', currSession.value)
     if (session) {
       mainArea.value = {
@@ -40,14 +39,20 @@ export const useSessionStore = defineStore('session', () => {
       surroundingPoint.value = session.surroundingPoint
     }
     else {
-      const lastestSession = sessionList.value[0]
-      mainArea.value = lastestSession ? {
-        areaId: lastestSession.areaId,
-        name: lastestSession.mainArea
+      await nextTick()
+      if (userStore.areaList.length === 0) {
+        await userStore.getUserInfo()
+      }
+
+      const area = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
+      mainArea.value = area ? {
+        areaId: area.areaId,
+        name: area.name
       } : {
         areaId: null,
         name: '未选择领域'
       }
+      // console.log('mainArea', mainArea.value)
     }
   }, { immediate: true })
 

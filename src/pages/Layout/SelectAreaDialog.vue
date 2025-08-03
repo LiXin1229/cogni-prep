@@ -15,7 +15,7 @@ const dialogRef = ref(null)
 
 const custom = ref('')
 
-const confirm = () => {
+const confirm = async () => {
   if (!custom.value) {
     ElMessage({
       message: '请选择领域',
@@ -31,7 +31,8 @@ const confirm = () => {
   //   return
   // }
 
-  userStore.updateArea(custom.value)
+  await userStore.updateArea(custom.value)
+  userStore.ableClose = true
   dialogRef.value.closeDialog()
 }
 
