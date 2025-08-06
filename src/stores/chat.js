@@ -20,8 +20,8 @@ export const useChatStore = defineStore('chat', () => {
     'help': 3
   }
 
-  // 已经加载的聊天记录
-  const chatList = ref([])
+  // available: 可发送  waiting: 等待请求  writing: 流式写入中
+  const status = ref('available')
 
   // 会话ID
   const sessionId = computed(() => +route.params.sessionId || '')
@@ -84,7 +84,6 @@ export const useChatStore = defineStore('chat', () => {
         sessionId: sessionId.value
       }
     })
-    // console.log('chatList', data)
     
     displayChat.value = data.data.chatList
     console.log('状态', chatStatus.value)
@@ -146,46 +145,90 @@ export const useChatStore = defineStore('chat', () => {
       await sessionStore.initSession()
     }
 
-    // 没有surroundingPoint则进入
-    if (!sessionStore.surroundingPoint) {
-      try {
-        const { data } = await axios({
-          url: API.interviewDaily,
-          method: 'POST',
-          data: {
-            sessionId: sessionId.value,
-            customContent: customContent.value,
-            areaId: sessionStore.mainArea.areaId
-          }
-        })
-        // console.log(data)
+    const res = await initChat()
 
-        displayChat.value.push(data.data)
-
-        console.log(chatStatus.value)
-      } catch (err) {
-        console.log(err)
-      }
-      return
+    if (res.success) {
+      getStreamResponse({
+        sessionId: res.data.sessionId,
+        mainArea: res.data.mainArea,
+        surroundingPoint: res.data.surroundingPoint,
+        customContent: customContent.value,
+        areaId: sessionStore.mainArea.areaId
+      }, res.data.chatId)
     }
+  }
+
+  const getStreamResponse = async (data, chatId) => {
+    const newText = reactive({
+      content: '',
+      id: chatId,
+      messageType: MSG_TYPE['question'],
+      sessionId: data.sessionId,
+    })
+
+    displayChat.value.push(newText)
 
     try {
-      const { data } = await axios({
-        url: API.interviewStart,
+      const response = await fetch('/api/chat/interview/start', {
         method: 'POST',
-        data: {
-          sessionId: sessionId.value,
-          customContent: customContent.value
-        }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       })
-      // console.log(data)
 
-      displayChat.value.push(data.data)
+      // 读取流式响应
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
 
-      console.log(chatStatus.value)
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) {
+          saveChat(chatId, newText.content, data)
+          break
+        }
+
+        // 解析SSE格式数据（格式：data: [JSON]\n\n）
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n\n') // 按SSE分隔符分割
+
+        lines.forEach(line => {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6) // 去掉'data: '前缀
+            if (data === '[DONE]') return // 结束标记
+            const json = JSON.parse(data) // 解析为JSON
+            // console.log('收到流式数据：', json)
+            newText.content += json.content
+          }
+        })
+      }
     } catch (err) {
-      console.log(err)
+      saveChat(chatId, newText.value.content, data)
     }
+  }
+
+  const initChat = async () => {
+    const { data } = await axios({
+      url: API.initChat,
+      method: 'POST',
+      data: {
+        sessionId: sessionId.value
+      }
+    })
+
+    return data
+  }
+
+  const saveChat = async (chatId, content, data) => {
+    const res = await axios({
+      url: API.saveChat,
+      method: 'POST',
+      data: {
+        chatId,
+        content,
+        surroundingPoint: data.surroundingPoint,
+        areaId: data.areaId
+      }
+    })
+    console.log('保存记录', res)
   }
 
   // 用户正常回答
@@ -208,7 +251,7 @@ export const useChatStore = defineStore('chat', () => {
         mainArea: sessionStore.mainArea.name
       }
     })
-    // console.log(data.data)
+    console.log(data.data)
 
     displayChat.value.push(data.data)
   }
@@ -222,6 +265,21 @@ export const useChatStore = defineStore('chat', () => {
       sessionId: sessionId.value,
       messageType: MSG_TYPE['user']
     })
+
+    const res = await initChat()
+
+    if (res.success) {
+      getStreamResponse({
+        sessionId: res.data.sessionId,
+        mainArea: res.data.mainArea,
+        customContent: customContent.value,
+        areaId: sessionStore.mainArea.areaId,
+        funcType: funcStatus.value,
+        question: lastQuestion.value
+      }, res.data.chatId)
+    }
+
+    return
 
     const { data } = await axios({
       url: API.interviewHelp,
@@ -252,6 +310,7 @@ export const useChatStore = defineStore('chat', () => {
     sessionId,
     submit,
     customContent,
-    getAIquestion
+    getAIquestion,
+    status
   }
 })

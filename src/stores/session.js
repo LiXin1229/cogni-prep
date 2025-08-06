@@ -25,10 +25,6 @@ export const useSessionStore = defineStore('session', () => {
 
   const surroundingPoint = ref('')
 
-  // const latestArea = computed(() => {
-  //   sessionList.value[0].
-  // })
-
   watch(() => currSession.value, async (session) => {
     // console.log('currSession', currSession.value)
     if (session) {

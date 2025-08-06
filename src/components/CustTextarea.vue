@@ -170,6 +170,7 @@ const insertText = (text, position = 0) => {
   quillInstance.setSelection(textLenght - 1, 0)
 
   matchText(text)
+  updateEditorHeight()
 }
 
 const deleteText = (length, position = 0) => {

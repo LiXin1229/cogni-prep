@@ -60,10 +60,21 @@ const nextQuestion = () => {
 
 const submit = () => {
   console.log('mainArea', sessionStore.mainArea)
+
   chatStore.submit()
 
   // 重置输入框
   quillRef.value?.resetForm(chatStore.customContent.length)
+}
+
+const handleEnter = (e) => {
+  if (e.ctrlKey) {
+    console.log('ctrl+enter')
+    quillRef.value?.insertText('\n')
+  } else {
+    console.log('enter')
+    submit()
+  }
 }
 
 // 围绕知识点
@@ -140,6 +151,7 @@ defineExpose({
           ref="quillRef"
           v-model="chatStore.customContent"
           v-model:height="textareaHeight"
+          @keydown.enter.prevent="handleEnter"
         />
       </div>
     </div>
@@ -178,7 +190,7 @@ defineExpose({
           border: 1px solid var(--light-blue-color);
           color: var(--main-color);
           border-radius: 10px;
-          margin-right: 10px;
+          margin-right: 15px;
         }
 
         .surrounding-point {
