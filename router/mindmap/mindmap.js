@@ -13,13 +13,12 @@ router.get('/getMindmapData', async (req, res) => {
       'SELECT * FROM areas WHERE id = ?',
       +areaId
     )
-    // console.log(rows)
 
     res.send({
       code: 200,
       success: true,
       data: {
-        mindmap: rows[0]
+        mindmap: rows[0].mindmap
       }
     })
   } catch (err) {
@@ -48,15 +47,22 @@ router.post('/saveMindmapData', async (req, res) => {
 })
 
 router.post('/getSubcategory', async (req, res) => {
-  const { mainArea, surroundingPoint, childrenPoints, number } = req.body
+  const { mainArea, surroundingPoint, childrenPoints, number, auto } = req.body
 
   const exitPoints = childrenPoints.map(item => item.name)
 
-  const system = useSubcategorySentence(mainArea, surroundingPoint, number, exitPoints)
-  const content = '按照JSON{"response": [{"title": <第一点>, "frequency": <频率分值>}, {"title": <第二点>, "frequency": <频率分值>}, ...]}格式返回'
+  let system
+
+  if (auto) {
+    system = useSubcategorySentence('auto', mainArea, surroundingPoint, exitPoints)
+  } else {
+    system = useSubcategorySentence('manual', mainArea, surroundingPoint, number, exitPoints)
+  }
+
+  const content = useSubcategorySentence('content')
 
   const result = await sendToDS(system, content)
-  console.log('AI返回结果', result)
+  // console.log('AI返回结果', result)
   const pointList = result.response
 
   res.send({

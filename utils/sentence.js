@@ -32,12 +32,40 @@ const useUserSentence = (type, ...args) => {
   }
 }
 
-const useSubcategorySentence = (...args) => {
-  return `${args[0]}面试中，关于${args[1]}有哪些知识点，列出${args[2]}点，并给出面试考察频率1-3分，已有 【${args[3].join('；').toString()}】，主要使用中文，按照JSON{"response": [{"title": <第一点>, "frequency": <频率分值>}, {"title": <第二点>, "frequency": <频率分值>}, ...]}格式返回`
+// 获取分类语句
+const useSubcategorySentence = (type, ...args) => {
+  if (type === 'auto') {
+    return `${args[0]}面试/考试中，关于${args[1]}有哪些内容，选择合理分类尺度，尽量囊括${args[1]}的内容，但最多不超过15点，并给出面试/考试考察频率（或重要性）1-3分，已有 【${args[2].join('；').toString()}】，不要给出重复考点，主要使用中文，按照JSON{"response": [{"name": <分类名称>, "frequency": <重要程度>}, {"name": <分类名称>, "frequency": <重要程度>}, ...]}格式返回`
+  }
+
+  if (type === 'manual') { 
+    return `${args[0]}面试/考试中，关于${args[1]}有哪些知识点，列出${args[2]}点，并给出面试/考试考察频率（或重要性）1-3分，已有 【${args[3].join('；').toString()}】，不要给出重复考点，主要使用中文，按照JSON{"response": [{"name": <知识点名称>, "frequency": <重要程度>}, {"name": <知识点名称>, "frequency": <重要程度>}, ...]}格式返回`
+  }
+
+  if (type === 'content') {
+    return '按照JSON{"response": [{"name": <名称>, "frequency": <重要程度>}, {"name": <名称>, "frequency": <重要程度>}, ...]}格式返回'
+  }
+}
+
+// 获取笔记语句
+const useNoteSentence = (type, ...args) => {
+  if (type === 'system') {
+    // return `详细解释${args[0]}的定义、用法等，主要使用中文，按照JSON{"result": <解释>}格式返回，其中result的value为string类型，使用标准markdown语法格式`
+    return `
+      请以<${args[1]}>专家的身份，面向<学习者>详细讲解以下内容：
+      【主题】<${args[0]}>
+      【要求】主要使用中文，按照JSON{"result": <详解>}格式返回，其中result的value为string类型，使用标准markdown语法格式，字数不限，越详细越好，最好每个知识点都有具体示例
+    `
+  }
+
+  if (type === 'content') {
+    return `开始讲解`
+  }
 }
 
 module.exports = {
   useSystemSentence,
   useUserSentence,
-  useSubcategorySentence
+  useSubcategorySentence,
+  useNoteSentence
 }

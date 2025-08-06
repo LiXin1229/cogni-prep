@@ -61,7 +61,7 @@ router.post('/start', async (req, res) => {
 
   content = `已经问过的问题：【${questions.join('；').toString()}】。开始下一个问题${customContent ? `，${customContent}。` : '。'}`
 
-  const result = await sendToDS(system, content)
+  const result = await sendToDS(system, content, true)
   // console.log('AI返回结果', result)
 
   // 将AI的结果存入数据库

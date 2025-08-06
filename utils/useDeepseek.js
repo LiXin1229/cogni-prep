@@ -18,7 +18,7 @@ const sendToDS = (system, content) => {
     "messages": messages,
     "model": "deepseek-chat",
     "frequency_penalty": 0,
-    "max_tokens": 2048,
+    "max_tokens": 8192,
     "presence_penalty": 0,
     "response_format": {
       "type": "json_object"

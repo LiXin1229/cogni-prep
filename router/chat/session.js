@@ -8,7 +8,7 @@ router.post('/initSession', async (req, res) => {
   const { userId, mainArea, areaId, surroundingPoint } = req.body
 
   console.log('areaId', areaId)
-  const title = surroundingPoint ? `${mainArea} - ${surroundingPoint}相关` : `${mainArea} - ${formatDate()}`
+  const title = surroundingPoint ? `${mainArea} - ${surroundingPoint}` : `${mainArea} - ${formatDate()}`
 
   try {
     const [result] = await pool.query(
@@ -42,7 +42,7 @@ router.get('/getSessionList', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM sessions WHERE user_id = ?',
+      'SELECT * FROM sessions WHERE user_id = ? ORDER BY created_at DESC',
       id
     )
 

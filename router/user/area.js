@@ -11,6 +11,7 @@ router.post('/updateArea', async (req, res) => {
     id: uuidv4(),
     name: newArea,
     markId: null,
+    chatId: null,
     frequency: 0,
     isFolded: 0,
     isRoot: true,
