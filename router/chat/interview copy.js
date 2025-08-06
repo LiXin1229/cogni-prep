@@ -3,7 +3,7 @@ const router = express.Router()
 const sendToDS = require('../../utils/useDeepseek')
 // const sendToDSStream = require('../../utils/useDeepseekStreamAxios')
 const sendToDSStream = require('../../utils/useDeepseekStream')
-const { useUserSentence, useSystemSentence, useSumPoint } = require('../../utils/sentence')
+const { useUserSentence, useSystemSentence } = require('../../utils/sentence')
 const pool = require('../../db')
 
 const MSG_TYPE = {
@@ -15,98 +15,49 @@ const MSG_TYPE = {
 
 // const funcType = ['标准', '@回答模板 ', '@标准答案 ', '@模板+答案 ']
 
-// 创建chat
-router.post('/init', async (req, res) => {
-  const { sessionId } = req.body
+// 开始提问
+router.post('/start', async (req, res) => {
+  const { sessionId, customContent } = req.body
+  // console.log('sessionId', sessionId)
 
+  let system = ''
+  let content = ''
+  const questions = []
+
+  // 获取session的system设定(如此会话将围绕system展开)
   try {
-    const [rows] = await pool.query(
+    const [rows, fields] = await pool.query(
       'SELECT main_area, surrounding_point FROM sessions WHERE session_id = ?',
       sessionId
     )
 
     const sessionData = rows[0] // 获取第一条记录
+    // console.log('查询结果:', sessionData)
+  
+    system = useSystemSentence('startquest', sessionData.main_area, sessionData.surrounding_point)
+    // console.log('system', system)
+  } catch (err) {
+    console.log(err)
+  }
 
-    const [insertRes] = await pool.query(
-      'INSERT INTO chats (session_id, message_type) VALUES (?, ?)',
-      [sessionId, MSG_TYPE['question']]
+  // 获取上下文
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM chats WHERE session_id = ?',
+      sessionId
     )
+    // console.log('查询结果:', rows)
 
-    res.send({ 
-      code: 200,
-      success: true,
-      data: {
-        sessionId,
-        mainArea: sessionData.main_area,
-        surroundingPoint: sessionData.surrounding_point,
-        chatId: insertRes.insertId
+    rows.forEach(row => {
+      if (row.message_type === MSG_TYPE['question']) {
+        questions.push(row.point)
       }
     })
   } catch (err) {
     console.log(err)
   }
-})
 
-// 保存chat
-router.post('/save', async (req, res) => {
-  const { chatId, content, surroundingPoint, areaId } = req.body
-
-  let isLongTerm = false
-  if (!surroundingPoint) isLongTerm = true
-
-  // 保存到数据库
-  try {
-    const { system, user } = useSumPoint(content)
-    const { point } = await sendToDS(system, user)
-
-    const pointToSave = typeof point === 'string' ? point : content
-
-    await pool.query(
-      'UPDATE chats SET content = ?, point = ? WHERE id = ?',
-      [content, pointToSave, chatId]
-    )
-
-    if (isLongTerm) {
-      await pool.query(
-        'INSERT INTO questions (question, area_id) VALUES (?, ?)',
-        [pointToSave, areaId]
-      )
-    }
-
-    res.send({
-      code: 200,
-      success: true
-    })
-  } catch (error) {
-    console.log(error)
-  }
-})
-
-// 开始提问
-router.post('/start', async (req, res) => {
-  const { sessionId, mainArea, surroundingPoint, customContent, areaId } = req.body
-  // console.log('sessionId', sessionId)
-
-  let isLongTerm = false
-  if (!surroundingPoint) isLongTerm = true
-  
-  // 获取上下文
-  const questions = await getContext(isLongTerm, sessionId, areaId)
-  // console.log('questions', questions)
-
-  let content = ''
-  if (questions.length > 0) {
-    content = `已经问过的问题：【${questions.join('；').toString()}】。开始下一个问题${customContent ? `，${customContent}。` : '。'}`
-  } else {
-    content = `开始下一个问题${customContent ? `，${customContent}。` : '。'}`
-  }
-
-  let system = ''
-  if (isLongTerm) {
-    system = useSystemSentence('longterm', mainArea, surroundingPoint)
-  } else {
-    system = useSystemSentence('startquest', mainArea, surroundingPoint)
-  }
+  content = `已经问过的问题：【${questions.join('；').toString()}】。开始下一个问题${customContent ? `，${customContent}。` : '。'}`
 
   try {
     // 设置响应头，告诉前端这是一个流式响应
@@ -119,7 +70,7 @@ router.post('/start', async (req, res) => {
     // console.log(response)
 
     if (!response.ok) {
-      throw new Error(`Deepseek API request failed: ${response.statusText}`)
+      throw new Error(`Deepseek API request failed: ${response.statusText}`);
     }
 
     // 获取响应的可读流
@@ -134,43 +85,135 @@ router.post('/start', async (req, res) => {
 
     // 循环读取流数据
     while (true) {
-      const { done, value } = await reader.read()
+      const { done, value } = await reader.read();
       
       if (done) {
-        res.write('data: [DONE]\n\n')
-        res.end()
-        break
+        res.write('data: [DONE]\n\n');
+        res.end();
+        break;
       }
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(line => line.trim() !== '')
+      const lines = chunk.split('\n').filter(line => line.trim() !== '');
       
       for (const line of lines) {
-        // console.log('line', line)
-        const dataStr = line.replace(/^data: /, '')
+        console.log('line', line)
+        const dataStr = line.replace(/^data: /, '');
         
         if (dataStr === '[DONE]') {
-          res.write(`data: ${dataStr}\n\n`)
-          res.end()
-          return
+          res.write(`data: ${dataStr}\n\n`);
+          res.end();
+          return;
         }
         
         try {
-          const data = JSON.parse(dataStr)
+          const data = JSON.parse(dataStr);
           if (data.choices && data.choices[0]?.delta?.content) {
             // console.log('AI返回结果', data.choices[0].delta.content)
             // 直接写入数据，流会自动处理缓冲
             res.write(`data: ${JSON.stringify({
               content: data.choices[0].delta.content
-            })}\n\n`)
+            })}\n\n`);
           }
         } catch (e) {
-          console.error('Error parsing stream chunk:', e)
+          console.error('Error parsing stream chunk:', e);
         }
       }
     }
   } catch (error) {
     console.log(error)
+  }
+
+  return
+
+  // 将AI的结果存入数据库
+  try {
+    const [insertRes] = await pool.query(
+      'INSERT INTO chats (session_id, message_type, content, point) VALUES (?, ?, ?, ?)',
+      [sessionId, MSG_TYPE['question'], result.question, result.point]
+    )
+
+    res.send({
+      code: 200,
+      success: true,
+      data: {
+        id: insertRes.insertId,
+        content: result.question,
+        sessionId: sessionId,
+        messageType: MSG_TYPE['question']
+      }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+})
+
+// 每日提问
+router.post('/daily', async (req, res) => {
+  const { sessionId, customContent, areaId } = req.body
+  // console.log('sessionId', sessionId)
+
+  let system = ''
+  let content = ''
+  const questions = []
+
+  // 获取session的system设定(如此会话将围绕system展开)
+  try {
+    const [rows, fields] = await pool.query(
+      'SELECT main_area, surrounding_point FROM sessions WHERE session_id = ?',
+      sessionId
+    )
+
+    const sessionData = rows[0] // 获取第一条记录
+    // console.log('查询结果:', sessionData)
+  
+    system = useSystemSentence('dailyquest', sessionData.main_area)
+    // console.log('system', system)
+  } catch (err) {
+    console.log(err)
+  }
+
+  // 获取上下文
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM chats WHERE area_id = ?',
+      areaId
+    )
+    // console.log('查询结果:', rows)
+
+    rows.forEach(row => {
+      if (row.message_type === MSG_TYPE['question']) {
+        questions.push(row.point)
+      }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+
+  content = `已经问过的问题：【${questions.join('；').toString()}】。开始下一个问题${customContent ? `，${customContent}。` : '。'}`
+
+  const result = await sendToDS(system, content)
+  // console.log('AI返回结果', result)
+
+  // 将AI的结果存入数据库
+  try {
+    const [insertRes] = await pool.query(
+      'INSERT INTO chats (session_id, message_type, content, area_id, point) VALUES (?, ?, ?, ?, ?)',
+      [sessionId, MSG_TYPE['question'], result.question, areaId, result.point]
+    )
+
+    res.send({
+      code: 200,
+      success: true,
+      data: {
+        id: insertRes.insertId,
+        content: result.question,
+        sessionId: sessionId,
+        messageType: MSG_TYPE['question']
+      }
+    })
+  } catch (err) {
+    console.log(err)
   }
 })
 
@@ -180,7 +223,7 @@ router.post('/answer', async (req, res) => {
 
   // 将回答存入数据库
   try {
-    await pool.query(
+    const [insertRes] = await pool.query(
       'INSERT INTO chats (session_id, message_type, content) VALUES (?, ?, ?)',
       [sessionId, MSG_TYPE['user'], answer]
     )
@@ -237,7 +280,8 @@ router.post('/help', async (req, res) => {
   const content = useUserSentence('help', funcType, customContent)
 
   const result = await sendToDS(system, content)
-  // console.log('AI help', result)
+
+  console.log('AI help', result)
 
   // 将AI的帮助存入数据库
   try {
@@ -292,44 +336,5 @@ router.get('/getChatData', async (req, res) => {
     console.log(err)
   }
 })
-
-// 获取曾经问过的问题
-const getContext = async (isLongTerm, sessionId, areaId) => {
-  let questions = []
-
-  if (isLongTerm) {
-    try {
-      const [rows] = await pool.query(
-        'SELECT * FROM questions WHERE area_id = ?',
-        areaId
-      )
-      // console.log('查询结果:', rows)
-
-      rows.forEach(row => questions.push(row.question))
-    } catch (err) {
-      console.log(err)
-      throw err
-    }
-  } else {
-    try {
-      const [rows] = await pool.query(
-        'SELECT * FROM chats WHERE session_id = ?',
-        sessionId
-      )
-      // console.log('查询结果:', rows)
-
-      rows.forEach(row => {
-        if (row.message_type === MSG_TYPE['question'] && row.point) {
-          questions.push(row.point)
-        }
-      })
-    } catch (err) {
-      console.log(err)
-      throw err
-    }
-  }
-
-  return questions
-}
 
 module.exports = router

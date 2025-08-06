@@ -1,21 +1,21 @@
 // 系统提示语句
 const useSystemSentence = (type, ...args) => { 
   if (type === 'startquest') {
-    return `这是一场${args[0]}面试，你是面试官，问我一个有关${args[1]}的问题，不要重复提问相同知识点，主要使用中文。直接给出问题。`
+    return `这是一场${args[0]}面试，你是面试官，问我一个有关${args[1]}的问题并提供该问题的考点名称，不要重复提问相同知识点，主要使用中文，按照JSON{"question": <问题>, "point": <考点名称>}格式返回。`
   }
 
-  if (type === 'longterm') {
-    return `这是一场${args[0]}面试，你是面试官，问我相关问题，不要重复提问相同问题，主要使用中文。直接给出问题。`
+  if (type === 'dailyquest') {
+    return `这是一场${args[0]}面试，你是面试官，问我相关问题并提供该问题的考点名称，不要重复提问相同问题，主要使用中文，按照JSON{"question": <问题>, "point": <考点名称>}格式返回。`
   }
 
   if (type === 'answer') {
-    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，主要语言为中文，并且使用标准markdown语法格式。`
+    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，主要使用中文，按照JSON{"result": <优化建议>}格式返回，其中result的value为string类型，使用标准markdown语法格式`
   }
 
   if (type === 'help') {
-    if (args[0] === 1) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路，主要语言为中文，并且使用标准markdown语法格式。`
-    else if (args[0] === 2) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的标准答案，主要使用中文，主要语言为中文，并且使用标准markdown语法格式。`
-    else if (args[0] === 3) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路和标准答案，主要使用中文，主要语言为中文，并且使用标准markdown语法格式。`
+    if (args[0] === 1) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路，主要使用中文，按照JSON{"result": <回答模板>}格式返回，其中result的value为string类型，使用标准markdown语法格式`
+    else if (args[0] === 2) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的标准答案，主要使用中文，按照JSON{"result": <标准答案>}格式返回，其中result的value为string类型，使用标准markdown语法格式`
+    else if (args[0] === 3) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路和标准答案，主要使用中文，按照JSON{"result": <回答模板+标准答案>}格式返回，其中result的value为string类型，使用标准markdown语法格式`
   }
 }
 
@@ -54,7 +54,7 @@ const useNoteSentence = (type, ...args) => {
     return `
       请以<${args[1]}>专家的身份，面向<学习者>详细讲解以下内容：
       【主题】<${args[0]}>
-      【要求】字数不限，越详细越好，最好每个知识点都有具体示例；主要语言为中文，并且使用标准markdown语法格式。
+      【要求】主要使用中文，按照JSON{"result": <详解>}格式返回，其中result的value为string类型，使用标准markdown语法格式，字数不限，越详细越好，最好每个知识点都有具体示例
     `
   }
 
@@ -63,21 +63,9 @@ const useNoteSentence = (type, ...args) => {
   }
 }
 
-// 概括考点
-const useSumPoint = (text) => {
-  const system = `概括以下内容的考点/知识点，主要使用中文，按照JSON{"point": <考点/知识点>}格式返回，其中"point"为简短的字符串。`
-  const user = `【内容】${text}`
-
-  return {
-    system,
-    user
-  }
-}
-
 module.exports = {
   useSystemSentence,
   useUserSentence,
   useSubcategorySentence,
-  useNoteSentence,
-  useSumPoint
+  useNoteSentence
 }
