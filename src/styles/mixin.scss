@@ -6,6 +6,7 @@
     border: 1px solid var(--light-border-color-1);
     border-radius: 6px;
     margin: 16px 0;
+    // padding: 1em;
     overflow-x: auto;
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   }
@@ -16,6 +17,7 @@
     font-size: 14px;
     color: #24292e;
     background-color: var(--code-bgc);
+    margin: 10px;
   }
 
   /* 行内代码样式（与块级代码区分） */

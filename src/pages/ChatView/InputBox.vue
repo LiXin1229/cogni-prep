@@ -59,9 +59,9 @@ const nextQuestion = () => {
 }
 
 const submit = () => {
-  console.log('mainArea', sessionStore.mainArea)
+  // console.log('mainArea', sessionStore.mainArea)
 
-  chatStore.submit()
+  chatStore.submit(chatStore.customContent, chatStore.funcStatus)
 
   // 重置输入框
   quillRef.value?.resetForm(chatStore.customContent.length)

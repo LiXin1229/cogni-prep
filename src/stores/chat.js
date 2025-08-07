@@ -89,14 +89,14 @@ export const useChatStore = defineStore('chat', () => {
     console.log('状态', chatStatus.value)
   }
 
-  const submit = async () => {
+  const submit = async (content, status) => {
     if (!checkArea()) return
 
     // 初始化session
     if (!sessionId.value) {
       try {
         await sessionStore.initSession()
-        await getAIquestion()
+        await getAIquestion(content)
       } catch (err) {
         console.log(err)
       }
@@ -106,19 +106,19 @@ export const useChatStore = defineStore('chat', () => {
 
     // 发送请求让AI开始提问
     if (chatStatus.value === MSG_TYPE['question']) {
-      getAIquestion()
+      getAIquestion(content)
     }
 
     // 用户回答问题
     else if (chatStatus.value === MSG_TYPE['user']) {
       // 用户正常回答
       if (funcStatus.value === 0) {
-        userAnwer()
+        userAnwer(content, status)
       }
 
       // 获取答题模板或其他
       else {
-        getHelp()
+        getHelp(content, status)
       }
     }
   }
@@ -138,41 +138,55 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   // 发送请求让AI开始提问
-  const getAIquestion = async () => {
+  const getAIquestion = async (content) => {
     if (!checkArea()) return
 
     if (!sessionId.value) {
       await sessionStore.initSession()
     }
 
-    const res = await initChat()
+    const res = await initChat(MSG_TYPE['question'])
 
     if (res.success) {
-      getStreamResponse({
+      await getStreamResponse(API.interviewStart, {
         sessionId: res.data.sessionId,
         mainArea: res.data.mainArea,
         surroundingPoint: res.data.surroundingPoint,
-        customContent: customContent.value,
+        customContent: content,
         areaId: sessionStore.mainArea.areaId
-      }, res.data.chatId)
+      }, res.data.chatId, MSG_TYPE['question'])
     }
   }
 
-  const getStreamResponse = async (data, chatId) => {
+  const abortCurrentStream = () => {
+    console.log('中断当前流')
+    if (controller) {
+      controller.abort()
+    }
+  }
+
+  // 中断信号
+  const controller = new AbortController()
+
+  const getStreamResponse = async (url, data, chatId, msgType) => {
+    // 保存信号，用于外部中断
+    const abortSignal = controller.signal
+
     const newText = reactive({
       content: '',
       id: chatId,
-      messageType: MSG_TYPE['question'],
+      messageType: msgType,
       sessionId: data.sessionId,
     })
 
     displayChat.value.push(newText)
 
     try {
-      const response = await fetch('/api/chat/interview/start', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        signal: abortSignal // 关联中断信号
       })
 
       // 读取流式响应
@@ -181,6 +195,7 @@ export const useChatStore = defineStore('chat', () => {
 
       while (true) {
         const { done, value } = await reader.read()
+
         if (done) {
           saveChat(chatId, newText.content, data)
           break
@@ -201,16 +216,37 @@ export const useChatStore = defineStore('chat', () => {
         })
       }
     } catch (err) {
-      saveChat(chatId, newText.value.content, data)
+      // 捕获中断错误（区别于其他错误）
+      if (err.name === 'AbortError') {
+        console.log('请求被主动中断')
+      } else {
+        console.error('请求错误:', err)
+      }
+      saveChat(chatId, newText.content, data)
     }
   }
 
-  const initChat = async () => {
+  const initChat = async (msgType) => {
     const { data } = await axios({
       url: API.initChat,
       method: 'POST',
       data: {
-        sessionId: sessionId.value
+        sessionId: sessionId.value,
+        msgType: msgType
+      }
+    })
+
+    return data
+  }
+
+  const saveUserWords = async (msgType, content) => { 
+    const { data } = await axios({
+      url: API.saveUserWords,
+      method: 'POST',
+      data: {
+        sessionId: sessionId.value,
+        msgType: msgType,
+        customContent: content
       }
     })
 
@@ -225,14 +261,14 @@ export const useChatStore = defineStore('chat', () => {
         chatId,
         content,
         surroundingPoint: data.surroundingPoint,
-        areaId: data.areaId
+        areaId: data.areaId || null
       }
     })
     console.log('保存记录', res)
   }
 
   // 用户正常回答
-  const userAnwer = async () => {
+  const userAnwer = async (content) => {
     // 更新页面
     pushUserText({
       id: uuidv4(),
@@ -241,23 +277,24 @@ export const useChatStore = defineStore('chat', () => {
       messageType: MSG_TYPE['user']
     })
 
-    const { data } = await axios({
-      url: API.interviewAnswer,
-      method: 'POST',
-      data: {
-        sessionId: sessionId.value,
-        question: lastQuestion.value,
-        answer: customContent.value,
-        mainArea: sessionStore.mainArea.name
-      }
-    })
-    console.log(data.data)
+    const userRes = await saveUserWords(MSG_TYPE['user'], content)
+    pushUserText({ id: userRes.chatId}, true)
 
-    displayChat.value.push(data.data)
+    const res = await initChat(MSG_TYPE['evaluation'])
+
+    if (res.success) {
+      await getStreamResponse(API.interviewAnswer, {
+        sessionId: res.data.sessionId,
+        mainArea: res.data.mainArea,
+        surroundingPoint: res.data.surroundingPoint,
+        answer: content,
+        question: lastQuestion.value
+      }, res.data.chatId, MSG_TYPE['evaluation'])
+    }
   }
 
   // 获取答题模板或其他
-  const getHelp = async () => {
+  const getHelp = async (content, status) => {
     // 更新页面
     pushUserText({
       id: uuidv4(),
@@ -266,39 +303,29 @@ export const useChatStore = defineStore('chat', () => {
       messageType: MSG_TYPE['user']
     })
 
-    const res = await initChat()
+    const userRes = await saveUserWords(MSG_TYPE['user'], content)
+    pushUserText({ id: userRes.chatId}, true)
+
+    const res = await initChat(MSG_TYPE['help'])
 
     if (res.success) {
-      getStreamResponse({
+      await getStreamResponse(API.interviewHelp, {
         sessionId: res.data.sessionId,
         mainArea: res.data.mainArea,
-        customContent: customContent.value,
-        areaId: sessionStore.mainArea.areaId,
-        funcType: funcStatus.value,
+        surroundingPoint: res.data.surroundingPoint,
+        customContent: content,
+        funcType: status,
         question: lastQuestion.value
-      }, res.data.chatId)
+      }, res.data.chatId, MSG_TYPE['help'])
     }
-
-    return
-
-    const { data } = await axios({
-      url: API.interviewHelp,
-      method: 'POST',
-      data: {
-        sessionId: sessionId.value,
-        question: lastQuestion.value,
-        funcType: funcStatus.value,
-        customContent: customContent.value,
-        mainArea: sessionStore.mainArea.name
-      }
-    })
-    // console.log(data.data)
-
-    displayChat.value.push(data.data)
   }
 
-  const pushUserText = (data) => {
-    displayChat.value.push(data)
+  const pushUserText = (data, isReplace = false) => {
+    if (isReplace) {
+      displayChat.value[displayChat.value.length - 1].id = data.id
+    } else {
+      displayChat.value.push(data)
+    }
   }
 
   return {
@@ -311,6 +338,7 @@ export const useChatStore = defineStore('chat', () => {
     submit,
     customContent,
     getAIquestion,
-    status
+    status,
+    abortCurrentStream
   }
 })

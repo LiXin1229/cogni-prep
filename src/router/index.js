@@ -20,12 +20,14 @@ const router = createRouter({
         {
           path: 'chat',
           name: '每日刷题',
-          component: ChatView
+          component: ChatView,
+          meta: { keepAlive: true }
         },
         {
           path: 'chat/:sessionId',
           name: '会话',
-          component: ChatView
+          component: ChatView,
+          meta: { keepAlive: true }
         },
         {
           path: 'mindmap',

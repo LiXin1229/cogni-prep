@@ -34,6 +34,7 @@ const funcBtn = (type) => {
   // 先清除上个@的内容
   if (chatStore.funcStatus > 0) {
     quillRef.value?.deleteText(chatStore.funcType[chatStore.funcStatus].length)
+    chatStore.customContent = chatStore.customContent.slice(chatStore.funcType[chatStore.funcStatus].length)
   }
   
   // 设置当前功能
@@ -91,6 +92,8 @@ onMounted(() => {
 // 卸载时移除滚动监听
 onUnmounted(() => {
   if (scrollRef.value) scrollRef.value.removeEventListener('scroll', stickBlockTop)
+  console.log('unmounted')
+  chatStore.abortCurrentStream()
 })
 </script>
 
@@ -238,8 +241,8 @@ onUnmounted(() => {
       :deep(.text-wrapper.assistant-wrapper ){
         @include code-box;
 
-        line-height: 2;
-        font-size: 1.1em;
+        line-height: 1.9;
+        // font-size: 0.9em;
 
         .assistant-question {
           color: var(--theme-color-1);

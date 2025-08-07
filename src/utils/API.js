@@ -1,8 +1,8 @@
 const API = {
   initChat: '/api/chat/interview/init',
   saveChat: '/api/chat/interview/save',
+  saveUserWords: '/api/chat/interview/saveUserWords',
   interviewStart: '/api/chat/interview/start',
-  interviewDaily: '/api/chat/interview/daily',
   getChatData: '/api/chat/interview/getChatData',
   interviewAnswer: '/api/chat/interview/answer',
   interviewHelp: '/api/chat/interview/help',
