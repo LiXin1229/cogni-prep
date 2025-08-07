@@ -95,7 +95,13 @@ onMounted(() => {
   quillInstance.on('text-change', (delta, oldDelta, source) => {
     if (source === 'api') return
 
-    const plainText  = quillInstance.getText()
+    const plainText = quillInstance.getText()
+
+    if (plainText.trim() === '') {
+      emit('update:modelValue', '')
+      updateEditorHeight()
+      return
+    }
 
     const unescapedText = escapeHtml(plainText)
 
@@ -109,6 +115,11 @@ onMounted(() => {
 
     updateEditorHeight()
   })
+  // quillInstance.keyboard.addBinding({ key: 13 }, (range, context) => {
+  //   console.log('按下了 Enter 键')
+  //   // 阻止默认换行行为
+  //   return false;
+  // })
 })
 
 // 清除样式

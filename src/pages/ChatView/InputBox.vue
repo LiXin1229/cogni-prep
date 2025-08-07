@@ -13,12 +13,9 @@ const chatStore = useChatStore()
 const userStore = useUserInfoStore()
 const sessionStore = useSessionStore()
 
-// const sendBtnActive = ref(true)
-const sendBtnActive = computed(() => {
-  // console.log('!!!', userStore.selectedAreaId)
-  // if (!userStore.selectedAreaId) return false
-  return true
-})
+const sendState = computed(() => chatStore.sendState)
+const nextState = computed(() => chatStore.nextState)
+
 const showAreaPopup = ref(false)
 
 const togglePopup = (e) => {
@@ -70,11 +67,20 @@ const submit = () => {
 const handleEnter = (e) => {
   if (e.ctrlKey) {
     console.log('ctrl+enter')
-    quillRef.value?.insertText('\n')
+    quillRef.value?.insertText('\n', chatStore.customContent.length)
   } else {
+    if (sendState.value !== 'available' || chatStore.customContent.length === 0) return
     console.log('enter')
     submit()
   }
+}
+
+const abortStream = () => {
+  chatStore.abortCurrentStream()
+  ElMessage({
+    message: '取消生成',
+    type: 'info'
+  })
 }
 
 // 围绕知识点
@@ -134,11 +140,21 @@ defineExpose({
         </div>
 
         <div class="right">
-          <div class="nextquestion" @click="nextQuestion">
+          <div class="nextquestion" @click="nextQuestion" v-if="nextState">
             <img src="../../assets/svgs/next.svg" alt="" class="icon"></img>
             <div class="text">下一题</div>
           </div>
-          <div :class="['send-btn', sendBtnActive && 'active']" @click.stop="submit">
+          <div class="nextquestion locked" v-else>
+            <img src="../../assets/svgs/next-locked.svg" alt="" class="icon"></img>
+            <div class="text">下一题</div>
+          </div>
+          <div :class="['send-btn', 'active']" @click.stop="submit" v-if="sendState === 'available' && chatStore.customContent.length">
+            <font-awesome-icon :icon="faPaperPlane" class="icon" />
+          </div>
+          <div class="abort-btn" v-if="sendState === 'streaming'" @click.stop="abortStream">
+            <div class="rect"></div>
+          </div>
+          <div :class="['send-btn']" v-else-if="sendState === 'loading' || chatStore.customContent.length === 0">
             <font-awesome-icon :icon="faPaperPlane" class="icon" />
           </div>
         </div>
@@ -151,7 +167,7 @@ defineExpose({
           ref="quillRef"
           v-model="chatStore.customContent"
           v-model:height="textareaHeight"
-          @keydown.enter.prevent="handleEnter"
+          @keydown.enter.prevent.stop="handleEnter"
         />
       </div>
     </div>
@@ -260,6 +276,11 @@ defineExpose({
           }
         }
 
+        .locked {
+          color: var(--btn-locked);
+          border-color: var(--btn-locked);
+        }
+
         .send-btn {
           width: 32px;
           height: 32px;
@@ -278,6 +299,24 @@ defineExpose({
 
         .active {
           background-color: var(--main-color);
+        }
+
+        .abort-btn {
+          width: 26px;
+          height: 26px;
+          margin-left: 6px;
+          border-radius: 50%;
+          border: 2px solid var(--theme-color-2);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+
+          .rect {
+            width: 10px;
+            height: 10px;
+            background-color: var(--theme-color-2);
+            border-radius: 3px;
+          }
         }
       }
     }

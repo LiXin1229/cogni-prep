@@ -92,7 +92,6 @@ onMounted(() => {
 // 卸载时移除滚动监听
 onUnmounted(() => {
   if (scrollRef.value) scrollRef.value.removeEventListener('scroll', stickBlockTop)
-  console.log('unmounted')
   chatStore.abortCurrentStream()
 })
 </script>
@@ -102,6 +101,8 @@ onUnmounted(() => {
     <!-- 顶部区 -->
     <div class="top">
       <div class="toggleSidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">打开侧栏</div>
+      <div class="state">{{ chatStore.sendState }}</div>
+      <div class="state">{{ chatStore.nextState }}</div>
     </div>
 
     <!-- 滚动聊天记录区 -->
@@ -188,7 +189,7 @@ onUnmounted(() => {
   .scroll-view {
     background-color: var(--primary-bgc);
     overflow-y: auto;
-    padding-bottom: 50px;
+    padding-bottom: 30px;
 
     mask-image: linear-gradient(
       to top,

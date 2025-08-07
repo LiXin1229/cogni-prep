@@ -20,10 +20,11 @@ export const useChatStore = defineStore('chat', () => {
     'help': 3
   }
 
+  // available: 可发送  waiting: 等待请求  writing: 流式写入中
+  const status = ref('available')
+
   // 会话ID
   const sessionId = computed(() => +route.params.sessionId || '')
-
-  const chatMap = reactive(new Map())
 
   // 当前展示的聊天记录
   const displayChat = ref([])
@@ -32,60 +33,6 @@ export const useChatStore = defineStore('chat', () => {
     // console.log('watch sessionId', sessionId.value)
     initDisplayChat()
   })
-
-  // 获取当前会话的聊天列表
-  const initDisplayChat = async () => {
-    const currentId = sessionId.value
-    // console.log('initDisplayChat', currentId)
-
-    if (!currentId) {
-      displayChat.value = []
-      return
-    }
-
-    if (chatMap.has(currentId)) {
-      displayChat.value = chatMap.get(currentId)
-      console.log('chatMap.get', displayChat.value)
-    }
-
-    else {
-      const { data } = await axios({
-        url: API.getChatData,
-        method: 'GET',
-        params: {
-          sessionId: sessionId.value
-        }
-      })
-      
-      displayChat.value = data.data.chatList
-      chatMap.set(currentId, displayChat.value)
-      // console.log('状态', chatStatus.value)
-    }
-  }
-
-  // 统一管理状态
-  const createSessionState = (defaultValue) => {
-    const stateMap = reactive(new Map())
-    
-    const getCurrentState = () => {
-      const id = sessionId.value || 0 // 统一处理空会话
-      if (!stateMap.has(id)) {
-        stateMap.set(id, ref(defaultValue)) // 自动初始化
-      }
-      return stateMap.get(id)
-    }
-    
-    // 生成当前会话的计算属性
-    const state = computed({
-      get: () => getCurrentState().value,
-      set: (val) => getCurrentState().value = val
-    })
-  
-    return { state, stateMap }
-  }
-
-  const { state: sendState } = createSessionState('available')
-  const { state: nextState } = createSessionState(true)
 
   // 上一条消息
   const lastMessage = computed(() => {
@@ -126,6 +73,21 @@ export const useChatStore = defineStore('chat', () => {
 
   // 选择的特殊功能
   const funcStatus = ref(0)
+
+  // watch(() => funcStatus.value, (value) => console.log(value))
+
+  const initDisplayChat = async () => {
+    const { data } = await axios({
+      url: API.getChatData,
+      method: 'GET',
+      params: {
+        sessionId: sessionId.value
+      }
+    })
+    
+    displayChat.value = data.data.chatList
+    console.log('状态', chatStatus.value)
+  }
 
   const submit = async (content, status) => {
     if (!checkArea()) return
@@ -197,16 +159,16 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const abortCurrentStream = () => {
+    console.log('中断当前流')
     if (controller) {
       controller.abort()
     }
   }
 
   // 中断信号
-  let controller = null
+  const controller = new AbortController()
 
   const getStreamResponse = async (url, data, chatId, msgType) => {
-    controller = new AbortController()
     // 保存信号，用于外部中断
     const abortSignal = controller.signal
 
@@ -231,14 +193,10 @@ export const useChatStore = defineStore('chat', () => {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
-      sendState.value = 'streaming'
-
       while (true) {
         const { done, value } = await reader.read()
 
         if (done) {
-          sendState.value = 'available'
-
           saveChat(chatId, newText.content, data)
           break
         }
@@ -264,16 +222,11 @@ export const useChatStore = defineStore('chat', () => {
       } else {
         console.error('请求错误:', err)
       }
-      sendState.value = 'loading'
       saveChat(chatId, newText.content, data)
-      sendState.value = 'available'
     }
   }
 
   const initChat = async (msgType) => {
-    sendState.value = 'loading'
-    nextState.value = false
-
     const { data } = await axios({
       url: API.initChat,
       method: 'POST',
@@ -311,7 +264,6 @@ export const useChatStore = defineStore('chat', () => {
         areaId: data.areaId || null
       }
     })
-    nextState.value = true
     console.log('保存记录', res)
   }
 
@@ -386,8 +338,7 @@ export const useChatStore = defineStore('chat', () => {
     submit,
     customContent,
     getAIquestion,
-    sendState,
-    nextState,
+    status,
     abortCurrentStream
   }
 })
