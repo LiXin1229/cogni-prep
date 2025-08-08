@@ -127,7 +127,33 @@ export const useChatStore = defineStore('chat', () => {
   // 选择的特殊功能
   const funcStatus = ref(0)
 
+  const testStream = () => {
+    const text = reactive({
+      content: '',
+      id: uuidv4(),
+      messageType: MSG_TYPE['help'],
+      sessionId: 1999,
+    })
+    displayChat.value.push(text)
+
+    typeText(text, "这里是要逐步显示的文本内容")
+  }
+
+  const typeText = (textObj, message, interval = 10) => {
+    let index = 0
+    const typing = setInterval(() => {
+      if (index < message.length * 100) {
+        textObj.content += message.charAt(index % message.length)
+        index++
+      } else {
+        clearInterval(typing)
+      }
+    }, interval)
+  }
+
   const submit = async (content, status) => {
+    // testStream()
+    triggerComponent('scrollToBottom')
     if (!checkArea()) return
 
     // 初始化session
@@ -376,6 +402,21 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  // 组件回调
+  const componentCallback = ref({})
+
+  // 注册组件方法
+  const registerCallback = (funcName, callback) => {
+    componentCallback.value[funcName] = callback
+  }
+
+  // 触发组件方法
+  const triggerComponent = (funcName, ...args) => {
+    if (typeof componentCallback.value[funcName] === 'function') {
+      componentCallback.value[funcName](...args) // 调用组件方法并传参
+    }
+  }
+
   return {
     displayChat,
     initDisplayChat,
@@ -388,6 +429,7 @@ export const useChatStore = defineStore('chat', () => {
     getAIquestion,
     sendState,
     nextState,
-    abortCurrentStream
+    abortCurrentStream,
+    registerCallback
   }
 })

@@ -96,7 +96,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // 节点修改属性
   const modifyNodeProp = (targetId, propName, id) => {
-    console.log('!!!', treeData.value, targetId, propName, id)
+    // console.log('!!!', treeData.value, targetId, propName, id)
     treeData.value = modifyTreeNodeProp(treeData.value, targetId, propName, id)
     saveMindmapData(treeData.value)
   }
