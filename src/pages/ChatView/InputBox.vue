@@ -176,11 +176,8 @@ defineExpose({
 
 <style scoped lang="scss">
 .input-box {
-  // height: 161px;
-
   .input-panel {
     width: calc(75vw - 300px);
-    // height: 125px;
     background-color: #fff;
     border: 1px solid var(--light-border-color-1);
     margin: 0 auto;

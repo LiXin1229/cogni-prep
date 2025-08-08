@@ -188,6 +188,10 @@ const deleteText = (length, position = 0) => {
   quillInstance.deleteText(position, length)
 }
 
+const focus = () => {
+  quillInstance.focus()
+}
+
 // 重置输入框
 const resetForm = (length) => {
   deleteText(length, 0)
@@ -200,7 +204,8 @@ const resetForm = (length) => {
 defineExpose({
   insertText,
   deleteText,
-  resetForm
+  resetForm,
+  focus
 })
 </script>
 

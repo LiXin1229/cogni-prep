@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useSessionStore } from '@/stores/session.js'
 import { useUserInfoStore } from '@/stores/user.js'
-import { request } from '@/utils/request.js'
 import API from '@/utils/API.js'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
@@ -45,7 +44,6 @@ export const useChatStore = defineStore('chat', () => {
 
     if (chatMap.has(currentId)) {
       displayChat.value = chatMap.get(currentId)
-      console.log('chatMap.get', displayChat.value)
     }
 
     else {
@@ -93,11 +91,8 @@ export const useChatStore = defineStore('chat', () => {
     return lastMsg || ''
   })
 
-  // 上一个问题
-  const lastQuestion = computed(() => {
-    const lastMsg = displayChat.value.findLast(item => item.messageType === MSG_TYPE['question'])
-    return lastMsg?.content || ''
-  })
+  // 选择的题
+  const selectQuestion = ref('')
 
   // 当前的发言状态
   const chatStatus = computed(() => {
@@ -122,39 +117,15 @@ export const useChatStore = defineStore('chat', () => {
   const customContent = ref('')
 
   // 特殊功能列表
-  const funcType = reactive(['标准', '@回答思路 ', '@标准答案 ', '@思路+答案 '])
+  const funcType = reactive(['标准', '@回答思路 ', '@标准答案 ', '@思路+答案 ', '@自由对话 '])
 
   // 选择的特殊功能
   const funcStatus = ref(0)
 
-  const testStream = () => {
-    const text = reactive({
-      content: '',
-      id: uuidv4(),
-      messageType: MSG_TYPE['help'],
-      sessionId: 1999,
-    })
-    displayChat.value.push(text)
-
-    typeText(text, "这里是要逐步显示的文本内容")
-  }
-
-  const typeText = (textObj, message, interval = 10) => {
-    let index = 0
-    const typing = setInterval(() => {
-      if (index < message.length * 100) {
-        textObj.content += message.charAt(index % message.length)
-        index++
-      } else {
-        clearInterval(typing)
-      }
-    }, interval)
-  }
-
   const submit = async (content, status) => {
     // testStream()
-    triggerComponent('scrollToBottom')
     if (!checkArea()) return
+    // triggerComponent('scrollToBottom')
 
     // 初始化session
     if (!sessionId.value) {
@@ -204,6 +175,7 @@ export const useChatStore = defineStore('chat', () => {
   // 发送请求让AI开始提问
   const getAIquestion = async (content) => {
     if (!checkArea()) return
+    triggerComponent('scrollToBottom')
 
     if (!sessionId.value) {
       await sessionStore.initSession()
@@ -351,6 +323,8 @@ export const useChatStore = defineStore('chat', () => {
       messageType: MSG_TYPE['user']
     })
 
+    triggerComponent('scrollToBottom')
+
     const userRes = await saveUserWords(MSG_TYPE['user'], content)
     pushUserText({ id: userRes.chatId}, true)
 
@@ -362,7 +336,7 @@ export const useChatStore = defineStore('chat', () => {
         mainArea: res.data.mainArea,
         surroundingPoint: res.data.surroundingPoint,
         answer: content,
-        question: lastQuestion.value
+        question: selectQuestion.value
       }, res.data.chatId, MSG_TYPE['evaluation'])
     }
   }
@@ -377,6 +351,8 @@ export const useChatStore = defineStore('chat', () => {
       messageType: MSG_TYPE['user']
     })
 
+    triggerComponent('scrollToBottom')
+
     const userRes = await saveUserWords(MSG_TYPE['user'], content)
     pushUserText({ id: userRes.chatId}, true)
 
@@ -389,7 +365,7 @@ export const useChatStore = defineStore('chat', () => {
         surroundingPoint: res.data.surroundingPoint,
         customContent: content,
         funcType: status,
-        question: lastQuestion.value
+        question: selectQuestion.value
       }, res.data.chatId, MSG_TYPE['help'])
     }
   }
@@ -422,6 +398,8 @@ export const useChatStore = defineStore('chat', () => {
     initDisplayChat,
     chatStatus,
     funcStatus,
+    lastMessage,
+    selectQuestion,
     funcType,
     sessionId,
     submit,

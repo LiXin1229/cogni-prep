@@ -26,15 +26,14 @@ onMounted(() => {
   chatStore.initDisplayChat()
 })
 
+const sendState = computed(() => chatStore.sendState)
+
 const inputRef = ref(null)
 
 const quillRef = computed(() => inputRef.value.quillRef)
 const inputHeight = computed(() => inputRef.value?.inputHeight)
 
-const funcBtn = (type) => {
-  // 不能重复按相同按钮
-  if (chatStore.funcStatus === type) return
-
+const funcBtn = (type, data) => {
   // 先清除上个@的内容
   if (chatStore.funcStatus > 0) {
     quillRef.value?.deleteText(chatStore.funcType[chatStore.funcStatus].length)
@@ -47,43 +46,52 @@ const funcBtn = (type) => {
   // 将功能显示到输入框开头
   quillRef.value?.insertText(chatStore.funcType[type])
   chatStore.customContent = chatStore.funcType[type] + chatStore.customContent
+  quillRef.value?.focus()
+
+  chatStore.selectQuestion = data.content
 }
 
 // 复制按钮
-const handleClick = (e) => {
-  // console.log(e.target.closest('.copy-btn'))
+const handleCopy = (e, data) => {
+  console.log(e.target.closest('.copy-btn'))
   const copyBtn = e.target.closest('.copy-btn')
   if (!copyBtn) return
 
   const preElement = copyBtn.closest('pre')
   const codeElement = preElement?.querySelector('code')
 
+  const imgElement = copyBtn.querySelector('img.icon')
+
   if (codeElement) {
-    // 执行复制逻辑
-    navigator.clipboard.writeText(codeElement.textContent)
-      .then(() => {
-        const imgElement = copyBtn.querySelector('img.icon')
-        if (!imgElement) return
-
-        const originalSrc = imgElement.src
-
-        // 切换为"已复制"图片
-        imgElement.src = '/src/assets/svgs/gou.svg'
-
-        setTimeout(() => {
-          imgElement.src = originalSrc
-          imgElement.classList.remove('copied-animation')
-        }, 5000)
-      })
-      .catch((err) => {
-        console.log(err)
-        ElMessage({
-          message: '复制失败',
-          type: 'info'
-        })
-        return
-      })
+    writeInClipboard(codeElement.textContent, imgElement)
+  } else {
+    writeInClipboard(data.content, imgElement)
   }
+}
+
+// 写入剪贴板
+const writeInClipboard = (text, imgElement) => {
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      if (!imgElement) return
+
+      const originalSrc = imgElement.src
+
+      // 切换为"已复制"图片
+      imgElement.src = '/src/assets/svgs/gou.svg'
+
+      setTimeout(() => {
+        imgElement.src = originalSrc
+        imgElement.classList.remove('copied-animation')
+      }, 5000)
+    })
+    .catch((err) => {
+      console.log(err)
+      ElMessage({
+        message: '复制失败',
+        type: 'info'
+      })
+    })
 }
 
 // 自动滚动
@@ -148,29 +156,23 @@ onUnmounted(() => {
     <!-- 顶部区 -->
     <div class="top">
       <div class="toggleSidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">打开侧栏</div>
-      <div class="state">{{ chatStore.sendState }}</div>
-      <div class="state">{{ chatStore.nextState }}</div>
     </div>
 
     <!-- 滚动聊天记录区 -->
     <div class="scroll-view" ref="scrollRef" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}" @scroll="handleScroll">
       <!-- 吸底按钮 -->
-      <div class="scroll-to-bottom" v-if="!isAutoToBottom && chatStore.sendState === 'streaming'" @click="scrollToBottom">
+      <div class="scroll-to-bottom" v-if="!isAutoToBottom && sendState === 'streaming'" @click="scrollToBottom">
         <!-- 原有的向下箭头 -->
         <font-awesome-icon :icon="faAngleDown" class="icon" />
       </div>
       
       <!-- 旋转圆环SVG -->
-      <svg width="40" height="40" viewBox="0 0 40 40" class="rotate-ring" @click="scrollToBottom" v-if="!isAutoToBottom && chatStore.sendState === 'streaming'">
+      <svg width="40" height="40" viewBox="0 0 40 40" class="rotate-ring" @click="scrollToBottom" v-if="!isAutoToBottom && sendState === 'streaming'">
         <defs>
           <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"  stop-color="#f5f5f5"/>
             <stop offset="80%"  stop-color="#f5f5f5"/>
             <stop offset="100%" stop-color="#7fabfe"/>
-
-            <!-- <stop offset="0%"  stop-color="red"/>
-            <stop offset="80%"  stop-color="red"/>
-            <stop offset="100%" stop-color="red"/> -->
           </linearGradient>
         </defs>
 
@@ -183,6 +185,9 @@ onUnmounted(() => {
 
       <!-- 对话内容区 -->
       <div class="text-view">
+        <div class="blank" v-if="!chatList.length">
+          <blank />
+        </div>
 
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in chatList" :key="chat.id">
@@ -190,8 +195,29 @@ onUnmounted(() => {
           <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
             <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>
 
-            <!-- 功能按键 -->
-            
+            <!-- 功能按钮 -->
+            <div class="functionList user-right">
+              <!-- 复制按钮 -->
+              <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
+                <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+              </div>
+              <!-- 其他按钮 -->
+              <el-dropdown placement="right">
+                <div class="btn other">
+                  <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="funcBtn(4, chat)">
+                      自由对话
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="deleteChat(chat)">
+                      删除该对话
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </div>
 
           <!-- 助手发言wrapper -->
@@ -202,12 +228,15 @@ onUnmounted(() => {
             </template>
 
             <template v-else>
-              <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleClick"></div>
-              <!-- <highlightjs :language="javascript" :code="chat.content"></highlightjs>  -->
+              <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy"></div>
             </template>
 
             <!-- 功能按钮 -->
-            <div class="functionList">
+            <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']">
+              <!-- 复制按钮 -->
+              <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
+                <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+              </div>
               <!-- 帮助按钮 -->
               <el-dropdown placement="right" v-if="chat.messageType === 1">
                 <div class="btn help">
@@ -215,19 +244,35 @@ onUnmounted(() => {
                 </div>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item @click="funcBtn(1)">
+                    <el-dropdown-item @click="funcBtn(1, chat)">
                       回答思路
                     </el-dropdown-item>
-                    <el-dropdown-item @click="funcBtn(2)">
+                    <el-dropdown-item @click="funcBtn(2, chat)">
                       标准答案
                     </el-dropdown-item>
-                    <el-dropdown-item @click="funcBtn(3)">
+                    <el-dropdown-item @click="funcBtn(3, chat)">
                       思路+答案
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-            </div>
+              <!-- 其他按钮 -->
+              <el-dropdown placement="right">
+                <div class="btn other">
+                  <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="funcBtn(4, chat)">
+                      自由对话
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="deleteChat(chat)">
+                      删除该对话
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+          </div>
           </div>
         </template>
       </div>
@@ -311,7 +356,7 @@ onUnmounted(() => {
       margin: 0 auto;
 
       .text-wrapper {
-        margin-bottom: 30px;
+        margin-bottom: 10px;
         color: var(--text-color-0);
         line-height: 1.5;
 
@@ -322,10 +367,18 @@ onUnmounted(() => {
           border-radius: 10px;
         }
 
+        &:hover {
+          .functionList {
+            visibility: visible;
+          }
+        }
+
         .functionList {
           display: flex;
           justify-content: left;
           margin: 10px 0;
+          height: 30px;
+          visibility: hidden;
 
           .btn {
             width: 24px;
@@ -334,6 +387,7 @@ onUnmounted(() => {
             justify-content: center;
             align-items: center;
             border-radius: 5px;
+            margin-right: 10px;
 
             &:hover {
               background-color: var(--uesr-bubble-bgc);
@@ -344,6 +398,18 @@ onUnmounted(() => {
             width: 16px;
             height: 16px;
           }
+        }
+
+        .functionList.user-right {
+          justify-content: right;
+        }
+
+        .functionList.visiable {
+          visibility: visible;
+        }
+
+        .functionList.hidden {
+          visibility: hidden;
         }
       }
 
