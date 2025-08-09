@@ -1,0 +1,89 @@
+@mixin loading {
+  .left-ball, .right-ball {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .left-ball {
+    background-color: var(--theme-color-1);
+    animation: left 1.2s linear infinite;
+  }
+
+  .right-ball {
+    background-color: var(--text-color-4);
+    animation: right 1.2s linear infinite;
+  }
+
+  @keyframes left {
+    0% {
+      transform: translateX(0);
+      z-index: 5;
+    }
+    20% {
+      transform: translateX(6px);
+      scale: 1.2;
+      z-index: 10;
+    }
+    25% {
+      scale: 1.25;
+    }
+    30% {
+      transform: translateX(6px);
+      scale: 1.2;
+      z-index: 10;
+    }
+    50% {
+      transform: translateX(12px);
+    }
+    70% {
+      transform: translateX(6px);
+      scale: 0.8;
+      z-index: 0;
+    }
+    80% {
+      transform: translateX(6px);
+      scale: 0.8;
+      z-index: 0;
+    }
+    100% {
+      transform: translateX(0);
+      z-index: 5;
+    }
+  }
+
+  @keyframes right {
+    0% {
+      transform: translateX(0);
+      z-index: 5;
+    }
+    20% {
+      transform: translateX(-6px);
+      scale: 0.8;
+      z-index: 0;
+    }
+    30% {
+      transform: translateX(-6px);
+      scale: 0.8;
+      z-index: 0;
+    }
+    50% {
+      transform: translateX(-12px);
+      z-index: 5;
+    }
+    70% {
+      transform: translateX(-6px);
+      scale: 1.2;
+      z-index: 10;
+    }
+    80% {
+      transform: translateX(-6px);
+      scale: 1.2;
+      z-index: 10;
+    }
+    100% {
+      transform: translateX(0);
+      z-index: 5;
+    }
+  }
+}

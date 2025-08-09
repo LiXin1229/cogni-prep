@@ -6,6 +6,8 @@ import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
 import SelectAreaDialog from './SelectAreaDialog.vue'
 import SelectPointDialog from './SelectPointDialog.vue'
+import DeleteChatDialog from './DeleteChatDialog.vue'
+import DeleteSessionDialog from './DeleteSessionDialog.vue'
 import UserAddNode from './UserAddNode.vue'
 import AIAddNode from './AIAddNode.vue'
 import EditNode from './EditNode.vue'
@@ -60,6 +62,26 @@ const navToSession = (sessionId) => {
   })
 }
 
+const showSessionPopup = ref('')
+
+const togglePopup = (e, data) => {
+  const svgs = ['svg', 'path', 'g', 'circle', 'rect']
+  if (svgs.includes(e.target.tagName)) return
+  if (e.target.className?.includes('toggleSessionPopup')) {
+    showSessionPopup.value === data.sessionId ? showSessionPopup.value = '' : showSessionPopup.value = data.sessionId
+  } else {
+    showSessionPopup.value = ''
+  }
+}
+
+const selectSession = ref(null)
+
+const deleteSession = (session) => {
+  // chatStore.selectChat = chat
+  selectSession.value = session
+  userStore.showDialog = 'deleteSession'
+}
+
 onMounted(async() => {
   // toggleSidebar()
   await userStore.getUserInfo()
@@ -71,7 +93,9 @@ onMounted(async() => {
   <div class="layout">
     <div :class="['sidebar', isSidebarFolded && 'sidebar-folded']" ref="sidebarRef">
       <div class="tooltips">
-        <div @click="toggleSidebar">收起侧栏</div>
+        <div @click="toggleSidebar" class="toggle-sidebar">
+          <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+        </div>
       </div>
 
       <!-- 搜索区 -->
@@ -94,13 +118,26 @@ onMounted(async() => {
       </div>
 
       <!-- 历史对话区 -->
-      <div class="session-list">
+      <div class="session-list" v-show="sessionStore.sessionList.length">
         <div class="history-top">
           <div class="title">历史对话</div>
         </div>
-        <div class="session-warpper">
-          <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
-            <div class="title">{{ session.title }}</div>
+        <div class="session-rows">
+          <div class="session-wrapper">
+            <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
+              <div class="title">{{ session.title }}</div>
+              <cust-popup :position="{ top: '0px', left: '28px' }">
+                <div :class="['more-btn', 'toggleSessionPopup', session.sessionId === seclectedSession && 'visible']" @click.stop="(e) => togglePopup(e, session)" >
+                  <img src="../../assets/svgs/ellipsis.svg" alt="" class="icon toggleSessionPopup">
+                </div>
+
+                <template #popup>
+                  <div class="popup-menu" v-show="showSessionPopup === session.sessionId" v-click-outside.stop="(e) => togglePopup(e, session)">
+                    <div class="menu-item" @click.stop="() => deleteSession(session)">删除会话</div>
+                  </div>
+                </template>
+              </cust-popup>
+            </div>
           </div>
         </div>
       </div>
@@ -120,6 +157,8 @@ onMounted(async() => {
     <!-- Dialog -->
     <select-area-dialog :showDialog="userStore.showDialog === 'selectArea'" />
     <select-point-dialog :showDialog="userStore.showDialog === 'selectPoint'" />
+    <delete-chat-dialog :showDialog="userStore.showDialog === 'deleteChat'" />
+    <delete-session-dialog :showDialog="userStore.showDialog === 'deleteSession'" :selectSession="selectSession" />
     <user-add-node :showDialog="userStore.showDialog === 'userAddNode'" />
     <AI-add-node :showDialog="userStore.showDialog === 'AIAddNode'" />
     <edit-node :showDialog="userStore.showDialog === 'editNode'" />
@@ -134,9 +173,6 @@ onMounted(async() => {
   display: flex;
   position: relative;
   overflow: hidden;
-  // background-color: aqua;
-  // height: 100vh;
-  // width: 100vw;
 
   .sidebar {
     width: 260px;
@@ -152,6 +188,27 @@ onMounted(async() => {
 
     .tooltips {
       height: 50px;
+      display: flex;
+      justify-content: left;
+      align-items: center;
+
+      .toggle-sidebar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 5px;
+
+        .icon {
+          width: 16px;
+          height: 16px;
+        }
+
+        &:hover {
+          background-color: var(--btn-hover);
+        }
+      }
     }
 
     .search-view {
@@ -237,17 +294,24 @@ onMounted(async() => {
         }
       }
 
-      .session-warpper {
-        overflow: auto;
+      .session-rows {
+        width: 240px;
         height: calc(100vh - 390px);
+        overflow: auto;
+        // background-color: beige;
+
+        .session-wrapper {
+          width: 235px;
+          // background-color: aqua;
+        }
 
         .session-item {
           display: flex;
-          justify-content: left;
+          justify-content: space-between;
           align-items: center;
           height: 35px;
           padding: 0 10px;
-          margin: 5px 6px;
+          margin: 5px;
           border-radius: 10px;
           font-size: 15px;
           color: var(--text-color-1);
@@ -261,6 +325,52 @@ onMounted(async() => {
 
           &:hover:not(.selected-nav) {
             background-color: var(--navber-hover);
+
+            .more-btn {
+              visibility: visible;
+            }
+          }
+
+          .more-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            overflow: visible;
+
+            .icon {
+              width: 18px;
+              height: 18px;
+            }
+          }
+
+          .more-btn.visible {
+            visibility: visible;
+          }
+
+          .popup-menu {
+            background-color: var(--normal-bgc);
+            border: 1px solid var(--light-border-color-1);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px var(--box-shadow-color);
+            padding: 6px;
+            cursor: default;
+            color: var(--text-color-0);
+            position: fixed;
+
+            .menu-item {
+              padding: 4px;
+              font-size: 13px;
+              border-radius: 4px;
+
+              &:hover {
+                background-color: var(--menu-hover-color);
+                color: var(--normal-bgc);
+              }
+            }
           }
         }
 

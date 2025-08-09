@@ -143,7 +143,7 @@ onMounted(() => {
     margin: 0 5px;
 
     &:hover {
-      background-color: var(--uesr-bubble-bgc);
+      background-color: var(--btn-hover);
     }
   }
 

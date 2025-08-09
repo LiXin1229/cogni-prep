@@ -127,6 +127,31 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
+  // 删除会话
+  const deleteSession = async (session) => {
+    try {
+      const { data } = await axios({
+        url: API.deleteSession,
+        method: 'POST',
+        data: {
+          sessionId: session.sessionId,
+          areaId: session.areaId,
+          userId: 1
+        }
+      })
+      // console.log('res_session', data)
+
+      if (data.success) {
+        if (chatStore.sessionId === session.sessionId) {
+          router.push('/chat')
+        }
+        sessionList.value = sessionList.value.filter(item => item.sessionId !== session.sessionId)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   watch(() => surroundingPoint.value, () => {
     markNode.value = false
   }, { flush: 'sync' })
@@ -138,6 +163,7 @@ export const useSessionStore = defineStore('session', () => {
     initSession,
     currSession,
     mainArea,
-    surroundingPoint
+    surroundingPoint,
+    deleteSession
   }
 })

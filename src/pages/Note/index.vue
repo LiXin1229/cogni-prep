@@ -215,7 +215,9 @@ onUnmounted(() => {
   <div class="note">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggleSidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">打开侧栏</div>
+      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
+        <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+      </div>
 
       <div class="area-list">
         <div
@@ -247,7 +249,7 @@ onUnmounted(() => {
             <template #default="{ node, data }">
               <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                 <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
-                <cust-popup :position="{ top: '-5px', left: '-80px' }">
+                <cust-popup :position="{ top: '0px', left: '20px' }">
                   <div class="func-btn toggleNodePopup" @click.stop="(e) => togglePopup(e, data)" >
                     <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                   </div>
@@ -303,10 +305,23 @@ onUnmounted(() => {
     overflow-x: auto;
     overflow-y: hidden;
 
-    .toggleSidebar {
-      position: absolute;
-      left: 10px;
-      top: 10px;
+    .toggle-sidebar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      margin-right: 10px;
+
+      .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        background-color: var(--btn-hover);
+      }
     }
 
     .area-list {
@@ -399,9 +414,10 @@ onUnmounted(() => {
           padding: 4px;
           cursor: default;
           color: var(--text-color-0);
+          position: fixed;
 
           .menu-item {
-            padding: 4px;
+            padding: 6px;
             font-size: 13px;
             border-radius: 4px;
 

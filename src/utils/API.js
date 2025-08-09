@@ -16,7 +16,9 @@ const API = {
   getSubcategory: '/api/mindmap/mindmap/getSubcategory',
   getNote: '/api/note/note/getNote',
   getNoteData: '/api/note/note/getNoteData',
-  updateNote: '/api/note/note/updateNote'
+  updateNote: '/api/note/note/updateNote',
+  deleteChat: '/api/chat/chat/deleteChat',
+  deleteSession: '/api/chat/session/deleteSession',
 }
 
 export default API

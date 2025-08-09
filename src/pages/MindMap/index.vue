@@ -38,7 +38,9 @@ onMounted(() => {
   <div class="mind-map">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggleSidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">打开侧栏</div>
+      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
+        <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+      </div>
 
       <div class="area-list">
         <div
@@ -73,10 +75,23 @@ onMounted(() => {
     overflow-x: auto;
     overflow-y: hidden;
 
-    .toggleSidebar {
-      position: absolute;
-      left: 10px;
-      top: 10px;
+    .toggle-sidebar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      margin-right: 10px;
+
+      .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        background-color: var(--btn-hover);
+      }
     }
 
     .area-list {

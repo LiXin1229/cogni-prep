@@ -181,16 +181,24 @@ export const useChatStore = defineStore('chat', () => {
       await sessionStore.initSession()
     }
 
-    const res = await initChat(MSG_TYPE['question'])
+    try {
+      const res = await initChat(MSG_TYPE['question'])
 
-    if (res.success) {
-      await getStreamResponse(API.interviewStart, {
-        sessionId: res.data.sessionId,
-        mainArea: res.data.mainArea,
-        surroundingPoint: res.data.surroundingPoint,
-        customContent: content,
-        areaId: sessionStore.mainArea.areaId
-      }, res.data.chatId, MSG_TYPE['question'])
+      if (res.success) {
+        await getStreamResponse(API.interviewStart, {
+          sessionId: res.data.sessionId,
+          mainArea: res.data.mainArea,
+          surroundingPoint: res.data.surroundingPoint,
+          customContent: content,
+          areaId: sessionStore.mainArea.areaId
+        }, res.data.chatId, MSG_TYPE['question'])
+      } else {
+        throw new Error('初始化会话失败')
+      }
+    } catch (error) {
+      // console.log(error)
+      sendState.value = 'available'
+      nextState.value = true
     }
   }
 
@@ -272,16 +280,20 @@ export const useChatStore = defineStore('chat', () => {
     sendState.value = 'loading'
     nextState.value = false
 
-    const { data } = await axios({
-      url: API.initChat,
-      method: 'POST',
-      data: {
-        sessionId: sessionId.value,
-        msgType: msgType
-      }
-    })
+    try {
+      const { data } = await axios({
+        url: API.initChat,
+        method: 'POST',
+        data: {
+          sessionId: sessionId.value,
+          msgType: msgType
+        }
+      })
 
-    return data
+      return data 
+    } catch (error) {
+      throw new Error(error)
+    }
   }
 
   const saveUserWords = async (msgType, content) => { 
@@ -326,7 +338,8 @@ export const useChatStore = defineStore('chat', () => {
     triggerComponent('scrollToBottom')
 
     const userRes = await saveUserWords(MSG_TYPE['user'], content)
-    pushUserText({ id: userRes.chatId}, true)
+    console.log('userRes', userRes)
+    pushUserText({ id: userRes.data.chatId }, true)
 
     const res = await initChat(MSG_TYPE['evaluation'])
 
@@ -354,7 +367,7 @@ export const useChatStore = defineStore('chat', () => {
     triggerComponent('scrollToBottom')
 
     const userRes = await saveUserWords(MSG_TYPE['user'], content)
-    pushUserText({ id: userRes.chatId}, true)
+    pushUserText({ id: userRes.data.chatId }, true)
 
     const res = await initChat(MSG_TYPE['help'])
 
@@ -375,6 +388,23 @@ export const useChatStore = defineStore('chat', () => {
       displayChat.value[displayChat.value.length - 1].id = data.id
     } else {
       displayChat.value.push(data)
+    }
+  }
+  
+  // 删除对话
+  const selectChat = ref(null)
+
+  const deleteChat = async () => {
+    const { data } = await axios({
+      url: API.deleteChat,
+      method: 'POST',
+      data: {
+        chatId: selectChat.value.id
+      }
+    })
+
+    if (data.success) {
+      displayChat.value = displayChat.value.filter(item => item.id !== selectChat.value.id)
     }
   }
 
@@ -408,6 +438,8 @@ export const useChatStore = defineStore('chat', () => {
     sendState,
     nextState,
     abortCurrentStream,
+    selectChat,
+    deleteChat,
     registerCallback
   }
 })

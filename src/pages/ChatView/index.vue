@@ -3,11 +3,13 @@ import InputBox from './InputBox.vue'
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
+import { useUserInfoStore } from '@/stores/user'
 import { parseMarkdown } from '@/utils/markdown'
 import { stickBlockTop } from '@/utils/stickBlockTop'
 import { useThrottle } from '@/utils/useThrottle'
 
 const { throttle } = useThrottle()
+const userStore = useUserInfoStore()
 
 defineProps({
   isSidebarFolded: {
@@ -53,7 +55,7 @@ const funcBtn = (type, data) => {
 
 // 复制按钮
 const handleCopy = (e, data) => {
-  console.log(e.target.closest('.copy-btn'))
+  // console.log(e.target.closest('.copy-btn'))
   const copyBtn = e.target.closest('.copy-btn')
   if (!copyBtn) return
 
@@ -92,6 +94,12 @@ const writeInClipboard = (text, imgElement) => {
         type: 'info'
       })
     })
+}
+
+// 删除对话
+const deleteChat = (chat) => {
+  chatStore.selectChat = chat
+  userStore.showDialog = 'deleteChat'
 }
 
 // 自动滚动
@@ -155,7 +163,9 @@ onUnmounted(() => {
   <div class="chat-view">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggleSidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">打开侧栏</div>
+      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
+        <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+      </div>
     </div>
 
     <!-- 滚动聊天记录区 -->
@@ -212,7 +222,7 @@ onUnmounted(() => {
                       自由对话
                     </el-dropdown-item>
                     <el-dropdown-item @click="deleteChat(chat)">
-                      删除该对话
+                      删除对话
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -275,6 +285,11 @@ onUnmounted(() => {
           </div>
           </div>
         </template>
+
+        <div class="loading-icon" v-show="sendState === 'loading'">
+          <div class="left-ball"></div>
+          <div class="right-ball"></div>
+        </div>
       </div>
     </div>
 
@@ -285,6 +300,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use "@/styles/mixin.scss" as *;
+@use "@/styles/loading.scss" as *;
 
 .chat-view {
   width: 100%;
@@ -298,10 +314,28 @@ onUnmounted(() => {
     align-items: center;
     padding: 0 20px;
 
-    .toggleSidebar {
-      position: absolute;
-      left: 10px;
-      top: 10px;
+    // .toggleSidebar {
+    //   position: absolute;
+    //   left: 10px;
+    //   top: 10px;
+    // }
+
+    .toggle-sidebar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+
+      .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        background-color: var(--btn-hover);
+      }
     }
   }
 
@@ -390,7 +424,7 @@ onUnmounted(() => {
             margin-right: 10px;
 
             &:hover {
-              background-color: var(--uesr-bubble-bgc);
+              background-color: var(--btn-hover);
             }
           }
 
@@ -428,6 +462,14 @@ onUnmounted(() => {
 
       .text-wrapper.user-wrapper {
         text-align: end;
+      }
+
+      .loading-icon {
+        @include loading;
+        display: flex;
+        justify-content: space-between;
+        width: 20px;
+        height: 15px;
       }
     }
   }
