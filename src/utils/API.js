@@ -1,9 +1,9 @@
 const API = {
-  initChat: '/api/chat/interview/init',
-  saveChat: '/api/chat/interview/save',
-  saveUserWords: '/api/chat/interview/saveUserWords',
+  initChat: '/api/chat/chat/init',
+  saveChat: '/api/chat/chat/save',
+  saveUserWords: '/api/chat/chat/saveUserWords',
   interviewStart: '/api/chat/interview/start',
-  getChatData: '/api/chat/interview/getChatData',
+  getChatData: '/api/chat/chat/getChatData',
   interviewAnswer: '/api/chat/interview/answer',
   interviewHelp: '/api/chat/interview/help',
   initSession: '/api/chat/session/initSession',
@@ -19,6 +19,10 @@ const API = {
   updateNote: '/api/note/note/updateNote',
   deleteChat: '/api/chat/chat/deleteChat',
   deleteSession: '/api/chat/session/deleteSession',
+  initPrefer: '/api/perfer/perfer/initPrefer',
+  getPreferList: '/api/perfer/perfer/getPreferList',
+  getdetailChats: '/api/perfer/perfer/getdetailChats',
+  deletePrefer: '/api/perfer/perfer/deletePrefer',
 }
 
 export default API

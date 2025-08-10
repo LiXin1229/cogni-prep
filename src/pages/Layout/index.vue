@@ -4,6 +4,7 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
+
 import SelectAreaDialog from './SelectAreaDialog.vue'
 import SelectPointDialog from './SelectPointDialog.vue'
 import DeleteChatDialog from './DeleteChatDialog.vue'
@@ -19,7 +20,6 @@ import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
 import penToSquare from '@/assets/svgs/pen-to-square.svg'
 import star from '@/assets/svgs/star.svg'
-import userTie from '@/assets/svgs/user-tie.svg'
 
 const router = useRouter()
 const route = useRoute()
@@ -39,8 +39,7 @@ const navberList = reactive([
   { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
   { id: 2, title: '知识点图', icon: siweidaotu, path: 'mindmap' },
   { id: 3, title: '笔记', icon: penToSquare, path: 'note' },
-  { id: 4, title: '收藏', icon: star, path: 'prefer' },
-  { id: 5, title: '模拟面试', icon: userTie, path: 'interview' },
+  { id: 4, title: '收藏', icon: star, path: 'prefer' }
 ])
 
 const navToPage = (nav) => {
@@ -50,7 +49,7 @@ const navToPage = (nav) => {
 }
 
 // 当前选中的导航栏
-const seclectedNav = computed(() => route.name) // 让当前选中的导航栏路由名称
+const seclectedNav = computed(() => route.path.split('/')[1])
 
 // 当前选中的会话
 const seclectedSession = computed(() => +route.params.sessionId)
@@ -111,7 +110,7 @@ onMounted(async() => {
 
       <!-- nav列表区 -->
       <div class="nav-list">
-        <div v-for="navbar in navberList" :key="navbar" :class="['navbar-item', navbar.title === seclectedNav && 'selected-nav']" @click="navToPage(navbar)">
+        <div v-for="navbar in navberList" :key="navbar" :class="['navbar-item', navbar.path === seclectedNav && 'selected-nav']" @click="navToPage(navbar)">
           <img :src="navbar.icon" alt="" class="icon">
           <div>{{ navbar.title }}</div>
         </div>
@@ -126,7 +125,7 @@ onMounted(async() => {
           <div class="session-wrapper">
             <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
               <div class="title">{{ session.title }}</div>
-              <cust-popup :position="{ top: '0px', left: '28px' }">
+              <cust-popup :position="{ top: '20px', left: '-75px' }">
                 <div :class="['more-btn', 'toggleSessionPopup', session.sessionId === seclectedSession && 'visible']" @click.stop="(e) => togglePopup(e, session)" >
                   <img src="../../assets/svgs/ellipsis.svg" alt="" class="icon toggleSessionPopup">
                 </div>
@@ -185,6 +184,7 @@ onMounted(async() => {
     top: 0;
     left: 0;
     z-index: 10;
+    cursor: default;
 
     .tooltips {
       height: 50px;
@@ -255,6 +255,7 @@ onMounted(async() => {
         border-radius: 10px;
         font-size: 15px;
         color: var(--text-color-1);
+        cursor: pointer;
 
         .icon {
           margin-right: 10px;
@@ -296,13 +297,12 @@ onMounted(async() => {
 
       .session-rows {
         width: 240px;
-        height: calc(100vh - 390px);
+        height: calc(100vh - 340px);
         overflow: auto;
         // background-color: beige;
 
         .session-wrapper {
           width: 235px;
-          // background-color: aqua;
         }
 
         .session-item {
@@ -316,6 +316,7 @@ onMounted(async() => {
           font-size: 15px;
           color: var(--text-color-1);
           transition: all 0.3s ease;
+          cursor: pointer;
 
           .title {
             white-space: nowrap;

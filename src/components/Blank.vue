@@ -51,7 +51,7 @@ onMounted(() => {
     </div>
 
     <div class="layer">
-      点击问题下方的
+      点击题目下方的
       <div class="btn help">
         <img src="../assets/svgs/help.svg" alt="" class="icon">
       </div>
@@ -128,6 +128,7 @@ onMounted(() => {
       position: absolute;
       top: 50%;
       left: 50%;
+      width: 17px;
       transform: translate(-60%, -60%);
       color: #fff;
     }

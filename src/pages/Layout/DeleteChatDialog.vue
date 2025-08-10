@@ -14,7 +14,7 @@ const props = defineProps({
 const dialogRef = ref(null)
 
 const confirm = async () => {
-  // chatStore.deleteChat()
+  chatStore.deleteChat()
   
   dialogRef.value.closeDialog()
 }

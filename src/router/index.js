@@ -5,6 +5,7 @@ import ChatView from '@/pages/ChatView/index.vue'
 import MindMap from '@/pages/MindMap/index.vue'
 import Note from '@/pages/Note/index.vue'
 import Prefer from '@/pages/Prefer/index.vue'
+import PreferDetail from '@/pages/Prefer/PreferDetail.vue'
 import Interview from '@/pages/Interview/index.vue'
 
 import { useUserInfoStore } from '../stores/user'
@@ -42,7 +43,14 @@ const router = createRouter({
         {
           path: 'prefer',
           name: '收藏',
-          component: Prefer
+          component: Prefer,
+          children: [
+            {
+              path: ':preferId',
+              name: '收藏详情',
+              component: PreferDetail
+            }
+          ]
         },
         {
           path: 'interview',

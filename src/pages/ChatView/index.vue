@@ -1,15 +1,17 @@
 <script setup>
 import InputBox from './InputBox.vue'
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
+import { faAngleDown, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useUserInfoStore } from '@/stores/user'
+import { useSessionStore } from '@/stores/session'
 import { parseMarkdown } from '@/utils/markdown'
 import { stickBlockTop } from '@/utils/stickBlockTop'
 import { useThrottle } from '@/utils/useThrottle'
 
 const { throttle } = useThrottle()
 const userStore = useUserInfoStore()
+const sessionStore = useSessionStore()
 
 defineProps({
   isSidebarFolded: {
@@ -102,6 +104,34 @@ const deleteChat = (chat) => {
   userStore.showDialog = 'deleteChat'
 }
 
+// 切换收藏状态
+const togglePreferState = () => {
+  chatStore.preferList.clear()
+  chatStore.isChosePrefer = !chatStore.isChosePrefer
+}
+
+// 选中对话
+const toggleChecked = (chat) => { 
+  console.log(chat.id)
+  if (chatStore.preferList.has(chat.id)) {
+    chatStore.preferList.delete(chat.id)
+  } else {
+    chatStore.preferList.add(chat.id)
+  }
+}
+
+// 全选/全不选
+const checkAll = () => { 
+  if (chatStore.isChoseAll) {
+    // 全选
+    chatStore.preferList.clear()
+  } else {
+    chatStore.displayChat.forEach(chat => {
+      chatStore.preferList.add(chat.id)
+    })
+  }
+}
+
 // 自动滚动
 const isAutoToBottom = ref(true)
 const SCROLL_THRESHOLD = 60
@@ -137,6 +167,10 @@ watch(() => chatStore.displayChat[chatStore.displayChat.length - 1]?.content, ()
   }
 })
 
+watch(() => chatStore.sessionId, () => {
+  throttleToBottom()
+})
+
 onMounted(async () => {
   await nextTick()
   scrollToBottom()
@@ -157,6 +191,12 @@ onUnmounted(() => {
 
   chatStore.registerCallback({})
 })
+
+const title = computed(() => {
+  const _title = sessionStore.currSession?.title.split('- ')[1] || ''
+  if (/^\d{1,2}\/\d{1,2}\/\d{1,2}$/.test(_title) || _title == '') return '每日刷题'
+  return _title
+})
 </script>
 
 <template>
@@ -165,6 +205,10 @@ onUnmounted(() => {
     <div class="top">
       <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
         <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+      </div>
+      <div>
+        <div class="title">{{ title }}</div>
+        <div class="tip">内容由 <span style="font-style: italic;">DeepSeek-V3</span> 生成</div>
       </div>
     </div>
 
@@ -194,95 +238,111 @@ onUnmounted(() => {
       </div>
 
       <!-- 对话内容区 -->
-      <div class="text-view">
+      <div :class="['text-view', chatStore.isChosePrefer && 'chose-prefer']">
         <div class="blank" v-if="!chatList.length">
           <blank />
         </div>
 
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in chatList" :key="chat.id">
-          <!-- 用户发言wrapper -->
-          <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
-            <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>
-
-            <!-- 功能按钮 -->
-            <div class="functionList user-right">
-              <!-- 复制按钮 -->
-              <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
-                <img src="../../assets/svgs/copy.svg" alt="" class="icon">
-              </div>
-              <!-- 其他按钮 -->
-              <el-dropdown placement="right">
-                <div class="btn other">
-                  <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
-                </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="funcBtn(4, chat)">
-                      自由对话
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="deleteChat(chat)">
-                      删除对话
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
+          <div class="left" @click="() => toggleChecked(chat)" v-if="chatStore.isChosePrefer">
+            <div :class="['check-box', chatStore.preferList.has(chat.id) && 'checked']">
+              <font-awesome-icon :icon="faCheck" class="icon" />
             </div>
           </div>
 
-          <!-- 助手发言wrapper -->
-          <div class="text-wrapper assistant-wrapper" v-else>
-            <!-- 问题 -->
-            <template v-if="chat.messageType === 1">
-              <div class="assistant-question">{{ chat.content }}</div>
-            </template>
+          <div @click="() => toggleChecked(chat)">
+              <!-- 用户发言wrapper -->
+            <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
+              <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>
 
-            <template v-else>
-              <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy"></div>
-            </template>
-
-            <!-- 功能按钮 -->
-            <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']">
-              <!-- 复制按钮 -->
-              <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
-                <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+              <!-- 功能按钮 -->
+              <div class="functionList user-right">
+                <!-- 复制按钮 -->
+                <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
+                  <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+                </div>
+                <!-- 收藏按钮 -->
+                <div class="btn prefer prefer-btn" @click="togglePreferState">
+                  <img src="../../assets/svgs/tag.svg" alt="" class="icon">
+                </div>
+                <!-- 其他按钮 -->
+                <el-dropdown placement="right">
+                  <div class="btn other">
+                    <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item @click="funcBtn(4, chat)">
+                        自由对话
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="deleteChat(chat)">
+                        删除对话
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </div>
-              <!-- 帮助按钮 -->
-              <el-dropdown placement="right" v-if="chat.messageType === 1">
-                <div class="btn help">
-                  <img src="../../assets/svgs/help.svg" alt="" class="icon">
+            </div>
+
+            <!-- 助手发言wrapper -->
+            <div class="text-wrapper assistant-wrapper" v-else>
+              <!-- 问题 -->
+              <template v-if="chat.messageType === 1">
+                <div class="assistant-question">{{ chat.content }}</div>
+              </template>
+
+              <template v-else>
+                <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy"></div>
+              </template>
+
+              <!-- 功能按钮 -->
+              <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']">
+                <!-- 复制按钮 -->
+                <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
+                  <img src="../../assets/svgs/copy.svg" alt="" class="icon">
                 </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="funcBtn(1, chat)">
-                      回答思路
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="funcBtn(2, chat)">
-                      标准答案
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="funcBtn(3, chat)">
-                      思路+答案
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-              <!-- 其他按钮 -->
-              <el-dropdown placement="right">
-                <div class="btn other">
-                  <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                <!-- 收藏按钮 -->
+                <div class="btn prefer prefer-btn" @click="togglePreferState">
+                  <img src="../../assets/svgs/tag.svg" alt="" class="icon">
                 </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="funcBtn(4, chat)">
-                      自由对话
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="deleteChat(chat)">
-                      删除该对话
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-          </div>
+                <!-- 帮助按钮 -->
+                <el-dropdown placement="right" v-if="chat.messageType === 1">
+                  <div class="btn help">
+                    <img src="../../assets/svgs/help.svg" alt="" class="icon">
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item @click="funcBtn(1, chat)">
+                        回答思路
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="funcBtn(2, chat)">
+                        标准答案
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="funcBtn(3, chat)">
+                        思路+答案
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+                <!-- 其他按钮 -->
+                <el-dropdown placement="right">
+                  <div class="btn other">
+                    <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item @click="funcBtn(4, chat)">
+                        自由对话
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="deleteChat(chat)">
+                        删除该对话
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </div>
           </div>
         </template>
 
@@ -294,7 +354,23 @@ onUnmounted(() => {
     </div>
 
     <!-- 输入框区 -->
-    <input-box ref="inputRef" />
+    <input-box ref="inputRef" v-if="!chatStore.isChosePrefer" />
+    <div class="prefer-bottom" v-else>
+      <div class="left">
+        <div class="check-all-box" @click="checkAll">
+          <div :class="['check-box', chatStore.isChoseAll && 'checked']">
+            <font-awesome-icon :icon="faCheck" class="icon" />
+          </div>
+          全选
+        </div>
+      </div>
+      <div class="middle" @click="togglePreferState">
+        取消
+      </div>
+      <div class="right" @click="chatStore.submitPrefers">
+        收藏
+      </div>
+    </div>
   </div>
 </template>
 
@@ -314,11 +390,15 @@ onUnmounted(() => {
     align-items: center;
     padding: 0 20px;
 
-    // .toggleSidebar {
-    //   position: absolute;
-    //   left: 10px;
-    //   top: 10px;
-    // }
+    .title {
+      font-weight: 600;
+      color: var(--theme-color-1);
+    }
+
+    .tip {
+      font-size: 12px;
+      color: var(--text-color-4);
+    }
 
     .toggle-sidebar {
       display: flex;
@@ -327,6 +407,7 @@ onUnmounted(() => {
       width: 24px;
       height: 24px;
       border-radius: 5px;
+      margin-right: 15px;
 
       .icon {
         width: 16px;
@@ -447,11 +528,11 @@ onUnmounted(() => {
         }
       }
 
-      :deep(.text-wrapper.assistant-wrapper ){
-        @include code-box;
-
+      :deep(.text-wrapper.assistant-wrapper ) {
         line-height: 1.9;
         // font-size: 0.9em;
+
+        @include code-box;
 
         .assistant-question {
           color: var(--theme-color-1);
@@ -465,13 +546,102 @@ onUnmounted(() => {
       }
 
       .loading-icon {
-        @include loading;
         display: flex;
         justify-content: space-between;
         width: 20px;
         height: 15px;
+
+        @include loading;
       }
     }
+
+    .chose-prefer {
+      display: grid;
+      grid-template-columns: 35px 1fr;
+
+      .left {
+        height: calc(100% - 10px);
+        display: flex;
+        align-items: center;
+        background-color: var(--selected-chat);
+      }
+
+      .text-wrapper {
+        padding: 20px;
+        background-color: var(--selected-chat);
+
+        .functionList {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .prefer-bottom {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 80px;
+    width: calc(75vw - 300px);
+    background-color: #fff;
+    border: 1px solid var(--light-border-color-1);
+    margin: 0 auto;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px var(--box-shadow-color);
+    padding: 5px 0;
+
+    .check-all-box {
+      display: flex;
+      justify-content: left;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-color-3);
+      cursor: pointer;
+    }
+
+    .middle { 
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .right {
+      background-color: var(--main-color);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      color: var(--normal-bgc);
+      cursor: pointer;
+    }
+  }
+
+  .check-box {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border-color-1);
+    border-radius: 5px;
+    position: relative;
+    margin-left: 10px;
+
+    .icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -45%);
+      width: 13px;
+      height: 13px;
+      color: var(--normal-bgc);
+    }
+
+    &:hover {
+      border: 1.5px solid var(--main-color);
+    }
+  }
+
+  .check-box.checked {
+    background-color: var(--main-color);
+    border: 1.5px solid var(--main-color);
   }
 }
 </style>

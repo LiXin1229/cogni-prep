@@ -57,6 +57,13 @@ const positionStyle = computed(() => {
 
 // 选择节点
 const selectNode = () => {
+  if (props.node.isRoot) {
+    ElMessage({
+      message: '不能选择根节点',
+      type: 'info'
+    })
+    return
+  }
   emits('selectNode')
   closeMenu()
 }

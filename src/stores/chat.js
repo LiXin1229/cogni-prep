@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSessionStore } from '@/stores/session.js'
 import { useUserInfoStore } from '@/stores/user.js'
+import { usePreferStore } from './prefer'
 import API from '@/utils/API.js'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
@@ -11,6 +12,7 @@ export const useChatStore = defineStore('chat', () => {
   const route = useRoute()
   const sessionStore = useSessionStore()
   const userStore = useUserInfoStore()
+  const preferStore = usePreferStore()
 
   const MSG_TYPE = {
     'user': 0, // 用户发言
@@ -402,9 +404,60 @@ export const useChatStore = defineStore('chat', () => {
         chatId: selectChat.value.id
       }
     })
+    // console.log(data)
 
     if (data.success) {
       displayChat.value = displayChat.value.filter(item => item.id !== selectChat.value.id)
+    }
+  }
+
+  // 是否在选择收藏
+  const isChosePrefer = ref(false)
+
+  // 已选中的对话
+  const preferList = ref(new Set())
+
+  // 是否全选
+  const isChoseAll = computed(() => {
+    return preferList.value.size === displayChat.value.length
+  })
+
+  // 提交收藏
+  const submitPrefers = async () => {
+    if (preferList.value.size === 0) {
+      ElMessage({
+        message: '请选择对话',
+        type: 'info'
+      })
+      return
+    }
+
+    isChosePrefer.value = false
+
+    try {
+      const sortChats = Array.from(preferList.value).sort((a, b) => a - b)
+      const content = displayChat.value.find(item => item.id === sortChats[0]).content + displayChat.value.find(item => item.id === sortChats[1] || -1)?.content || ''
+
+      const { data } = await axios({
+        url: API.initPrefer,
+        method: 'POST',
+        data: {
+          userId: 1,
+          title: sessionStore.currSession.title,
+          content: content,
+          chatIds: sortChats
+        }
+      })
+
+      if (data.success) {
+        ElMessage({
+          dangerouslyUseHTMLString: true,
+          message: `收藏成功，<span style="text-decoration: underline; cursor: pointer;">去看看</span>`,
+          type: 'success'
+        })
+      }
+    } catch (error) {
+      throw new Error(error)
     }
   }
 
@@ -440,6 +493,10 @@ export const useChatStore = defineStore('chat', () => {
     abortCurrentStream,
     selectChat,
     deleteChat,
+    isChosePrefer,
+    isChoseAll,
+    preferList,
+    submitPrefers,
     registerCallback
   }
 })
