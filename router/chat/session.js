@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const pool = require('../../db')
 const formatDate = require('../../utils/formatDate')
+const { modifyTreeNodeChatId } = require('../../utils/treeUtils')
 
 // 新建会话
 router.post('/initSession', async (req, res) => {
@@ -65,6 +66,44 @@ router.get('/getSessionList', async (req, res) => {
       data: {
         sessionList
       }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+})
+
+router.post('/deleteSession', async (req, res) => {
+  const { sessionId, areaId, userId } = req.body
+
+  try {
+    // 删除会话
+    await pool.query(
+      'DELETE FROM sessions WHERE session_id = ?',
+      sessionId
+    )
+
+    // 删除会话聊天记录
+    await pool.query(
+      'DELETE FROM chats WHERE session_id = ?',
+      sessionId
+    )
+
+    // 修改思维导图的关联
+    const [rows] = await pool.query(
+      'SELECT mindmap FROM areas WHERE id = ?',
+      areaId
+    )
+
+    const mindmap = modifyTreeNodeChatId(rows[0].mindmap, sessionId)
+
+    await pool.query(
+      'UPDATE areas SET mindmap = ? WHERE id = ?',
+      [JSON.stringify(mindmap), areaId]
+    )
+
+    res.send({
+      code: 200,
+      success: true
     })
   } catch (err) {
     console.log(err)

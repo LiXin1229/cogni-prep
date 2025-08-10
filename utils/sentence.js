@@ -1,21 +1,22 @@
 // 系统提示语句
 const useSystemSentence = (type, ...args) => { 
   if (type === 'startquest') {
-    return `这是一场${args[0]}面试，你是面试官，问我一个有关${args[1]}的问题，不要重复提问相同知识点，主要使用中文。直接给出问题。`
+    return `这是一场${args[0]}面试，你是面试官，问我一个有关${args[1]}的问题，不要重复提问相同知识点，主要使用中文。直接给出问题，无需添加无效内容。`
   }
 
   if (type === 'longterm') {
-    return `这是一场${args[0]}面试，你是面试官，问我相关问题，不要重复提问相同问题，主要使用中文。直接给出问题。`
+    return `这是一场${args[0]}面试，你是面试官，问我相关问题，不要重复提问相同知识点，主要使用中文。直接给出问题，无需添加无效内容。`
   }
 
   if (type === 'answer') {
-    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，主要语言为中文，并且使用标准markdown语法格式。`
+    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，主要语言为中文，严格按照Markdown语法格式返回内容。`
   }
 
   if (type === 'help') {
-    if (args[0] === 1) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路，主要语言为中文，并且使用标准markdown语法格式。`
-    else if (args[0] === 2) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的标准答案，主要使用中文，主要语言为中文，并且使用标准markdown语法格式。`
-    else if (args[0] === 3) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路和标准答案，主要使用中文，主要语言为中文，并且使用标准markdown语法格式。`
+    if (args[0] === 1) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路，主要语言为中文，严格按照Markdown语法格式返回内容。`
+    else if (args[0] === 2) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的标准答案，主要语言为中文，严格按照Markdown语法格式返回内容。`
+    else if (args[0] === 3) return `在${args[1]}面试中，面对问题：${args[2]}。我无法解答，给出该问题的回答思路和标准答案，主要语言为中文，严格按照Markdown语法格式返回内容。`
+    else if (args[0] === 4) return `使用Markdown语法格式`
   }
 }
 
@@ -29,6 +30,7 @@ const useUserSentence = (type, ...args) => {
     if (args[0] === 1) return `给出该问题的回答思路，${args[1]}`
     if (args[0] === 2) return `给出该问题的标准答案，${args[1]}`
     if (args[0] === 3) return `给出该问题的回答思路和标准答案，${args[1]}`
+    if (args[0] === 4) return `${args[1]}`
   }
 }
 
@@ -50,12 +52,12 @@ const useSubcategorySentence = (type, ...args) => {
 // 获取笔记语句
 const useNoteSentence = (type, ...args) => {
   if (type === 'system') {
-    // return `详细解释${args[0]}的定义、用法等，主要使用中文，按照JSON{"result": <解释>}格式返回，其中result的value为string类型，使用标准markdown语法格式`
     return `
       请以<${args[1]}>专家的身份，面向<学习者>详细讲解以下内容：
       【主题】<${args[0]}>
-      【要求】字数不限，越详细越好，最好每个知识点都有具体示例；主要语言为中文，并且使用标准markdown语法格式。
+      【要求】主要使用中文，按照JSON{"result": <详解>}格式返回，其中"result"为string类型，使用标准markdown语法格式，字数不限，越详细越好，最好每个知识点都有具体示例
     `
+    // 【要求】字数不限，越详细越好，最好每个知识点都有具体示例；主要语言为中文，并且使用标准markdown语法格式。
   }
 
   if (type === 'content') {
