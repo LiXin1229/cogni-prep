@@ -83,6 +83,7 @@ onMounted(() => {
       height: 24px;
       border-radius: 5px;
       margin-right: 10px;
+      cursor: pointer;
 
       .icon {
         width: 16px;
@@ -106,6 +107,7 @@ onMounted(() => {
         font-size: 15px;
         position: relative;
         white-space: nowrap;
+        cursor: pointer;
       }
 
       .selected-area {

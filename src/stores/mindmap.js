@@ -1,19 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user'
-import { useChatStore } from './chat'
-import { useSessionStore } from './session'
 import { useLocalStorage } from '@/utils/useStorage'
 import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
 import axios from 'axios'
 import API from '@/utils/API.js'
 
 export const useMindmapStore = defineStore('mindmap', () => {
-  const router = useRouter()
   const userStore = useUserInfoStore()
-  const chatStore = useChatStore()
-  const sessionStore = useSessionStore()
 
   const areaList = computed(() => userStore.areaList)
 
@@ -63,6 +57,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
   // 右键选中的节点
   const selectedNode = ref(null)
 
+  const sendState = ref(false)
+
   // AI生成子节点
   const getSubcategory = async (formData, pointList) => {
     // console.log(selectedNode.value)
@@ -79,19 +75,26 @@ export const useMindmapStore = defineStore('mindmap', () => {
       surroundingPoint = `“${selectedNode.value.name}”`
     }
 
-    const { data } = await axios({
-      url: API.getSubcategory,
-      method: 'POST',
-      data: {
-        mainArea: areaList.value.find(item => item.areaId === selectedAreaId.value).name,
-        surroundingPoint,
-        childrenPoints,
-        number: formData.number,
-        auto: formData.auto
-      }
-    })
+    try {
+      sendState.value = true
+      const { data } = await axios({
+        url: API.getSubcategory,
+        method: 'POST',
+        data: {
+          mainArea: areaList.value.find(item => item.areaId === selectedAreaId.value).name,
+          surroundingPoint,
+          childrenPoints,
+          number: formData.number,
+          auto: formData.auto
+        }
+      })
 
-    return data
+      sendState.value = false
+      return data 
+    } catch (error) {
+      sendState.value = false
+      throw new Error(error)
+    }
   }
 
   // 节点修改属性
@@ -127,6 +130,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     registerCallback,
     triggerComponent,
     getSubcategory,
-    modifyNodeProp
+    modifyNodeProp,
+    sendState
   }
 })

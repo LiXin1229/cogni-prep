@@ -1,6 +1,6 @@
 export const formatDate = (date = new Date(), format = 'YY/M/D') => {
   // 确保传入的是有效的日期对象
-  const today = date instanceof Date && !isNaN(date.getTime()) ? date : new Date()
+  const today = new Date(date)
   
   const year = today.getFullYear()
   const shortYear = year.toString().slice(-2) // 年份后两位

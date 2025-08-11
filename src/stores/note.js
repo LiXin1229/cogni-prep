@@ -64,8 +64,45 @@ export const useNoteStore = defineStore('note', () => {
     }
   }
 
+  // 查看/编辑模式
+  const isMarkdownMode = ref(true)
+
+  // 当前状态
+  const sendState = ref('available')
+
   // 当前笔记
   const note = ref('')
+
+  const initNote = async () => {
+    note.value = ''
+    sendState.value = 'loading'
+
+    try {
+      const { data } = await axios({
+        url: API.initNote,
+        method: 'POST'
+      })
+      // console.log(data)
+
+      return data
+    } catch (error) {
+      throw new Error(error)
+    }
+  }
+
+  const saveNote = async (noteId, content, node) => {
+    const { data } = await axios({
+      url: API.saveNote,
+      method: 'POST',
+      data: {
+        noteId,
+        content
+      }
+    })
+
+    console.log('保存记录', data)
+    updateSelectKey({ id: node.id, markId: noteId })
+  }
 
   // AI生成笔记
   const getNote = async (node) => {
@@ -84,20 +121,85 @@ export const useNoteStore = defineStore('note', () => {
     const area = areaList.value.find(item => item.areaId === selectedAreaId.value)
     const mainArea = area?.name || '该领域'
 
-    const { data } = await axios({
-      url: API.getNote,
-      method: 'POST',
-      data: {
-        mainArea,
-        point
-      }
-    })
-    // console.log('data', data.data)
+    try {
+      const res = await initNote()
 
-    note.value = data.data.result
-    triggerComponent('insertText', note.value)
-    modifyNodeProp(node.id, 'markId',  data.data.noteId)
-    updateSelectKey({ id: node.id, markId: data.data.noteId })
+      if (res.success) {
+        modifyNodeProp(node.id, 'markId', res.data.noteId)
+
+        await getStreamResponse(API.getNote, {
+          mainArea,
+          point
+        }, res.data.noteId, node)
+      }
+    } catch (error) {
+      sendState.value = 'available'
+    }
+  }
+
+  const abortCurrentStream = () => {
+    if (controller) {
+      controller.abort()
+    }
+  }
+
+  // 中断信号
+  let controller = null
+
+  const getStreamResponse = async (url, data, noteId, node) => {
+    controller = new AbortController()
+    // 保存信号，用于外部中断
+    const abortSignal = controller.signal
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        signal: abortSignal
+      })
+
+      // 读取流式响应
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      sendState.value = 'streaming'
+      isMarkdownMode.value = true
+
+      while (true) {
+        const { done, value } = await reader.read()
+
+        if (done) {
+          sendState.value = 'available'
+
+          saveNote(noteId, note.value, node)
+          break
+        }
+
+        // 解析SSE格式数据（格式：data: [JSON]\n\n）
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n\n') // 按SSE分隔符分割
+
+        lines.forEach(line => {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6) // 去掉'data: '前缀
+            if (data === '[DONE]') return // 结束标记
+            const json = JSON.parse(data) // 解析为JSON
+            // console.log('收到流式数据：', json)
+            note.value += json.content
+          }
+        })
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('请求被主动中断')
+      } else {
+        console.error('请求错误:', err)
+      }
+      sendState.value = 'loading'
+      saveNote(noteId, note.value, node)
+      sendState.value = 'available'
+    }
   }
 
   // 获取节点笔记
@@ -182,9 +284,12 @@ export const useNoteStore = defineStore('note', () => {
     treeData,
     getTreeData,
     selectKey,
+    isMarkdownMode,
     getNote,
+    sendState,
     note,
     getNoteData,
+    abortCurrentStream,
     updateSelectKey,
     updateNoteData,
     registerCallback

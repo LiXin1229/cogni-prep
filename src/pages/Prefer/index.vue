@@ -60,7 +60,7 @@ const navToDetail = (item) => {
           <div class="content">
             <div>{{ item.content }}</div>
           </div>
-          <div class="date">{{ formatDate(item.created_at, 'YYYY-MM-DD') }}</div>
+          <div class="date">{{ item.date }}</div>
         </div>
       </div>
     </div>

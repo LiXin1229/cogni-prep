@@ -17,8 +17,12 @@ defineProps({
 
 const emit = defineEmits(['toggleSidebar'])
 
+const scrollRef = ref(null)
+
 // 切换头部领域
 const selectArea = async (id) => {
+  if (noteStore.sendState !== 'available') return
+
   if (id === noteStore.selectedAreaId) return
   noteStore.selectedAreaId = id
 
@@ -58,8 +62,12 @@ const selectKey = computed(() => noteStore.selectKey)
 // 点击节点
 const handleNodeClick = async (data) => {
   // console.log(data)
+  if (noteStore.sendState !== 'available') return
+
   // 获取当前节点笔记
   await noteStore.getNoteData(data)
+
+  scrollRef.value.scrollTop = 0
 
   if (!isMarkdownMode.value) {
     insertText(noteStore.note)
@@ -85,6 +93,7 @@ const togglePopup = (e, data) => {
 
 // 生成笔记
 const createNote = (node) => {
+  if (noteStore.sendState !== 'available') return
   noteStore.getNote(node)
 }
 
@@ -125,11 +134,17 @@ const handleClick = (e) => {
   }
 }
 
-const isMarkdownMode = ref(true)
+const isMarkdownMode = computed({
+  get: () => noteStore.isMarkdownMode,
+  set: value => noteStore.isMarkdownMode = value
+})
+
 const isModified = ref(false)
 
 // 切换模式
 const toggleMode = () => {
+  if (noteStore.sendState !== 'available') return
+
   if (isMarkdownMode.value) {
     insertText(noteStore.note)
   } else {
@@ -206,9 +221,10 @@ onUnmounted(() => {
   if (quillInstance) {
     quillInstance = null
   }
+  noteStore.abortCurrentStream()
+
   noteStore.registerCallback({})
 })
-
 </script>
 
 <template>
@@ -267,7 +283,7 @@ onUnmounted(() => {
       </div>
 
       <!-- 笔记内容区 -->
-      <div class="mark-content">
+      <div class="mark-content" ref="scrollRef">
         <div class="button-container">
           <!-- 左上角按钮 -->
           <el-button @click="toggleMode" class="mode-toggle">
@@ -283,6 +299,14 @@ onUnmounted(() => {
         <div class="editor-view">
           <div class="editor" ref="editorRef" v-show="!isMarkdownMode"></div>
         </div>
+
+        <div class="text-view" v-show="noteStore.sendState === 'loading'">
+          <!-- 等待响应的图标 -->
+          <div class="loading-icon">
+            <div class="left-ball"></div>
+            <div class="right-ball"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -290,6 +314,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use "@/styles/mixin.scss" as *;
+@use "@/styles/loading.scss" as *;
 
 .note {
   width: 100%;
@@ -313,6 +338,7 @@ onUnmounted(() => {
       height: 24px;
       border-radius: 5px;
       margin-right: 10px;
+      cursor: pointer;
 
       .icon {
         width: 16px;
@@ -336,6 +362,7 @@ onUnmounted(() => {
         font-size: 15px;
         position: relative;
         white-space: nowrap;
+        cursor: pointer;
       }
 
       .selected-area {
@@ -473,6 +500,15 @@ onUnmounted(() => {
       width: calc(70vw - 300px);
       margin: 0 auto;
       padding-bottom: 30px;
+    }
+
+    .loading-icon {
+      display: flex;
+      justify-content: space-between;
+      width: 20px;
+      height: 15px;
+
+      @include loading;
     }
   }
 }

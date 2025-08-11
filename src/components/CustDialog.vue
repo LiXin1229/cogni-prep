@@ -15,7 +15,7 @@ const props = defineProps({
   }
 })
 
-const emits= defineEmits(['confirm'])
+const emits = defineEmits(['confirm', 'closeDialog'])
 
 const confirm = () => {
   emits('confirm')
@@ -25,6 +25,7 @@ const ableClose = computed(() => userStore.ableClose)
 
 const closeDialog = () => {
   if (!ableClose.value) return
+  emits('closeDialog')
   userStore.showDialog = ''
 }
 
@@ -95,6 +96,7 @@ defineExpose({
       background-color: var(--uesr-bubble-bgc);
       font-weight: bold;
       font-size: 15px;
+      cursor: pointer;
     }
 
     .confirm-btn { 

@@ -36,7 +36,10 @@ onMounted(() => {
         <div class="back-btn" @click="router.push('/prefer')">
           <img src="../../assets/svgs/left-arrow.svg" alt="" class="icon">
         </div>
-        <div class="delete-prefer" @click="preferStore.deletePrefer(preferId)">取消收藏</div>
+        <div class="delete-prefer" @click="preferStore.deletePrefer(preferId)">
+          <img src="../../assets/svgs/bookmark.svg" alt="" class="icon">
+          取消收藏
+        </div>
       </div>
     </div>
 
@@ -133,7 +136,14 @@ onMounted(() => {
 
       .delete-prefer {
         font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
         cursor: pointer;
+
+        .icon {
+          width: 18px;
+        }
       }
     }
   }

@@ -1,19 +1,13 @@
 import { defineStore } from 'pinia'
-import { computed, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useSessionStore } from '@/stores/session.js'
-import { useUserInfoStore } from '@/stores/user.js'
-import { useChatStore } from './chat'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { getTextWidth } from '@/utils/getTextWidth.js'
+import { formatDate } from '@/utils/formatDate.js'
 import API from '@/utils/API.js'
 import axios from 'axios'
-import { th } from 'element-plus/es/locales.mjs'
 
 export const usePreferStore = defineStore('prefer', () => {
-  const route = useRoute()
   const router = useRouter()
-  const sessionStore = useSessionStore()
-  const userStore = useUserInfoStore()
 
   const preferList = ref([])
 
@@ -28,16 +22,19 @@ export const usePreferStore = defineStore('prefer', () => {
         }
       })
 
-      preferList.value = data.data.preferList.map(ele => {
-        const length = getTextWidth(ele.content, { fontSize: '14px' })
-        // console.log(length)
-        const content = length > 2800 ? ele.content.slice(0, 140) + '...' : ele.content
+      preferList.value = data.data.preferList
+        .map(ele => {
+          const length = getTextWidth(ele.content, { fontSize: '14px' })
+          // console.log(length)
+          const content = length > 2800 ? ele.content.slice(0, 140) + '...' : ele.content
 
-        return {
-          ...ele,
-          content
-        }
-      })
+          return {
+            ...ele,
+            content,
+            date: formatDate(ele.created_at, 'YYYY-MM-DD')
+          }
+        })
+        .sort((a, b) => b.id - a.id)
     } catch (error) {
       throw new Error(error)
     }

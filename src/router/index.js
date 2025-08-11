@@ -38,7 +38,8 @@ const router = createRouter({
         {
           path: 'note',
           name: '笔记',
-          component: Note
+          component: Note,
+          meta: { keepAlive: true }
         },
         {
           path: 'prefer',

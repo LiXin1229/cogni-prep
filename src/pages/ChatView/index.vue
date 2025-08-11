@@ -346,6 +346,7 @@ const title = computed(() => {
           </div>
         </template>
 
+        <!-- 等待响应的图标 -->
         <div class="loading-icon" v-show="sendState === 'loading'">
           <div class="left-ball"></div>
           <div class="right-ball"></div>

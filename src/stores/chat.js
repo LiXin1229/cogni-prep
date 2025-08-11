@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { computed, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, reactive, ref, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session.js'
 import { useUserInfoStore } from '@/stores/user.js'
 import { usePreferStore } from './prefer'
@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 export const useChatStore = defineStore('chat', () => {
   const route = useRoute()
+  const router = useRouter()
   const sessionStore = useSessionStore()
   const userStore = useUserInfoStore()
   const preferStore = usePreferStore()
@@ -450,10 +451,21 @@ export const useChatStore = defineStore('chat', () => {
       })
 
       if (data.success) {
+        const id = data.data.perferId
         ElMessage({
           dangerouslyUseHTMLString: true,
-          message: `收藏成功，<span style="text-decoration: underline; cursor: pointer;">去看看</span>`,
+          message: `收藏成功，<span style="text-decoration: underline; cursor: pointer;" id="go-prefer-${id}">去看看</span>`,
           type: 'success'
+        })
+
+        nextTick(() => {
+          const link = document.querySelector(`#go-prefer-${id}`)
+          console.log(link)
+          if (link) {
+            link.addEventListener('click', () => {
+              router.push('/prefer')
+            })
+          }
         })
       }
     } catch (error) {

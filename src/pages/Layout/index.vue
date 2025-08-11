@@ -147,9 +147,9 @@ onMounted(async() => {
       <!-- <router-view @toggleSidebar="toggleSidebar" :isSidebarFolded="isSidebarFolded" /> -->
       <router-view v-slot="{ Component, route }" @toggleSidebar="toggleSidebar" :isSidebarFolded="isSidebarFolded">
         <keep-alive :max="3">
-          <component :is="Component" v-if="route.meta.keepAlive" />
+          <component :is="Component" :key="route.name" v-if="route.meta.keepAlive" />
         </keep-alive>
-        <component :is="Component" v-if="!route.meta.keepAlive" />
+        <component :is="Component" :key="route.name" v-if="!route.meta.keepAlive" />
       </router-view>
     </div>
 
