@@ -2,8 +2,7 @@ const express = require('express')
 const router = express.Router()
 const pool = require('../../db')
 const sendToDS = require('../../utils/useDeepseek')
-const sendToDSStream = require('../../utils/useDeepseekStream')
-const { useUserSentence, useSystemSentence, useSumPoint } = require('../../utils/sentence')
+const { useSumPoint } = require('../../utils/sentence')
 
 const MSG_TYPE = {
   'user': 0, // 用户发言

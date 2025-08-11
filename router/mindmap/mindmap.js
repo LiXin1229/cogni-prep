@@ -7,6 +7,15 @@ const { useSubcategorySentence } = require('../../utils/sentence')
 router.get('/getMindmapData', async (req, res) => {
   const { areaId } = req.query
 
+  if (!areaId) {
+    res.send({
+      code: 400,
+      success: false,
+      message: '无areaId'
+    })
+    return
+  }
+
   // console.log(areaId)
   try {
     const [rows] = await pool.query(

@@ -39,6 +39,13 @@ router.post('/initSession', async (req, res) => {
 router.get('/getSessionList', async (req, res) => {
   const { id } = req.query
 
+  if (!id) {
+    return res.send({
+      code: 400,
+      success: false,
+      message: '用户id不能为空'
+    })
+  }
   const sessionList = []
 
   try {
