@@ -29,7 +29,10 @@ const userStore = useUserInfoStore()
 const sidebarRef = ref(null)
 const mainViewRef = ref(null)
 
-const isSidebarFolded = ref(false)
+const isSidebarFolded = computed({
+  get: () => userStore.isSidebarFolded,
+  set: value => userStore.isSidebarFolded = value
+})
 
 const toggleSidebar = () => {
   isSidebarFolded.value = !isSidebarFolded.value
@@ -94,6 +97,9 @@ onMounted(async() => {
       <div class="tooltips">
         <div @click="toggleSidebar" class="toggle-sidebar">
           <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+        </div>
+        <div class="logout" @click="userStore.logout()">
+          退出登录
         </div>
       </div>
 
@@ -277,6 +283,7 @@ onMounted(async() => {
     .session-list {
       margin-top: 18px;
       padding: 18px 0;
+      padding-bottom: 10px;
       border-top: 1px solid var(--light-border-color-1);
 
       .history-top {
@@ -299,7 +306,6 @@ onMounted(async() => {
         width: 240px;
         height: calc(100vh - 340px);
         overflow: auto;
-        // background-color: beige;
 
         .session-wrapper {
           width: 235px;

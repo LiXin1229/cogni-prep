@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useUserInfoStore } from './user'
 import { useRouter } from 'vue-router'
 import { getTextWidth } from '@/utils/getTextWidth.js'
 import { formatDate } from '@/utils/formatDate.js'
+import request from '@/utils/request'
 import API from '@/utils/API.js'
-import axios from 'axios'
 
 export const usePreferStore = defineStore('prefer', () => {
+  const userStore = useUserInfoStore()
   const router = useRouter()
 
   const preferList = ref([])
@@ -14,15 +16,15 @@ export const usePreferStore = defineStore('prefer', () => {
   // 获取收藏列表
   const getPreferList = async () => {
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.getPreferList,
         method: 'GET',
         params: {
-          userId: 1
+          userId: userStore.userInfo.userId
         }
       })
 
-      preferList.value = data.data.preferList
+      preferList.value = res.data.preferList
         .map(ele => {
           const length = getTextWidth(ele.content, { fontSize: '14px' })
           // console.log(length)
@@ -50,7 +52,7 @@ export const usePreferStore = defineStore('prefer', () => {
     // console.log(IdList)
 
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.getdetailChats,
         method: 'GET',
         params: {
@@ -58,9 +60,9 @@ export const usePreferStore = defineStore('prefer', () => {
         }
       })
 
-      if (data.success) {
+      if (res.success) {
         // console.log(data)
-        detailChats.value = data.data.chatList
+        detailChats.value = res.data.chatList
       }
     } catch (error) {
       throw new Error(error)
@@ -72,7 +74,7 @@ export const usePreferStore = defineStore('prefer', () => {
     // console.log(preferId)
     router.push('/prefer')
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.deletePrefer,
         method: 'POST',
         data: {
@@ -80,7 +82,7 @@ export const usePreferStore = defineStore('prefer', () => {
         }
       })
 
-      if (data.success) {
+      if (res.success) {
         preferList.value = preferList.value.filter(ele => ele.id !== preferId)
         ElMessage({
           message: '删除成功',

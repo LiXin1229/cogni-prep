@@ -204,6 +204,7 @@ defineExpose({
           color: var(--main-color);
           border-radius: 10px;
           margin-right: 15px;
+          cursor: pointer;
         }
 
         .surrounding-point {
@@ -211,6 +212,7 @@ defineExpose({
           border: 1px solid var(--light-border-color-1);
           border-radius: 10px;
           color: var(--text-color-4);
+          cursor: pointer;
 
           &:hover {
             background-color: var(--uesr-bubble-bgc);
@@ -231,12 +233,14 @@ defineExpose({
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
           }
 
           .add-area {
             display: flex;
             justify-content: left;
             color: var(--light-blue-color);
+            cursor: pointer;
           }
         }
 
@@ -262,6 +266,7 @@ defineExpose({
           padding: 2px 8px 2px 6px;
           border: 1.5px solid var(--main-color);
           border-radius: 50px;
+          cursor: pointer;
 
           .icon {
             width: 17px;
@@ -284,6 +289,7 @@ defineExpose({
           border-radius: 50%;
           background-color: var(--btn-locked);
           position: relative;
+          cursor: pointer;
 
           .icon {
             position: absolute;

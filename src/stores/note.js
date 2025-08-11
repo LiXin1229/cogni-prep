@@ -5,7 +5,7 @@ import { useUserInfoStore } from './user'
 import { useMindmapStore } from './mindmap'
 import { useLocalStorage } from '@/utils/useStorage'
 import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
-import axios from 'axios'
+import request from '@/utils/request'
 import API from '@/utils/API.js'
 
 export const useNoteStore = defineStore('note', () => {
@@ -32,20 +32,20 @@ export const useNoteStore = defineStore('note', () => {
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
 
-    const { data } = await axios({
+    const res = await request({
       url: API.getMindmapData,
       method: 'GET',
       params: {
         areaId: selectedAreaId.value
       }
     })
-    // console.log(data.data)
+    // console.log(res.data)
 
-    treeData.value = data.data.mindmap
+    treeData.value = res.data.mindmap
   }
 
   // 本地存储展开的树节点
-  const { value: selectKey } = useLocalStorage('cogni_selectKey', [])
+  const { value: selectKey } = useLocalStorage('cogni_select_key', [])
 
   // 更新当前选中的树节点
   const updateSelectKey = (data) => {
@@ -78,20 +78,20 @@ export const useNoteStore = defineStore('note', () => {
     sendState.value = 'loading'
 
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.initNote,
         method: 'POST'
       })
-      // console.log(data)
+      // console.log(res)
 
-      return data
+      return res
     } catch (error) {
       throw new Error(error)
     }
   }
 
   const saveNote = async (noteId, content, node) => {
-    const { data } = await axios({
+    const res = await request({
       url: API.saveNote,
       method: 'POST',
       data: {
@@ -100,7 +100,7 @@ export const useNoteStore = defineStore('note', () => {
       }
     })
 
-    console.log('保存记录', data)
+    console.log('保存记录', res)
     updateSelectKey({ id: node.id, markId: noteId })
   }
 
@@ -209,23 +209,23 @@ export const useNoteStore = defineStore('note', () => {
       return
     }
 
-    const { data } = await axios({
+    const res = await request({
       url: API.getNoteData,
       method: 'GET',
       params: {
         markId: node.markId
       }
     })
-    // console.log('获取节点笔记', data)
+    // console.log('获取节点笔记', res)
 
-    note.value = data.data.content
+    note.value = res.data.content
   }
 
   // 修改节点笔记
   const updateNoteData = async (markId) => {
     if (!markId) return
 
-    const { data } = await axios({
+    const res = await request({
       url: API.updateNote,
       method: 'POST',
       data: {
@@ -233,9 +233,9 @@ export const useNoteStore = defineStore('note', () => {
         content: note.value
       }
     })
-    // console.log('修改节点笔记', data)
+    // console.log('修改节点笔记', res)
 
-    if (data.success) {
+    if (res.success) {
       return true
     }
 
@@ -253,7 +253,7 @@ export const useNoteStore = defineStore('note', () => {
   const saveMindmapData = async (data) => {
     if (!selectedAreaId.value) return
 
-    await axios({
+    await request({
       url: API.saveMindmapData,
       method: 'POST',
       data: {

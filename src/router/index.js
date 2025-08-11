@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
+import Login from '@/pages/Login/index.vue'
 import Layout from '@/pages/Layout/index.vue'
 import ChatView from '@/pages/ChatView/index.vue'
 import MindMap from '@/pages/MindMap/index.vue'
@@ -13,6 +14,11 @@ import { useUserInfoStore } from '../stores/user'
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/login',
+      name: '登录',
+      component: Login
+    },
     {
       path: '/',
       component: Layout,

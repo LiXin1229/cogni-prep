@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user.js'
 import { useChatStore } from './chat'
 import { useMindmapStore } from './mindmap.js'
-import axios from 'axios'
+import request from '@/utils/request.js'
 import API from '@/utils/API.js'
 
 export const useSessionStore = defineStore('session', () => {
@@ -52,44 +52,21 @@ export const useSessionStore = defineStore('session', () => {
     }
   }, { immediate: true })
 
-  // watch(() => [currSession.value, userStore.areaList], ([session, list]) => {
-  //   // console.log('currSession', currSession.value)
-  //   if (session) {
-  //     mainArea.value = {
-  //       areaId: session.areaId,
-  //       name: session.mainArea
-  //     }
-  //     surroundingPoint.value = session.surroundingPoint
-  //   }
-  //   else {
-  //     // console.log(list)
-  //     if (list.length) {
-  //       const area = list[list.length - 1]
-  //       mainArea.value = {
-  //         areaId: area.areaId,
-  //         name: area.name
-  //       }
-  //     } else {
-  //       mainArea.value = {
-  //         areaId: null,
-  //         name: '未选择领域'
-  //       }
-  //     }
-  //     surroundingPoint.value = ''
-  //   }
-  // }, { immediate: true })
-
   const getSessionList = async () => {
-    const { data } = await axios({
+    if (!userStore.userInfo.userId) {
+      return
+    }
+
+    const res = await request({
       url: API.getSessionList,
       method: 'GET',
       params: {
-        id: 1
+        id: userStore.userInfo.userId
       }
     })
-    // console.log(data)
+    // console.log(res)
 
-    sessionList.value = data.data.sessionList
+    sessionList.value = res.data.sessionList
   }
 
   // 标记是否有节点需要挂载sessionId
@@ -100,22 +77,22 @@ export const useSessionStore = defineStore('session', () => {
     // console.log('mainArea', mainArea.value)
     // console.log('point', surroundingPoint.value)
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.initSession,
         method: 'POST',
         data: {
-          userId: 1,
+          userId: userStore.userInfo.userId,
           mainArea: mainArea.value.name,
           areaId: mainArea.value.areaId,
           surroundingPoint: surroundingPoint.value
         }
       })
-      // console.log('res_session', data)
+      // console.log('res_session', res)
 
-      sessionList.value.unshift(data.data)
+      sessionList.value.unshift(res.data)
 
       // 更新sessionId
-      await router.push(`/chat/${data.data.sessionId}`)
+      await router.push(`/chat/${res.data.sessionId}`)
 
       // 清空目标节点
       if (markNode.value) {
@@ -130,18 +107,18 @@ export const useSessionStore = defineStore('session', () => {
   // 删除会话
   const deleteSession = async (session) => {
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.deleteSession,
         method: 'POST',
         data: {
           sessionId: session.sessionId,
           areaId: session.areaId,
-          userId: 1
+          userId: userStore.userInfo.userId
         }
       })
       // console.log('res_session', data)
 
-      if (data.success) {
+      if (res.success) {
         if (chatStore.sessionId === session.sessionId) {
           router.push('/chat')
         }

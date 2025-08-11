@@ -106,6 +106,7 @@ watch(() => props.showDialog, (showDialog) => {
       margin: 10px 0;
       padding: 0 5px;
       color: var(--text-color-2);
+      cursor: pointer;
 
       .icon {
         color: var(--text-color-4);

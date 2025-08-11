@@ -1,17 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useUserInfoStore } from './user'
+import { useNoteStore } from './note'
 import { useLocalStorage } from '@/utils/useStorage'
 import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
-import axios from 'axios'
+import request from '@/utils/request'
 import API from '@/utils/API.js'
 
 export const useMindmapStore = defineStore('mindmap', () => {
   const userStore = useUserInfoStore()
+  const noteStore = useNoteStore()
 
   const areaList = computed(() => userStore.areaList)
 
-  const { value: selectedAreaId } = useLocalStorage('cogni_selectedAreaId', {})
+  const { value: selectedAreaId } = useLocalStorage('cogni_selected_area_id', {})
 
   const getSelectedAreaId = async () => {
     await userStore.getUserInfo()
@@ -26,7 +28,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
 
-    const { data } = await axios({
+    const res = await request({
       url: API.getMindmapData,
       method: 'GET',
       params: {
@@ -34,14 +36,14 @@ export const useMindmapStore = defineStore('mindmap', () => {
       }
     })
 
-    return data.data
+    return res.data
   }
 
   // 保存导图数据
   const saveMindmapData = async (data) => {
     if (!selectedAreaId.value) return
 
-    await axios({
+    await request({
       url: API.saveMindmapData,
       method: 'POST',
       data: {
@@ -49,6 +51,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
         mindmap: data
       }
     })
+
+    noteStore.getTreeData()
   }
 
   // 是否正在编辑
@@ -77,7 +81,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
     try {
       sendState.value = true
-      const { data } = await axios({
+      const res = await request({
         url: API.getSubcategory,
         method: 'POST',
         data: {
@@ -90,7 +94,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
       })
 
       sendState.value = false
-      return data 
+      return res 
     } catch (error) {
       sendState.value = false
       throw new Error(error)

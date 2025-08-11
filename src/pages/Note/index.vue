@@ -265,7 +265,7 @@ onUnmounted(() => {
             <template #default="{ node, data }">
               <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                 <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
-                <cust-popup :position="{ top: '0px', left: '20px' }">
+                <cust-popup :position="{ top: '20px', left: '-75px' }">
                   <div class="func-btn toggleNodePopup" @click.stop="(e) => togglePopup(e, data)" >
                     <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                   </div>
@@ -327,6 +327,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     padding: 0 20px;
+    border-bottom: 1px solid var(--light-border-color-1);
     overflow-x: auto;
     overflow-y: hidden;
 

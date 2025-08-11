@@ -45,7 +45,9 @@ const sizeMap = {
 const positionStyle = computed(() => {
   const { width, height } = sizeMap[props.showCustMenu]
 
-  const x = Math.min(props.position.x, window.innerWidth - width - 270)
+  const left = userStore.isSidebarFolded ? 260 : 0
+
+  const x = Math.min(props.position.x + left, window.innerWidth - width - (userStore.isSidebarFolded ? 20 : 280))
   const y = Math.min(props.position.y, window.innerHeight - height)
 
   return {

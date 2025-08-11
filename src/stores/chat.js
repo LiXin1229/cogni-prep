@@ -5,7 +5,7 @@ import { useSessionStore } from '@/stores/session.js'
 import { useUserInfoStore } from '@/stores/user.js'
 import { usePreferStore } from './prefer'
 import API from '@/utils/API.js'
-import axios from 'axios'
+import request from '@/utils/request'
 import { v4 as uuidv4 } from 'uuid'
 
 export const useChatStore = defineStore('chat', () => {
@@ -50,7 +50,7 @@ export const useChatStore = defineStore('chat', () => {
     }
 
     else {
-      const { data } = await axios({
+      const res = await request({
         url: API.getChatData,
         method: 'GET',
         params: {
@@ -58,7 +58,7 @@ export const useChatStore = defineStore('chat', () => {
         }
       })
       
-      displayChat.value = data.data.chatList
+      displayChat.value = res.data.chatList
       chatMap.set(currentId, displayChat.value)
       // console.log('状态', chatStatus.value)
     }
@@ -215,6 +215,7 @@ export const useChatStore = defineStore('chat', () => {
   let controller = null
 
   const getStreamResponse = async (url, data, chatId, msgType) => {
+    // console.log('getStreamResponse', data)
     controller = new AbortController()
     // 保存信号，用于外部中断
     const abortSignal = controller.signal
@@ -284,7 +285,7 @@ export const useChatStore = defineStore('chat', () => {
     nextState.value = false
 
     try {
-      const { data } = await axios({
+      const res = await request({
         url: API.initChat,
         method: 'POST',
         data: {
@@ -293,14 +294,14 @@ export const useChatStore = defineStore('chat', () => {
         }
       })
 
-      return data 
+      return res 
     } catch (error) {
       throw new Error(error)
     }
   }
 
   const saveUserWords = async (msgType, content) => { 
-    const { data } = await axios({
+    const res = await request({
       url: API.saveUserWords,
       method: 'POST',
       data: {
@@ -310,11 +311,11 @@ export const useChatStore = defineStore('chat', () => {
       }
     })
 
-    return data
+    return res
   }
 
   const saveChat = async (chatId, content, data) => {
-    const res = await axios({
+    const res = await request({
       url: API.saveChat,
       method: 'POST',
       data: {
@@ -398,16 +399,16 @@ export const useChatStore = defineStore('chat', () => {
   const selectChat = ref(null)
 
   const deleteChat = async () => {
-    const { data } = await axios({
+    const res = await request({
       url: API.deleteChat,
       method: 'POST',
       data: {
         chatId: selectChat.value.id
       }
     })
-    // console.log(data)
+    // console.log(res)
 
-    if (data.success) {
+    if (res.success) {
       displayChat.value = displayChat.value.filter(item => item.id !== selectChat.value.id)
     }
   }
@@ -439,19 +440,19 @@ export const useChatStore = defineStore('chat', () => {
       const sortChats = Array.from(preferList.value).sort((a, b) => a - b)
       const content = displayChat.value.find(item => item.id === sortChats[0]).content + displayChat.value.find(item => item.id === sortChats[1] || -1)?.content || ''
 
-      const { data } = await axios({
+      const res = await request({
         url: API.initPrefer,
         method: 'POST',
         data: {
-          userId: 1,
+          userId: userStore.userInfo.userId,
           title: sessionStore.currSession.title,
           content: content,
           chatIds: sortChats
         }
       })
 
-      if (data.success) {
-        const id = data.data.perferId
+      if (res.success) {
+        const id = res.data.perferId
         ElMessage({
           dangerouslyUseHTMLString: true,
           message: `收藏成功，<span style="text-decoration: underline; cursor: pointer;" id="go-prefer-${id}">去看看</span>`,
