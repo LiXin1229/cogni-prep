@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const handleError = require('./utils/handleError.js')
+const { expressjwt } = require('express-jwt')
 
 const userRouter = require('./router/user/index.js')
 const chatRouter = require('./router/chat/index.js')
@@ -9,8 +10,8 @@ const noteRouter = require('./router/note/index.js')
 const perferRouter = require('./router/perfer/index.js')
 
 // 解析 token 的中间件 (以 /login 开头的 以及 下载头像的 不需要检验 token)
-// const secretKey = 'isomer 1229 ^.^'
-// app.use(expressjwt({ secret: secretKey, algorithms: ['HS256'] }).unless({ path: [/^\/users\//, /^\/upload\//] }))
+const secretKey = 'isomer 1229 ^.^'
+app.use(expressjwt({ secret: secretKey, algorithms: ['HS256'] }).unless({ path: [/^\/user\//] }))
 
 // 配置解析表单数据的中间件
 app.use(express.urlencoded({ extended: false }))

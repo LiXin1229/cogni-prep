@@ -123,14 +123,14 @@ router.get('/getChatData', async (req, res) => {
   try {
     const [rows] = await pool.query(
       'SELECT * FROM chats WHERE session_id = ?',
-      sessionId
+      +sessionId
     )
 
     rows.forEach(row => {
       chatList.push({
         id: row.id,
         content: row.content,
-        sessionId: sessionId,
+        sessionId: +sessionId,
         messageType: row.message_type
       })
     })

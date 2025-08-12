@@ -23,6 +23,8 @@ router.get('/getMindmapData', async (req, res) => {
       +areaId
     )
 
+    console.log(rows[0])
+
     res.send({
       code: 200,
       success: true,
