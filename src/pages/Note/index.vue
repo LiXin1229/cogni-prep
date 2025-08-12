@@ -244,6 +244,9 @@ onUnmounted(() => {
         >
           {{ area.name }}
         </div>
+        <div class="tip">
+          点击菜单&nbsp;&nbsp;<img src="../../assets/svgs/ellipsis.svg" style="width:16px;vertical-align:middle;">&nbsp;&nbsp;生成笔记
+        </div>
       </div>
     </div>
 
@@ -266,7 +269,7 @@ onUnmounted(() => {
               <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                 <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
                 <cust-popup :position="{ top: '20px', left: '-75px' }">
-                  <div class="func-btn toggleNodePopup" @click.stop="(e) => togglePopup(e, data)" >
+                  <div :class="['func-btn', 'toggleNodePopup', data.id === selectKey[0]?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
                     <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                   </div>
 
@@ -354,6 +357,7 @@ onUnmounted(() => {
     .area-list {
       display: flex;
       justify-content: flex-start;
+      align-items: center;
       gap: 20px;
 
       .area-item {
@@ -369,6 +373,12 @@ onUnmounted(() => {
       .selected-area {
         background-color: var(--theme-color-1);
         color: var(--normal-bgc);
+      }
+
+      .tip {
+        color: var(--text-color-4);
+        font-size: 14px;
+        cursor: default;
       }
     }
   }
@@ -432,6 +442,10 @@ onUnmounted(() => {
           &:hover {
             background-color: var(--light-border-color-2);
           }
+        }
+
+        .func-btn.visible {
+          visibility: visible !important;
         }
 
         .popup-menu {

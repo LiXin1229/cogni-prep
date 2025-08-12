@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { ElLoading } from 'element-plus'
 import { useUserInfoStore } from '@/stores/user'
-import router from '@/router'
 
 const customConfig = {
   showLoading: false,
@@ -27,8 +26,8 @@ instance.interceptors.request.use(
   (config) => {
     const userStore = useUserInfoStore()
     // console.log('token', userStore.token)
-    if (userStore.getToken) {
-      config.headers.Authorization = `Bearer ${userStore.getToken}`
+    if (userStore.token) {
+      config.headers.Authorization = `Bearer ${userStore.token}`
     }
 
     if (customConfig.showLoading) {
@@ -110,12 +109,8 @@ instance.interceptors.response.use(
           isTokenExpiredShown = false
         }, 1000)
       }
-      const userStore = useUserStore()
+      const userStore = useUserInfoStore()
       userStore.logout()
-
-      router.replace({
-        name: 'login'
-      })
     }
 
     // 错误处理

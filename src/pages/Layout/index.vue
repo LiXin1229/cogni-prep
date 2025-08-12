@@ -15,6 +15,7 @@ import EditNode from './EditNode.vue'
 import DeleteNode from './DeleteNode.vue'
 import DeleteChildren from './DeleteChildren.vue'
 import QuoteMindmap from './QuoteMindmap.vue'
+import LogoutDialog from './LogoutDialog.vue'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
@@ -95,11 +96,11 @@ onMounted(async() => {
   <div class="layout">
     <div :class="['sidebar', isSidebarFolded && 'sidebar-folded']" ref="sidebarRef">
       <div class="tooltips">
-        <div @click="toggleSidebar" class="toggle-sidebar">
-          <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+        <div class="logout" @click="userStore.showDialog = 'logout'">
+          <img src="../../assets/svgs/logout.svg" alt="" class="icon">
         </div>
-        <div class="logout" @click="userStore.logout()">
-          退出登录
+        <div class="toggle-sidebar" @click="toggleSidebar">
+          <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
         </div>
       </div>
 
@@ -170,6 +171,7 @@ onMounted(async() => {
     <delete-node :showDialog="userStore.showDialog === 'deleteNode'" />
     <delete-children :showDialog="userStore.showDialog === 'deleteChildren'" />
     <quote-mindmap :showDialog="userStore.showDialog === 'quoteMindmap'" />
+    <logout-dialog :showDialog="userStore.showDialog === 'logout'" />
   </div>
 </template>
 
@@ -195,10 +197,10 @@ onMounted(async() => {
     .tooltips {
       height: 50px;
       display: flex;
-      justify-content: left;
+      justify-content: space-between;
       align-items: center;
 
-      .toggle-sidebar {
+      .toggle-sidebar, .logout {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -206,14 +208,14 @@ onMounted(async() => {
         height: 24px;
         border-radius: 5px;
 
-        .icon {
-          width: 16px;
-          height: 16px;
-        }
-
         &:hover {
           background-color: var(--btn-hover);
         }
+      }
+
+      .icon {
+        width: 16px;
+        height: 16px;
       }
     }
 

@@ -38,7 +38,6 @@ export const useChatStore = defineStore('chat', () => {
   // 获取当前会话的聊天列表
   const initDisplayChat = async () => {
     const currentId = sessionId.value
-    // console.log('initDisplayChat', currentId)
 
     if (!currentId) {
       displayChat.value = []
@@ -126,9 +125,7 @@ export const useChatStore = defineStore('chat', () => {
   const funcStatus = ref(0)
 
   const submit = async (content, status) => {
-    // testStream()
     if (!checkArea()) return
-    // triggerComponent('scrollToBottom')
 
     // 初始化session
     if (!sessionId.value) {
@@ -230,9 +227,16 @@ export const useChatStore = defineStore('chat', () => {
     displayChat.value.push(newText)
 
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (userStore.token) {
+        headers['Authorization'] = `Bearer ${userStore.token}`
+      }
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(data),
         signal: abortSignal // 关联中断信号
       })
@@ -315,6 +319,8 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const saveChat = async (chatId, content, data) => {
+    displayChat.value.find(item => item.id === chatId).content = content
+
     const res = await request({
       url: API.saveChat,
       method: 'POST',
@@ -461,7 +467,6 @@ export const useChatStore = defineStore('chat', () => {
 
         nextTick(() => {
           const link = document.querySelector(`#go-prefer-${id}`)
-          console.log(link)
           if (link) {
             link.addEventListener('click', () => {
               router.push('/prefer')

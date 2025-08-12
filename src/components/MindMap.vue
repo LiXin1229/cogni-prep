@@ -37,7 +37,7 @@ const props = defineProps({
 
 // 更新数据
 const updateData = async () => {
-  const { mindmap } = await mindmapStore.getMindmapData()
+  const mindmap = await mindmapStore.getMindmapData()
   treeData.value = mindmap
 }
 

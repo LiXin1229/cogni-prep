@@ -28,15 +28,21 @@ export const useMindmapStore = defineStore('mindmap', () => {
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
 
-    const res = await request({
-      url: API.getMindmapData,
-      method: 'GET',
-      params: {
-        areaId: selectedAreaId.value
-      }
-    })
+    try {
+      const res = await request({
+        url: API.getMindmapData,
+        method: 'GET',
+        params: {
+          areaId: selectedAreaId.value
+        }
+      })
 
-    return res.data
+      if (res.success) {
+        return res.data.mindmap
+      }
+    } catch (error) {
+      throw error
+    }
   }
 
   // 保存导图数据

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from './chat'
 import { useSessionStore } from './session'
@@ -16,7 +16,7 @@ export const useUserInfoStore = defineStore('user', () => {
   const noteStore = useNoteStore()
   const sessionStore = useSessionStore()
 
-  const isSidebarFolded = ref(true)
+  const isSidebarFolded = ref(false)
 
   const showDialog = ref('')
   const ableClose = ref(true)
@@ -31,7 +31,7 @@ export const useUserInfoStore = defineStore('user', () => {
     noteStore.selectKey = []
     mindmapStore.selectedAreaId = {}
 
-    router.push('/login')
+    router.replace('/login')
   }
 
   const getUserInfo = async () => {
@@ -67,12 +67,12 @@ export const useUserInfoStore = defineStore('user', () => {
     })
 
     if (res.success) {
+      await router.push({
+        name: '每日刷题'
+      })
       areaList.value.push(res.data.newArea)
       mindmapStore.selectedAreaId = res.data.newArea.areaId
       sessionStore.mainArea = res.data.newArea
-      router.push({
-        name: '每日刷题'
-      })
     }
 
     console.log(res.data)

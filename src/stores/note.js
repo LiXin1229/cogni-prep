@@ -152,9 +152,16 @@ export const useNoteStore = defineStore('note', () => {
     const abortSignal = controller.signal
 
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (userStore.token) {
+        headers['Authorization'] = `Bearer ${userStore.token}`
+      }
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(data),
         signal: abortSignal
       })

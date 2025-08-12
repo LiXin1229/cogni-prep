@@ -30,7 +30,7 @@ const selectArea = async (id) => {
 }
 
 onMounted(() => {
-  mindmapStore.getMindmapData()
+  // mindmapStore.getMindmapData()
 })
 </script>
 
@@ -50,6 +50,9 @@ onMounted(() => {
           @click="selectArea(area.areaId)"
         >
           {{ area.name }}
+        </div>
+        <div class="tip">
+          点击节点打开菜单
         </div>
       </div>
     </div>
@@ -98,6 +101,7 @@ onMounted(() => {
     .area-list {
       display: flex;
       justify-content: flex-start;
+      align-items: center;
       gap: 20px;
 
       .area-item {
@@ -127,6 +131,12 @@ onMounted(() => {
           top: 5px;
           left: 6px;
         }
+      }
+
+      .tip {
+        color: var(--text-color-4);
+        font-size: 14px;
+        cursor: default;
       }
     }
   }
