@@ -526,6 +526,11 @@ const title = computed(() => {
 
       .text-wrapper.user-wrapper {
         text-align: end;
+
+        .user {
+          text-align: left;
+          word-break: break-all;
+        }
       }
 
       .loading-icon {
