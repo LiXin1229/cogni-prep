@@ -30,6 +30,46 @@
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   }
 
+  // 文本样式
+  /* 列表样式（有序/无序列表） */
+  ul,
+  ol {
+    // margin: 0 0 16px;
+    padding-left: 18px; /* 左侧缩进，预留列表符号位置 */
+  }
+
+  ul {
+    list-style-type: none; /* 无序列表默认圆点 */
+  }
+
+  ol {
+    list-style-type: decimal; /* 有序列表默认数字 */
+  }
+
+  ul li::before {
+    content: ""; /* 圆点符号（也可用其他符号如 "●"） */
+    // color: var(--text-color-4); /* 自定义颜色（这里用谷歌红示例） */
+    // font-weight: bold; /* 加粗圆点 */
+    display: inline-block;
+    // padding-bottom: 10px;
+    width: 6px; /* 固定宽度，确保对齐 */
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--text-color-4);
+    margin: 0 12px 2px -15px;
+  }
+
+  ol li::marker {
+    color: var(--text-color-3); /* 序号颜色（示例为深紫色） */
+    font-weight: bold; /* 可选：加粗序号 */
+    font-size: 0.9em;
+  }
+
+  a {
+    color: var(--main-color); /* 链接蓝色 */
+    text-decoration: none; /* 取消默认下划线 */
+  }
+
   // 代码块头部
   .code-block-header {
     display: flex;

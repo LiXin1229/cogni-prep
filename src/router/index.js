@@ -9,8 +9,6 @@ import Prefer from '@/pages/Prefer/index.vue'
 import PreferDetail from '@/pages/Prefer/PreferDetail.vue'
 import Interview from '@/pages/Interview/index.vue'
 
-import { useUserInfoStore } from '../stores/user'
-
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
@@ -39,7 +37,8 @@ const router = createRouter({
         {
           path: 'mindmap',
           name: '知识点图',
-          component: MindMap
+          component: MindMap,
+          meta: { keepAlive: true }
         },
         {
           path: 'note',
@@ -69,18 +68,18 @@ const router = createRouter({
   ]
 })
 
-router.afterEach(async (to, from) => {
-  const userStore = useUserInfoStore()
+// router.afterEach(async (to, from) => {
+//   const userStore = useUserInfoStore()
 
-  // console.log('全局后置守卫', userStore.areaList)
-  if (userStore.areaList.length === 0) {
-    await userStore.getUserInfo()
+//   // console.log('全局后置守卫', userStore.areaList)
+//   // if (userStore.areaList.length === 0) {
+//   //   await userStore.getUserInfo()
 
-    if (userStore.areaList.length === 0) {
-      userStore.showDialog = 'selectArea'
-      userStore.ableClose = false
-    }
-  }
-})
+//   //   if (userStore.areaList.length === 0) {
+//   //     userStore.showDialog = 'selectArea'
+//   //     userStore.ableClose = false
+//   //   }
+//   // }
+// })
 
 export default router

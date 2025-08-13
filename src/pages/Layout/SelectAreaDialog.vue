@@ -11,10 +11,14 @@ const props = defineProps({
   }
 })
 
-const selectCategory = ref('互联网/AI')
+const selectCategory = ref('大学水课')
 const selectCategoryChildren = ref('')
 
 const categorys = [
+  {
+    name: '大学水课',
+    children: ['测绘学漫谈', '工程制图', '数字地形测量学', '普通测量实验', '大地测量学基础', '人文地理学', '摄影测量学基础', '数字测图实习', '控制测量与平差实习']
+  },
   {
     name: '互联网/AI',
     children: ['Java', 'C++', '后端开发', '前端/移动开发', '算法工程师', '运维', '测试']
@@ -87,6 +91,9 @@ watch(() => props.showDialog, (showDialog) => {
   <div class="select-area-dialog" v-if="showDialog">
     <cust-dialog ref="dialogRef" title="选择领域" @confirm="confirm">
       <div class="content">
+        <div class="custom">
+          <el-input v-model="custom" placeholder="自定义领域" style="--el-input-focus-border-color: var(--theme-color-1);" />
+        </div>
         <div class="area-category">
           <div class="category-list">
             <div
@@ -115,9 +122,6 @@ watch(() => props.showDialog, (showDialog) => {
               </div>
             </div>
           </div>
-        </div>
-        <div class="custom">
-          <el-input v-model="custom" placeholder="自定义领域" style="--el-input-focus-border-color: var(--theme-color-1);" />
         </div>
       </div>
     </cust-dialog>

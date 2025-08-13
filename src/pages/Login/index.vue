@@ -54,7 +54,7 @@ const submit = (formRef) => {
         userStore.token = res.data.token
         console.log('userStore.token', userStore.token)
         await userStore.getUserInfo()
-        userStore.showDialog = ''
+        // userStore.showDialog = ''
 
         router.push('/')
       }
@@ -81,7 +81,7 @@ const submit = (formRef) => {
         userStore.userInfo = res.data.userInfo
         userStore.token = res.data.token
         await userStore.getUserInfo()
-        userStore.showDialog = ''
+        // userStore.showDialog = ''
 
         router.push('/')
       }

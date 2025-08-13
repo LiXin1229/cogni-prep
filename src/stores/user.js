@@ -35,8 +35,9 @@ export const useUserInfoStore = defineStore('user', () => {
   }
 
   const getUserInfo = async () => {
-    if (!userInfo.value.userId) {
-      return
+    console.log('获取用户信息', userInfo.value?.userId)
+    if (!userInfo.value?.userId) {
+      return logout()
     }
 
     const res = await request({
@@ -49,6 +50,11 @@ export const useUserInfoStore = defineStore('user', () => {
     // console.log(res.data)
 
     areaList.value = res.data.areaList
+
+    if (areaList.value.length === 0) {
+      showDialog.value = 'selectArea'
+      ableClose.value = false
+    }
   }
 
   // 领域列表

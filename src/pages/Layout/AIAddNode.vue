@@ -157,6 +157,7 @@ watch(() => props.showDialog, (showDialog) => {
       align-items: center;
       max-height: 400px;
       overflow-y: auto;
+      padding: 0 30px;
 
       .point-item {
         display: flex;

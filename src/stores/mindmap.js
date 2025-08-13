@@ -22,8 +22,10 @@ export const useMindmapStore = defineStore('mindmap', () => {
   // 展示的树数据
   const treeData = ref({})
 
+  const isEmptyObj = (o) => o != null && typeof o === 'object' && Object.keys(o).length === 0
+
   const getMindmapData = async () => {
-    if (!selectedAreaId.value) {
+    if (isEmptyObj(selectedAreaId.value)) {
       await getSelectedAreaId()
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
