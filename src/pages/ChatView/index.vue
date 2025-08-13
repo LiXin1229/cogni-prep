@@ -8,7 +8,7 @@ import { useSessionStore } from '@/stores/session'
 import { parseMarkdown } from '@/utils/markdown'
 import { stickBlockTop } from '@/utils/stickBlockTop'
 import { useThrottle } from '@/utils/useThrottle'
-import GouIcon from '@/assets/svgs/gou.svg'
+import { writeInClipboard } from '@/utils/clipboard'
 
 const { throttle } = useThrottle()
 const userStore = useUserInfoStore()
@@ -72,31 +72,6 @@ const handleCopy = (e, data) => {
   } else {
     writeInClipboard(data.content, imgElement)
   }
-}
-
-// 写入剪贴板
-const writeInClipboard = (text, imgElement) => {
-  navigator.clipboard.writeText(text)
-    .then(() => {
-      if (!imgElement) return
-
-      const originalSrc = imgElement.src
-
-      // 切换为"已复制"图片
-      imgElement.src = GouIcon
-
-      setTimeout(() => {
-        imgElement.src = originalSrc
-        imgElement.classList.remove('copied-animation')
-      }, 5000)
-    })
-    .catch((err) => {
-      console.log(err)
-      ElMessage({
-        message: '复制失败',
-        type: 'info'
-      })
-    })
 }
 
 // 删除对话
@@ -179,15 +154,21 @@ onMounted(async () => {
 
 // 代码块吸顶
 const scrollRef = ref(null)
+let scrollHandler
 onMounted(() => {
-  scrollRef.value.addEventListener('scroll', stickBlockTop)
+  scrollHandler = () => {
+    if (chatStore.sendState === 'streaming') return
+    stickBlockTop()
+  }
+
+  scrollRef.value?.addEventListener('scroll', scrollHandler)
   stickBlockTop()
 
   chatStore.registerCallback('scrollToBottom', scrollToBottom)
 })
 // 卸载时移除滚动监听
 onUnmounted(() => {
-  if (scrollRef.value) scrollRef.value.removeEventListener('scroll', stickBlockTop)
+  if (scrollRef.value && scrollHandler) scrollRef.value.removeEventListener('scroll', scrollHandler)
   chatStore.abortCurrentStream()
 
   chatStore.registerCallback({})

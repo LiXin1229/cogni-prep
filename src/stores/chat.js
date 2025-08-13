@@ -93,6 +93,11 @@ export const useChatStore = defineStore('chat', () => {
     return lastMsg || ''
   })
 
+  const lastQuestion = computed(() => {
+    const lastMsg = displayChat.value.findLast(item => item.messageType === MSG_TYPE['question'])
+    return lastMsg?.content || ''
+  })
+
   // 选择的题
   const selectQuestion = ref('')
 
@@ -360,7 +365,7 @@ export const useChatStore = defineStore('chat', () => {
         mainArea: res.data.mainArea,
         surroundingPoint: res.data.surroundingPoint,
         answer: content,
-        question: selectQuestion.value
+        question: lastQuestion.value
       }, res.data.chatId, MSG_TYPE['evaluation'])
     }
   }

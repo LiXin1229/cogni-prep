@@ -5,6 +5,7 @@ import { parseMarkdown } from '@/utils/markdown'
 import Quill from 'quill'
 import Delta from 'quill-delta'
 import 'quill/dist/quill.bubble.css'
+import { writeInClipboard } from '@/utils/clipboard'
 
 const noteStore = useNoteStore()
 
@@ -106,31 +107,10 @@ const handleClick = (e) => {
   const preElement = copyBtn.closest('pre')
   const codeElement = preElement?.querySelector('code')
 
+  const imgElement = copyBtn.querySelector('img.icon')
+
   if (codeElement) {
-    // 执行复制逻辑
-    navigator.clipboard.writeText(codeElement.textContent)
-      .then(() => {
-        const imgElement = copyBtn.querySelector('img.icon')
-        if (!imgElement) return
-
-        const originalSrc = imgElement.src
-
-        // 切换为"已复制"图片
-        imgElement.src = '/src/assets/svgs/gou.svg'
-
-        setTimeout(() => {
-          imgElement.src = originalSrc
-          imgElement.classList.remove('copied-animation')
-        }, 5000)
-      })
-      .catch((err) => {
-        console.log(err)
-        ElMessage({
-          message: '复制失败',
-          type: 'info'
-        })
-        return
-      })
+    writeInClipboard(codeElement.textContent, imgElement)
   }
 }
 

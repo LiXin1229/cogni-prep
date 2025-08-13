@@ -10,7 +10,7 @@ export const stickBlockTop = () => {
     const headerHeight = header.offsetHeight;
     
     // 条件：代码块顶部已滚动出视口，且底部未完全离开视口
-    if (blockRect.top < 50 && blockRect.bottom > headerHeight) {
+    if (blockRect.top < 50 && blockRect.bottom > headerHeight + 100) {
       // 固定定位到视口顶部
       header.style.position = 'fixed';
       header.style.top = '55px';
