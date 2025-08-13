@@ -21,6 +21,10 @@ import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
 import penToSquare from '@/assets/svgs/pen-to-square.svg'
 import star from '@/assets/svgs/star.svg'
+import logoutIcon from '@/assets/svgs/logout.svg'
+import hideSidebarIcon from '@/assets/svgs/hide-sidebar.svg'
+import ellipsisIcon from '@/assets/svgs/ellipsis.svg'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -97,10 +101,10 @@ onMounted(async() => {
     <div :class="['sidebar', isSidebarFolded && 'sidebar-folded']" ref="sidebarRef">
       <div class="tooltips">
         <div class="logout" @click="userStore.showDialog = 'logout'">
-          <img src="../../assets/svgs/logout.svg" alt="" class="icon">
+          <img :src="logoutIcon" alt="" class="icon">
         </div>
         <div class="toggle-sidebar" @click="toggleSidebar">
-          <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+          <img :src="hideSidebarIcon" alt="" class="icon">
         </div>
       </div>
 
@@ -134,7 +138,7 @@ onMounted(async() => {
               <div class="title">{{ session.title }}</div>
               <cust-popup :position="{ top: '20px', left: '-75px' }">
                 <div :class="['more-btn', 'toggleSessionPopup', session.sessionId === seclectedSession && 'visible']" @click.stop="(e) => togglePopup(e, session)" >
-                  <img src="../../assets/svgs/ellipsis.svg" alt="" class="icon toggleSessionPopup">
+                  <img :src="ellipsisIcon" alt="" class="icon toggleSessionPopup">
                 </div>
 
                 <template #popup>

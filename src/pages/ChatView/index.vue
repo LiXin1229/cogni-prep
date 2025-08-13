@@ -8,6 +8,7 @@ import { useSessionStore } from '@/stores/session'
 import { parseMarkdown } from '@/utils/markdown'
 import { stickBlockTop } from '@/utils/stickBlockTop'
 import { useThrottle } from '@/utils/useThrottle'
+import GouIcon from '@/assets/svgs/gou.svg'
 
 const { throttle } = useThrottle()
 const userStore = useUserInfoStore()
@@ -82,7 +83,7 @@ const writeInClipboard = (text, imgElement) => {
       const originalSrc = imgElement.src
 
       // 切换为"已复制"图片
-      imgElement.src = '/src/assets/svgs/gou.svg'
+      imgElement.src = GouIcon
 
       setTimeout(() => {
         imgElement.src = originalSrc

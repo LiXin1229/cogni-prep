@@ -3,6 +3,7 @@ import { marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-light.css'
+import copySvg from '@/assets/svgs/copy.svg'
 
 // 配置 marked 使用 highlight.js 高亮代码
 marked.use(markedHighlight({
@@ -79,7 +80,7 @@ export const parseMarkdown = (content) => {
     const copyIcon = document.createElement('div')
     copyIcon.className = 'copy-btn'
     const image = document.createElement('img')
-    image.src = '/src/assets/svgs/copy.svg'
+    image.src = copySvg
     image.className = 'icon'
     image.alt = '复制'
     // 防止图片加载失败的事件注入

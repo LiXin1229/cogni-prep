@@ -152,6 +152,7 @@ export const useNoteStore = defineStore('note', () => {
     const abortSignal = controller.signal
 
     try {
+      const baseUrl = import.meta.env.VITE_BASE_URL + url
       const headers = {
         'Content-Type': 'application/json'
       }
@@ -159,7 +160,7 @@ export const useNoteStore = defineStore('note', () => {
         headers['Authorization'] = `Bearer ${userStore.token}`
       }
 
-      const response = await fetch(url, {
+      const response = await fetch(baseUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),

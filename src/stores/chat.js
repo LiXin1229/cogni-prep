@@ -227,6 +227,7 @@ export const useChatStore = defineStore('chat', () => {
     displayChat.value.push(newText)
 
     try {
+      const baseUrl = import.meta.env.VITE_BASE_URL + url
       const headers = {
         'Content-Type': 'application/json'
       }
@@ -234,7 +235,7 @@ export const useChatStore = defineStore('chat', () => {
         headers['Authorization'] = `Bearer ${userStore.token}`
       }
 
-      const response = await fetch(url, {
+      const response = await fetch(baseUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),

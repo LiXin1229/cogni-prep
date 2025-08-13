@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons'
 import { verifyUsername, verifyPassword } from "@/utils/validate"
-import { securePassword } from "@/utils/securePassword"
+// import { securePassword } from "@/utils/securePassword"
 import request from '@/utils/request'
 import API from '@/utils/API'
 import { useRouter } from 'vue-router'
@@ -37,7 +37,8 @@ const submit = (formRef) => {
       if (!valid) return
 
       const username = ruleForm.username
-      const { derivedKey } = await securePassword(ruleForm.password, username)
+      // const { derivedKey } = await securePassword(ruleForm.password, username)
+      const derivedKey = ruleForm.password
 
       const res = await request({
         url: API.login,
@@ -64,7 +65,8 @@ const submit = (formRef) => {
       if (!valid) return
 
       const username = ruleForm.username
-      const { derivedKey } = await securePassword(ruleForm.password, username)
+      // const { derivedKey } = await securePassword(ruleForm.password, username)
+      const derivedKey = ruleForm.password
 
       const res = await request({
         url: API.register,

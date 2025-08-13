@@ -116,7 +116,7 @@ defineExpose({
           <cust-popup :position="{ bottom: '55px', left: '-15px' }">
             <div class="main-area toggleAreaPopup" @click.stop="togglePopup" >
               {{ mainArea.name }}
-              <img src="../../assets/svgs/arrow-main-color.svg" alt="" class="icon toggleAreaPopup">
+              <img src="../../assets/svgs/arrow-main-color.svg" alt="" :class="['icon', 'toggleAreaPopup', showAreaPopup && 'rotate']">
             </div>
 
             <template #popup>
@@ -205,6 +205,14 @@ defineExpose({
           border-radius: 10px;
           margin-right: 15px;
           cursor: pointer;
+
+          .icon {
+            transition: transform 0.15s linear;
+          }
+
+          .icon.rotate {
+            transform: rotate(-180deg);
+          }
         }
 
         .surrounding-point {
