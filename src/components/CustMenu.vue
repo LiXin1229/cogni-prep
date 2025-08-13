@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { useMindmapStore } from '../stores/mindmap'
 import { useUserInfoStore } from '../stores/user'
+import { useRoute } from 'vue-router'
 
 const mindmapStore = useMindmapStore()
 const userStore = useUserInfoStore()
+const route = useRoute()
 
 const props = defineProps({
   showCustMenu: {
@@ -44,6 +46,17 @@ const sizeMap = {
 // 菜单位置样式
 const positionStyle = computed(() => {
   const { width, height } = sizeMap[props.showCustMenu]
+
+  if (route.path.split('/')[1] === 'chat') {
+    const x = Math.min(props.position.x, window.innerWidth - width - (userStore.isSidebarFolded ? 20 : 280))
+    const y = Math.min(props.position.y - 20, window.innerHeight - height)
+
+    return {
+      left: x + 'px',
+      top: y + 'px',
+      width: width + 'px'
+    }
+  }
 
   const left = userStore.isSidebarFolded ? 260 : 0
 

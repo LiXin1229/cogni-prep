@@ -72,6 +72,8 @@ export const useChatStore = defineStore('chat', () => {
       if (!stateMap.has(id)) {
         stateMap.set(id, ref(defaultValue)) // 自动初始化
       }
+
+      console.log('stateMap', stateMap, 'currentId', id)
       return stateMap.get(id)
     }
     
@@ -251,8 +253,6 @@ export const useChatStore = defineStore('chat', () => {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
-      sendState.value = 'streaming'
-
       while (true) {
         const { done, value } = await reader.read()
 
@@ -262,6 +262,8 @@ export const useChatStore = defineStore('chat', () => {
           saveChat(chatId, newText.content, data)
           break
         }
+
+        sendState.value = 'streaming'
 
         // 解析SSE格式数据（格式：data: [JSON]\n\n）
         const chunk = decoder.decode(value)
