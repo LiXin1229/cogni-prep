@@ -9,7 +9,7 @@ const useSystemSentence = (type, ...args) => {
   }
 
   if (type === 'answer') {
-    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，主要语言为中文，严格按照Markdown语法格式返回内容。`
+    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，如果我的回答比较完善了，可以简要给出优化建议。可以使用Markdown语法格式`
   }
 
   if (type === 'help') {

@@ -2,12 +2,15 @@ const express = require('express')
 const app = express()
 const handleError = require('./utils/handleError.js')
 const { expressjwt } = require('express-jwt')
+const cors = require('cors')
 
 const userRouter = require('./router/user/index.js')
 const chatRouter = require('./router/chat/index.js')
 const mindmapRouter = require('./router/mindmap/index.js')
 const noteRouter = require('./router/note/index.js')
 const perferRouter = require('./router/perfer/index.js')
+
+app.use(cors({ origin: 'http://47.108.61.196' }))
 
 // 解析 token 的中间件 (以 /login 开头的 以及 下载头像的 不需要检验 token)
 const secretKey = 'isomer 1229 ^.^'
