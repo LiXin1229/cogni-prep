@@ -37,8 +37,7 @@ const router = createRouter({
         {
           path: 'mindmap',
           name: '知识点图',
-          component: MindMap,
-          meta: { keepAlive: true }
+          component: MindMap
         },
         {
           path: 'note',

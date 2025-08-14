@@ -30,6 +30,8 @@ const selectArea = async (id) => {
   noteStore.getTreeData()
 }
 
+const resizeRef = ref(null)
+
 const treeRef = ref(null)
 
 // 初始化目录
@@ -231,38 +233,40 @@ onUnmounted(() => {
     </div>
 
     <div class="main-content">
-      <!-- 目录区 -->
-      <div class="sider-menu">
-        <div class="warpper">
-          <!-- {{ treeData }} -->
-          <el-tree
-            ref="treeRef"
-            node-key="id"
-            :data="treeData"
-            :props="defaultProps"
-            @node-click="handleNodeClick"
-            highlight-current
-            :default-expanded-keys="selectKey"
-            :expand-on-click-node="false"
-          >
-            <template #default="{ node, data }">
-              <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
-                <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
-                <cust-popup :position="{ top: '20px', left: '-75px' }">
-                  <div :class="['func-btn', 'toggleNodePopup', data.id === selectKey[0]?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
-                    <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
-                  </div>
-
-                  <template #popup>
-                    <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e) => togglePopup(e, data)">
-                      <div class="menu-item" @click="() => createNote(data)">生成笔记</div>
+      <div class="resize-menu">
+        <!-- 目录区 -->
+        <div class="sider-menu">
+          <div class="warpper">
+            <el-tree
+              ref="treeRef"
+              node-key="id"
+              :data="treeData"
+              :props="defaultProps"
+              @node-click="handleNodeClick"
+              highlight-current
+              :default-expanded-keys="selectKey"
+              :expand-on-click-node="false"
+            >
+              <template #default="{ node, data }">
+                <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
+                  <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
+                  <cust-popup :position="{ top: '20px', left: '-75px' }">
+                    <div :class="['func-btn', 'toggleNodePopup', data.id === selectKey[0]?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
+                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                     </div>
-                  </template>
-                </cust-popup>
-              </div>
-            </template>
-          </el-tree>
+
+                    <template #popup>
+                      <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e) => togglePopup(e, data)">
+                        <div class="menu-item" @click="() => createNote(data)">生成笔记</div>
+                      </div>
+                    </template>
+                  </cust-popup>
+                </div>
+              </template>
+            </el-tree>
+          </div>
         </div>
+        <div class="resize-handle" v-resizable></div>
       </div>
 
       <!-- 笔记内容区 -->
@@ -369,8 +373,22 @@ onUnmounted(() => {
     height: calc(100% - 50px);
   }
 
+  .resize-menu {
+    display: flex;
+    justify-content: left;
+    width: 270px;
+    min-width: 180px;
+    max-width: 440px;
+
+    .resize-handle {
+      width: 5px;
+      height: 100%;
+      cursor: ew-resize; /* 显示水平调整大小的光标 */
+    }
+  }
+
   .sider-menu {
-    width: 265px;
+    width: calc(100% - 5px);
     height: 100%;
     border-right: 1px solid var(--light-border-color-1);
     padding-right: 6px;
@@ -378,7 +396,7 @@ onUnmounted(() => {
     overflow-y: auto;
 
     .warpper {
-      width: 260px;
+      width: calc(100% - 5px);
     }
 
     .custom-tree-node {

@@ -79,6 +79,7 @@ export const useUserInfoStore = defineStore('user', () => {
       areaList.value.push(res.data.newArea)
       mindmapStore.selectedAreaId = res.data.newArea.areaId
       sessionStore.mainArea = res.data.newArea
+      sessionStore.surroundingPoint = ''
     }
 
     console.log(res.data)

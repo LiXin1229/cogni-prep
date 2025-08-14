@@ -7,6 +7,7 @@
     "dev": "vite",
     "test": "vite --mode production",
     "build": "vite build",
+    "build:minify": "vite build --minify",
     "preview": "vite preview"
   },
   "dependencies": {

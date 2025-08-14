@@ -139,8 +139,10 @@ const initChart = () => {
     .scaleExtent([0.1, 5])
     .on('zoom', (event) => {
       currentTransform = event.transform
+      // for (const k in currentTransform) {
+      //   if (Number.isNaN(currentTransform[k])) return
+      // }
       chartGroup.attr('transform', currentTransform)
-      // console.log('currentTransform', currentTransform)
     })
 
   svg.call(zoom)
