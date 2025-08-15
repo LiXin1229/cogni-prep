@@ -3,6 +3,7 @@ const router = express.Router()
 const pool = require('../../db')
 const sendToDS = require('../../utils/useDeepseek')
 const { useSubcategorySentence } = require('../../utils/sentence')
+const { isEmptyObj } = require('../../utils/verifyEmpty')
 
 router.get('/getMindmapData', async (req, res) => {
   const { areaId } = req.query
@@ -39,8 +40,8 @@ router.get('/getMindmapData', async (req, res) => {
 
 router.post('/saveMindmapData', async (req, res) => {
   const { areaId, mindmap } = req.body
-  // console.log('areaId', areaId)
-  // console.log(JSON.stringify(mindmap))
+  
+  if (areaId === null || isEmptyObj(mindmap)) return res.errHandle('参数不完整')
 
   try {
     await pool.query(

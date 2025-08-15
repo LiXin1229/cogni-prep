@@ -93,6 +93,8 @@ router.post('/saveNote', async (req, res) => {
   const { noteId, content } = req.body
   // console.log('saveNote', noteId, content)
 
+  if (!noteId || !content) return res.errHandle('参数不完整')
+
   try {
     await pool.query(
       'UPDATE notes SET content = ? WHERE note_id = ?',
@@ -122,7 +124,7 @@ router.get('/getNoteData', async (req, res) => {
       code: 200,
       success: true,
       data: {
-        content: rows[0].content
+        content: rows[0]?.content || ''
       }
     })
   } catch (err) {
