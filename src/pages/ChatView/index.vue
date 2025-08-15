@@ -221,7 +221,7 @@ const title = computed(() => {
 
       <!-- 对话内容区 -->
       <div :class="['text-view', chatStore.isChosePrefer && 'chose-prefer']">
-        <div class="blank" v-if="!chatList.length && chatStore.sendState === 'available' && chatStore.sessionId">
+        <div class="blank" v-if="!chatList.length && chatStore.sendState === 'available' && !chatStore.sessionId">
           <blank />
         </div>
 

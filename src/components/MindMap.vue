@@ -42,7 +42,6 @@ const updateData = async () => {
 }
 
 const saveData = () => {
-  if (!treeData.value) return
   mindmapStore.saveMindmapData(treeData.value)
   isEdited.value = false
 }
@@ -139,9 +138,6 @@ const initChart = () => {
     .scaleExtent([0.1, 5])
     .on('zoom', (event) => {
       currentTransform = event.transform
-      // for (const k in currentTransform) {
-      //   if (Number.isNaN(currentTransform[k])) return
-      // }
       chartGroup.attr('transform', currentTransform)
     })
 
@@ -436,6 +432,7 @@ const startChat = async (chatId) => {
 const startNote = async (id, markId) => {
   await router.push({ name: '笔记' })
   noteStore.updateSelectKey({ id, markId })
+  noteStore.getNoteData({ markId })
 }
 
 // store注册方法, 便于在Dialog组件中触发

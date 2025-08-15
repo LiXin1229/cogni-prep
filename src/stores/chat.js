@@ -73,7 +73,7 @@ export const useChatStore = defineStore('chat', () => {
         stateMap.set(id, ref(defaultValue)) // 自动初始化
       }
 
-      // console.log('stateMap', stateMap, 'currentId', id)
+      console.log('sessionId', id)
       return stateMap.get(id)
     }
     

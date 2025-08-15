@@ -4,6 +4,7 @@ import { useUserInfoStore } from './user'
 import { useNoteStore } from './note'
 import { useLocalStorage } from '@/utils/useStorage'
 import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
+import { isEmptyObj } from '@/utils/verifyEmpty'
 import request from '@/utils/request'
 import API from '@/utils/API.js'
 
@@ -21,8 +22,6 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // 展示的树数据
   const treeData = ref({})
-
-  const isEmptyObj = (o) => o != null && typeof o === 'object' && Object.keys(o).length === 0
 
   const getMindmapData = async () => {
     if (isEmptyObj(selectedAreaId.value)) {
@@ -49,7 +48,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // 保存导图数据
   const saveMindmapData = async (data) => {
-    if (!selectedAreaId.value) return
+    console.log('saveMindmapData', data)
+    if (isEmptyObj(data) || selectedAreaId.value === null) return
 
     await request({
       url: API.saveMindmapData,
@@ -60,7 +60,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
       }
     })
 
-    noteStore.getTreeData()
+    noteStore.treeData = data
   }
 
   // 是否正在编辑

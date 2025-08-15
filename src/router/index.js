@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
 import Login from '@/pages/Login/index.vue'
 import Layout from '@/pages/Layout/index.vue'
@@ -10,7 +10,7 @@ import PreferDetail from '@/pages/Prefer/PreferDetail.vue'
 import Interview from '@/pages/Interview/index.vue'
 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/login',

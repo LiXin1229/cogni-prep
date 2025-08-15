@@ -1,15 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user'
 import { useMindmapStore } from './mindmap'
 import { useLocalStorage } from '@/utils/useStorage'
 import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
+import { isEmptyObj } from '@/utils/verifyEmpty'
 import request from '@/utils/request'
 import API from '@/utils/API.js'
 
 export const useNoteStore = defineStore('note', () => {
-  const router = useRouter()
   const userStore = useUserInfoStore()
   const mindmapStore = useMindmapStore()
 
@@ -27,7 +26,7 @@ export const useNoteStore = defineStore('note', () => {
   const treeData = ref({})
 
   const getTreeData = async () => {
-    if (!selectedAreaId.value) {
+    if (isEmptyObj(selectedAreaId.value)) {
       await getSelectedAreaId()
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
@@ -39,7 +38,7 @@ export const useNoteStore = defineStore('note', () => {
         areaId: selectedAreaId.value
       }
     })
-    // console.log(res.data)
+    // console.log('getTreeData', res.data)
 
     treeData.value = res.data.mindmap
   }
@@ -49,6 +48,7 @@ export const useNoteStore = defineStore('note', () => {
 
   // 更新当前选中的树节点
   const updateSelectKey = (data) => {
+    console.log('data', data)
     if (!data) return
     const node = selectKey.value.find(item => item.areaId === selectedAreaId.value)
 
@@ -62,6 +62,7 @@ export const useNoteStore = defineStore('note', () => {
         markId: data.markId
       })
     }
+    console.log(selectKey.value)
   }
 
   // 查看/编辑模式
@@ -91,6 +92,9 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   const saveNote = async (noteId, content, node) => {
+    console.log('!noteId || !content', !noteId || !content)
+    if (!noteId || !content) return
+
     const res = await request({
       url: API.saveNote,
       method: 'POST',
@@ -212,25 +216,23 @@ export const useNoteStore = defineStore('note', () => {
 
   // 获取节点笔记
   const getNoteData = async (node) => {
-    if (!node.markId) {
-      note.value = '### 暂无笔记'
-      return
-    }
-
+    console.log(node.markId)
+    console.log(node.markId ?? -1)
     const res = await request({
       url: API.getNoteData,
       method: 'GET',
       params: {
-        markId: node.markId
+        markId: node.markId ?? -1
       }
     })
     // console.log('获取节点笔记', res)
 
-    note.value = res.data.content
+    note.value = res.data.content || '### 暂无笔记'
   }
 
   // 修改节点笔记
   const updateNoteData = async (markId) => {
+    console.log(markId)
     if (!markId) return
 
     const res = await request({
@@ -241,7 +243,7 @@ export const useNoteStore = defineStore('note', () => {
         content: note.value
       }
     })
-    // console.log('修改节点笔记', res)
+    console.log('修改节点笔记', res)
 
     if (res.success) {
       return true
@@ -259,7 +261,7 @@ export const useNoteStore = defineStore('note', () => {
 
   // 保存导图数据
   const saveMindmapData = async (data) => {
-    if (!selectedAreaId.value) return
+    if (isEmptyObj(data) || selectedAreaId.value === null) return
 
     await request({
       url: API.saveMindmapData,

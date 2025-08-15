@@ -30,8 +30,6 @@ const selectArea = async (id) => {
   noteStore.getTreeData()
 }
 
-const resizeRef = ref(null)
-
 const treeRef = ref(null)
 
 // 初始化目录
@@ -61,6 +59,8 @@ const defaultProps = {
 }
 
 const selectKey = computed(() => noteStore.selectKey)
+
+const currentNode = computed(() => selectKey.value.find(item => item.areaId === noteStore.selectedAreaId) || {})
 
 // 点击节点
 const handleNodeClick = async (data) => {
@@ -181,8 +181,7 @@ onMounted(async () => {
 
 // 保存笔记
 const saveNote = async () => {
-  const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
-  const markId = node?.markId
+  const markId = currentNode.value?.markId
   // return
   if (await noteStore.updateNoteData(markId)) {
     isModified.value = false
@@ -244,14 +243,14 @@ onUnmounted(() => {
               :props="defaultProps"
               @node-click="handleNodeClick"
               highlight-current
-              :default-expanded-keys="selectKey"
+              :default-expanded-keys="selectKey.map(node => node.nodeId)"
               :expand-on-click-node="false"
             >
               <template #default="{ node, data }">
                 <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                   <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
                   <cust-popup :position="{ top: '20px', left: '-75px' }">
-                    <div :class="['func-btn', 'toggleNodePopup', data.id === selectKey[0]?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
+                    <div :class="['func-btn', 'toggleNodePopup', data.id === currentNode?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
                       <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                     </div>
 
