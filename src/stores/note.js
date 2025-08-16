@@ -48,7 +48,6 @@ export const useNoteStore = defineStore('note', () => {
 
   // 更新当前选中的树节点
   const updateSelectKey = (data) => {
-    console.log('data', data)
     if (!data) return
     const node = selectKey.value.find(item => item.areaId === selectedAreaId.value)
 
@@ -62,7 +61,7 @@ export const useNoteStore = defineStore('note', () => {
         markId: data.markId
       })
     }
-    console.log(selectKey.value)
+    // console.log(selectKey.value)
   }
 
   // 查看/编辑模式
@@ -92,7 +91,7 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   const saveNote = async (noteId, content, node) => {
-    console.log('!noteId || !content', !noteId || !content)
+    // console.log('!noteId || !content', !noteId || !content)
     if (!noteId || !content) return
 
     const res = await request({
@@ -216,8 +215,7 @@ export const useNoteStore = defineStore('note', () => {
 
   // 获取节点笔记
   const getNoteData = async (node) => {
-    console.log(node.markId)
-    console.log(node.markId ?? -1)
+    // console.log(node.markId)
     const res = await request({
       url: API.getNoteData,
       method: 'GET',

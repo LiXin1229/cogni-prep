@@ -115,7 +115,7 @@ watch(() => props.showDialog, (showDialog) => {
 
           <div class="point-item" v-for="(point, index) in pointList" :key="index">
             <div class="tag" :style="{ borderColor: colorMap[point.frequency] }">
-              <el-input v-model="point.name" :style="{ width: point.width }" />
+              <el-input v-model="point.name" :style="{ width: point.width }" :maxlength="36" />
             </div>
             <div class="frequency">
               <el-rate v-model="point.frequency" size="large" :max="3" clearable  />
@@ -153,7 +153,6 @@ watch(() => props.showDialog, (showDialog) => {
     .point-list {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
       max-height: 400px;
       overflow-y: auto;
