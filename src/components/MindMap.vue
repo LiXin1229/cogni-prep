@@ -5,7 +5,7 @@ import { useUserInfoStore } from '@/stores/user'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useSessionStore } from '@/stores/session'
 import { useNoteStore } from '@/stores/note'
-import { useDebounce } from '@/utils/useDebounce'
+import { useThrottle } from '@/utils/useThrottle'
 import { getTextWidth } from '@/utils/getTextWidth'
 import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById } from '@/utils/treeUtils'
 import { calculateDynamicTreeSize } from '@/utils/dynamicTreeSize'
@@ -17,7 +17,7 @@ const userStore = useUserInfoStore()
 const mindmapStore = useMindmapStore()
 const sessionStore = useSessionStore()
 const noteStore = useNoteStore()
-const { debounce } = useDebounce()
+const { throttle } = useThrottle()
 
 const props = defineProps({
   style: {
@@ -53,7 +53,7 @@ onMounted(async () => {
   await updateData()
   renderChart()
 
-  const handleResize = debounce(() => adjustChartSize(), 100)
+  const handleResize = throttle(() => adjustChartSize(), 500)
 
   // 监听页面尺寸
   resizeObserver.value = new ResizeObserver(entries => {
