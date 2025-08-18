@@ -1,5 +1,6 @@
 <script setup>
 import { useNoteStore } from '@/stores/note'
+import { useUserInfoStore } from '@/stores/user'
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
 import { parseMarkdown } from '@/utils/markdown'
 import Quill from 'quill'
@@ -8,6 +9,7 @@ import 'quill/dist/quill.bubble.css'
 import { writeInClipboard } from '@/utils/clipboard'
 
 const noteStore = useNoteStore()
+const userStore = useUserInfoStore()
 
 defineProps({
   isSidebarFolded: {
@@ -98,6 +100,11 @@ const togglePopup = (e, data) => {
 const createNote = (node) => {
   if (noteStore.sendState !== 'available') return
   noteStore.getNote(node)
+}
+
+const addNode = (data) => {
+  noteStore.selectedNode = data
+  userStore.showDialog = 'userAddNode'
 }
 
 // 复制按钮
@@ -256,7 +263,8 @@ onUnmounted(() => {
 
                     <template #popup>
                       <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e) => togglePopup(e, data)">
-                        <div class="menu-item" @click="() => createNote(data)">生成笔记</div>
+                        <div class="menu-item" @click="createNote(data)">生成笔记</div>
+                        <div class="menu-item" @click="addNode(data)">添加子节点</div>
                       </div>
                     </template>
                   </cust-popup>

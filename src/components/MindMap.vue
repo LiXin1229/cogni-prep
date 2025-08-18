@@ -9,8 +9,8 @@ import { useThrottle } from '@/utils/useThrottle'
 import { getTextWidth } from '@/utils/getTextWidth'
 import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, deleteNodeById } from '@/utils/treeUtils'
 import { calculateDynamicTreeSize } from '@/utils/dynamicTreeSize'
-import * as d3 from 'd3'
 import { v4 as uuidv4 } from 'uuid'
+import * as d3 from 'd3'
 
 const router = useRouter()
 const userStore = useUserInfoStore()
@@ -379,6 +379,7 @@ const resetView = async () => {
 
 // 添加节点
 const addNodes = (data) => {
+  // console.log('添加节点', data)
   const dataArray = Array.isArray(data) ? data : [data]
   const newNodes = dataArray.map(node => ({ id: uuidv4(), name: node.name, children: [], isFolded: 0, frequency: node.frequency, markId: null, chatId: null }))
   // console.log('newNodes', newNodes)
@@ -431,6 +432,7 @@ const startChat = async (chatId) => {
 // 生成笔记
 const startNote = async (id, markId) => {
   await router.push({ name: '笔记' })
+  if (noteStore.sendState !== 'available') return
   noteStore.updateSelectKey({ id, markId })
   noteStore.getNoteData({ markId })
 }

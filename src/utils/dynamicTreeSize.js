@@ -37,7 +37,11 @@ export const calculateDynamicTreeSize = (tree, options = {}) => {
     
     // 计算分支因子（基于平均子节点数）
     // 平均子节点数越多，需要的空间越大
-    const branchFactor = Math.min(1 + (treeStats.avgChildren - 1) * 0.3, 2.5);
+    const branchFactor = Math.min(1 + (treeStats.avgChildren - 1) * 0.2, 5);
+
+    // console.log('depthFactor', depthFactor)
+    // console.log('densityFactor', densityFactor)
+    // console.log('branchFactor', branchFactor)
     
     // 综合计算基础size
     let baseSize = 1;

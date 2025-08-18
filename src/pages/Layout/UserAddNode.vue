@@ -1,8 +1,12 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMindmapStore } from '@/stores/mindmap'
+import { useNoteStore } from '@/stores/note'
 
 const mindmapStore = useMindmapStore()
+const route = useRoute()
+const noteStore = useNoteStore()
 
 const props = defineProps({
   showDialog: {
@@ -34,7 +38,11 @@ const confirm = async () => {
   const isValid = await ruleFormRef.value.validate()
   
   if (isValid) {
-    mindmapStore.triggerComponent('addNodes', formData.value)
+    if (route.name === '知识点图') {
+      mindmapStore.triggerComponent('addNodes', formData.value)
+    } else if (route.name === '笔记') {
+      noteStore.addNode(formData.value)
+    }
     dialogRef.value.closeDialog()
   }
 }

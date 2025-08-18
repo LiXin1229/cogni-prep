@@ -3,10 +3,11 @@ import { ref, computed } from 'vue'
 import { useUserInfoStore } from './user'
 import { useMindmapStore } from './mindmap'
 import { useLocalStorage } from '@/utils/useStorage'
-import { findAncestorsById, modifyTreeNodeProp } from '@/utils/treeUtils'
+import { findAncestorsById, modifyTreeNodeProp, addChildrenById } from '@/utils/treeUtils'
 import { isEmptyObj } from '@/utils/verifyEmpty'
 import request from '@/utils/request'
 import API from '@/utils/API.js'
+import { v4 as uuidv4 } from 'uuid'
 
 export const useNoteStore = defineStore('note', () => {
   const userStore = useUserInfoStore()
@@ -250,11 +251,27 @@ export const useNoteStore = defineStore('note', () => {
     return false
   }
 
-  // 修改节点属性
+  // 修改节点markId属性
   const modifyNodeProp = (targetId, propName, id) => {
     // console.log('!!!', treeData.value, targetId, propName, id)
     treeData.value = modifyTreeNodeProp(treeData.value, targetId, propName, id)
     saveMindmapData(treeData.value)
+  }
+
+  const selectedNode = ref(null)
+
+  const addNode = (data) => {
+    console.log(selectedNode.value)
+    console.log(data)
+
+    const newNode = { id: uuidv4(), name: data.name, children: [], isFolded: 0, frequency: data.frequency, markId: null, chatId: null }
+    treeData.value = addChildrenById(treeData.value, selectedNode.value.id, newNode)
+
+    try {
+      mindmapStore.saveMindmapData(treeData.value) 
+    } catch (err) {
+      throw new Error(err)
+    }
   }
 
   // 保存导图数据
@@ -297,6 +314,8 @@ export const useNoteStore = defineStore('note', () => {
     sendState,
     note,
     getNoteData,
+    selectedNode,
+    addNode,
     abortCurrentStream,
     updateSelectKey,
     updateNoteData,
