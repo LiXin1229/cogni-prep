@@ -1,4 +1,9 @@
 @mixin code-box {
+  /* 公共样式 */
+  div {
+    line-height: 1.9;
+  }
+
   /* 代码块容器样式（框体效果） */
   pre {
     /* 基础框体样式 */
@@ -96,6 +101,36 @@
       &:hover {
         background-color: var(--light-border-color-2);
       }
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    div {
+      line-height: 1.65;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+    }
+
+    h4 {
+      font-size: 1.1rem;
+    }
+
+    h5 {
+      font-size: 1.05rem;
+    }
+
+    h6 {
+      font-size: 1rem;
     }
   }
 }

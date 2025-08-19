@@ -65,12 +65,12 @@ const submit = () => {
 }
 
 const handleEnter = (e) => {
+  e.preventDefault()
   if (e.ctrlKey) {
-    console.log('ctrl+enter')
     quillRef.value?.insertText('\n', chatStore.customContent.length)
-  } else {
+  }
+  else if (!e.shiftKey) {
     if (sendState.value !== 'available' || chatStore.customContent.length === 0) return
-    console.log('enter')
     submit()
   }
 }
@@ -98,7 +98,7 @@ watch(() => textareaHeight.value, (newHeight, oldHeight) => {
   if (newHeight === oldHeight) return
   // console.log(newHeight)
 
-  inputHeight.value = Math.min(Math.max(newHeight, 52), 210)
+  inputHeight.value = Math.min(Math.max(newHeight, 52), userStore.isMobile ? 120 : 210)
 })
 
 defineExpose({
@@ -334,6 +334,46 @@ defineExpose({
 
     .text-area {
       padding: 0 15px;
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    padding: 0 10px;
+
+    .input-panel {
+      width: 100%;
+      padding: 2px 0;
+
+      .tool-btns {
+        padding: 0 10px;
+
+        .left {
+          .main-area {
+            margin-right: 7px;
+            padding: 4px 8px;
+
+            .icon {
+              scale: 0.9;
+              margin: 0 -2px;
+            }
+          }
+
+          .surrounding-point {
+            max-width: calc(100vw - 235px);
+            padding: 4px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+
+        .right {
+          .nextquestion {
+            margin-right: 10px;
+            font-size: 13px;
+          }
+        }
+      }
     }
   }
 }

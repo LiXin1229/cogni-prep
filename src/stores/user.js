@@ -16,7 +16,9 @@ export const useUserInfoStore = defineStore('user', () => {
   const noteStore = useNoteStore()
   const sessionStore = useSessionStore()
 
-  const isSidebarFolded = ref(false)
+  const isMobile = ref(window.innerWidth / window.innerHeight < 1 ? true : false)
+
+  const isSidebarFolded = ref(isMobile.value ? true : false)
 
   const showDialog = ref('')
   const ableClose = ref(true)
@@ -35,7 +37,7 @@ export const useUserInfoStore = defineStore('user', () => {
   }
 
   const getUserInfo = async () => {
-    console.log('获取用户信息', userInfo.value?.userId)
+    // console.log('获取用户信息', userInfo.value?.userId)
     if (!userInfo.value?.userId) {
       return logout()
     }
@@ -104,6 +106,7 @@ export const useUserInfoStore = defineStore('user', () => {
   }
 
   return {
+    isMobile,
     isSidebarFolded,
     showDialog,
     ableClose,

@@ -88,8 +88,8 @@ const showNodePopup = ref('')
 const togglePopup = (e, data) => {
   // console.log(e)
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
-  if (svgs.includes(e.target.tagName)) return
-  if (e.target.className?.includes('toggleNodePopup')) {
+  if (svgs.includes(e?.target.tagName)) return
+  if (e?.target.className?.includes('toggleNodePopup')) {
     showNodePopup.value === data.id ? showNodePopup.value = '' : showNodePopup.value = data.id
   } else {
     showNodePopup.value = ''
@@ -103,6 +103,7 @@ const createNote = (node) => {
 }
 
 const addNode = (data) => {
+  togglePopup()
   noteStore.selectedNode = data
   userStore.showDialog = 'userAddNode'
 }
@@ -264,7 +265,7 @@ onUnmounted(() => {
                     <template #popup>
                       <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e) => togglePopup(e, data)">
                         <div class="menu-item" @click="createNote(data)">生成笔记</div>
-                        <div class="menu-item" @click="addNode(data)">添加子节点</div>
+                        <div class="menu-item" @click.stop="addNode(data)">添加子节点</div>
                       </div>
                     </template>
                   </cust-popup>
@@ -332,7 +333,7 @@ onUnmounted(() => {
       width: 24px;
       height: 24px;
       border-radius: 5px;
-      margin-right: 10px;
+      margin-right: 15px;
       cursor: pointer;
 
       .icon {
@@ -349,7 +350,8 @@ onUnmounted(() => {
       display: flex;
       justify-content: flex-start;
       align-items: center;
-      gap: 20px;
+      gap: 10px;
+      white-space: nowrap;
 
       .area-item {
         padding: 6px 12px;
@@ -357,7 +359,6 @@ onUnmounted(() => {
         font-weight: bold;
         font-size: 15px;
         position: relative;
-        white-space: nowrap;
         cursor: pointer;
       }
 
@@ -503,7 +504,6 @@ onUnmounted(() => {
   }
 
   :deep(.mark-content) {
-    @include code-box;
     flex: 1;
     overflow-y: auto;
 
@@ -516,7 +516,6 @@ onUnmounted(() => {
     }
 
     .text-view, .editor-view {
-      line-height: 2;
       width: calc(70vw - 300px);
       margin: 0 auto;
       padding-bottom: 30px;
@@ -529,6 +528,32 @@ onUnmounted(() => {
       height: 15px;
 
       @include loading;
+    }
+
+    @include code-box;
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .top {
+      .area-list {
+        gap: 10px;
+      }
+    }
+
+    .resize-menu {
+      width: 170px;
+    }
+
+    .custom-tree-node {
+      .text {
+        font-size: 13px;
+      }
+    }
+
+    .mark-content {
+      .text-view, .editor-view {
+        width: 100%;
+      }
     }
   }
 }

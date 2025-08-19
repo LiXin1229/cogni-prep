@@ -54,6 +54,7 @@ const navToPage = (nav) => {
   router.push({
     name: nav.title,
   })
+  if (userStore.isMobile) toggleSidebar()
 }
 
 // 当前选中的导航栏
@@ -67,6 +68,7 @@ const navToSession = (sessionId) => {
     name: '会话',
     params: { sessionId }
   })
+  if (userStore.isMobile) toggleSidebar()
 }
 
 const showSessionPopup = ref('')
@@ -426,6 +428,41 @@ onMounted(async() => {
   .main-folded {
     width: 100vw;
     margin-left: 0;
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .sidebar {
+      width: 75vw;
+      z-index: 1001;
+    }
+
+    .main-view {
+      width: 100vw;
+      padding: 0;
+      margin-left: 0;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        transition: opacity 0.3s ease;
+      }
+    }
+
+    .main-folded {
+      margin-left: 0;
+
+      &::before {
+        content: "";
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
   }
 }
 </style>

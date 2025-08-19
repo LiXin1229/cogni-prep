@@ -155,17 +155,25 @@ onMounted(async () => {
 // 代码块吸顶
 const scrollRef = ref(null)
 let scrollHandler
-onMounted(() => {
+
+const setStickBlockTop = () => {
+  if (userStore.isMobile) return
+
   scrollHandler = () => {
     if (chatStore.sendState === 'streaming') return
     stickBlockTop()
   }
-
   scrollRef.value?.addEventListener('scroll', scrollHandler)
+}
+
+onMounted(() => {
+  setStickBlockTop()
+
   stickBlockTop()
 
   chatStore.registerCallback('scrollToBottom', scrollToBottom)
 })
+
 // 卸载时移除滚动监听
 onUnmounted(() => {
   if (scrollRef.value && scrollHandler) scrollRef.value.removeEventListener('scroll', scrollHandler)
@@ -195,7 +203,7 @@ const title = computed(() => {
     </div>
 
     <!-- 滚动聊天记录区 -->
-    <div class="scroll-view" ref="scrollRef" :style="{height: `calc(100vh - 50px - 172px - ${inputHeight}px + 65px)`}" @scroll="handleScroll">
+    <div class="scroll-view" ref="scrollRef" :style="{height: `calc(100vh - ${userStore.isMobile ? '20px' : '40px'} - 172px - ${inputHeight}px + 65px)`}" @scroll="handleScroll">
       <!-- 吸底按钮 -->
       <div class="scroll-to-bottom" v-if="!isAutoToBottom && sendState === 'streaming'" @click="scrollToBottom">
         <!-- 原有的向下箭头 -->
@@ -376,6 +384,9 @@ const title = computed(() => {
     .title {
       font-weight: 600;
       color: var(--theme-color-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .tip {
@@ -422,7 +433,7 @@ const title = computed(() => {
       border-radius: 50%;
       position: fixed;
       bottom: 220px;
-      left: calc(50% + 110px);
+      right: calc(50% - 110px);
 
       .icon {
         position: absolute;
@@ -512,16 +523,13 @@ const title = computed(() => {
       }
 
       :deep(.text-wrapper.assistant-wrapper ) {
-        line-height: 1.9;
-        // font-size: 0.9em;
-
-        @include code-box;
-
         .assistant-question {
           color: var(--theme-color-1);
           font-size: 20px;
           font-weight: bold;
         }
+
+        @include code-box;
       }
 
       .text-wrapper.user-wrapper {
@@ -630,6 +638,33 @@ const title = computed(() => {
   .check-box.checked {
     background-color: var(--main-color);
     border: 1.5px solid var(--main-color);
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .top {
+      .title {
+        max-width: 75vw;
+      }
+    }
+
+    .scroll-view {
+      padding: 0 10px;
+
+      .text-view {
+        width: 100%;
+      }
+
+      .scroll-to-bottom {
+        right: 20px;
+        bottom: 150px;
+      }
+
+      .text-wrapper.assistant-wrapper {
+        .assistant-question {
+          font-size: 16px !important;
+        }
+      }
+    }
   }
 }
 </style>

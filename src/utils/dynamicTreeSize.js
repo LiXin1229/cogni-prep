@@ -28,7 +28,7 @@ export const calculateDynamicTreeSize = (tree, options = {}) => {
     
     // 计算深度因子（基于树的最大深度）
     // 最大深度为1时因子为1，每增加1深度因子增加0.2，上限为2
-    const depthFactor = Math.min(1 + (treeStats.maxDepth - 1) * 0.3, 10);
+    const depthFactor = Math.min(1 + (treeStats.maxDepth - 1) * 0.36, 10);
     
     // 计算密度因子（基于节点分布密度）
     // 密度 = 总节点数 / 最大深度，归一化到0-3范围
@@ -37,17 +37,21 @@ export const calculateDynamicTreeSize = (tree, options = {}) => {
     
     // 计算分支因子（基于平均子节点数）
     // 平均子节点数越多，需要的空间越大
-    const branchFactor = Math.min(1 + (treeStats.avgChildren - 1) * 0.2, 5);
+    const branchFactor = Math.min(1 + (treeStats.avgChildren - 1) * 0.3, 5);
+
+    const countFactor = Math.max(1, treeStats.totalNodes * 0.003 + 0.8)
 
     // console.log('depthFactor', depthFactor)
     // console.log('densityFactor', densityFactor)
     // console.log('branchFactor', branchFactor)
+    // console.log('countFactor', countFactor)
     
     // 综合计算基础size
     let baseSize = 1;
     baseSize *= (depthFactor * config.depthWeight);
     baseSize *= (densityFactor * config.densityWeight);
     baseSize *= branchFactor;
+    baseSize *= countFactor;
     
     // 确保size在合理范围内
     const finalSize = Math.max(
@@ -107,32 +111,3 @@ const analyzeTreeStructure = (tree) => {
         avgChildren         // 平均每个节点的子节点数
     };
 }
-
-// 示例用法
-// const simpleTree = {
-//     id: 'root',
-//     children: [
-//         { id: 'child1' },
-//         { id: 'child2' }
-//     ]
-// };
-// console.log(calculateDynamicTreeSize(simpleTree)); // 约0.8-1.2
-
-// const complexTree = {
-//     id: 'root',
-//     children: [
-//         { 
-//             id: 'child1',
-//             children: Array(10).fill().map((_, i) => ({ 
-//                 id: `c1-${i}`,
-//                 children: i < 3 ? Array(5).fill().map((_, j) => ({ id: `c1-${i}-${j}` })) : []
-//             }))
-//         },
-//         { 
-//             id: 'child2',
-//             children: Array(8).fill().map((_, i) => ({ id: `c2-${i}` }))
-//         }
-//     ]
-// };
-// console.log(calculateDynamicTreeSize(complexTree)); // 约2.5-3.5
-    

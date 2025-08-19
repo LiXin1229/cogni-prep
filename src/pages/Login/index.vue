@@ -52,9 +52,8 @@ const submit = (formRef) => {
       if (res.success) {
         userStore.userInfo = res.data.userInfo
         userStore.token = res.data.token
-        console.log('userStore.token', userStore.token)
+        // console.log('userStore.token', userStore.token)
         await userStore.getUserInfo()
-        // userStore.showDialog = ''
 
         router.push('/')
       }

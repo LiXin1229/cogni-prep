@@ -255,5 +255,9 @@ defineExpose({
   :deep(.ql-editor) {
     caret-color: var(--main-color);
   }
+
+  @media (max-aspect-ratio: 1/1) {
+    max-height: 120px;
+  }
 }
 </style>

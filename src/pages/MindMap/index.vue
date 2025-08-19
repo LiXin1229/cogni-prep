@@ -85,7 +85,7 @@ onMounted(() => {
       width: 24px;
       height: 24px;
       border-radius: 5px;
-      margin-right: 10px;
+      margin-right: 15px;
       cursor: pointer;
 
       .icon {
@@ -103,6 +103,7 @@ onMounted(() => {
       justify-content: flex-start;
       align-items: center;
       gap: 20px;
+      white-space: nowrap;
 
       .area-item {
         padding: 6px 12px;
@@ -110,7 +111,6 @@ onMounted(() => {
         font-weight: bold;
         font-size: 15px;
         position: relative;
-        white-space: nowrap;
         cursor: pointer;
       }
 
@@ -137,6 +137,14 @@ onMounted(() => {
         color: var(--text-color-4);
         font-size: 14px;
         cursor: default;
+      }
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .top {
+      .area-list {
+        gap: 10px;
       }
     }
   }
