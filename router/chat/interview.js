@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const sendToDS = require('../../utils/useDeepseek')
-const sendToDSStream = require('../../utils/useDeepseekStream')
+const { sendToDSStream, sendToDoubaoStream } = require('../../utils/useDeepseekStream')
 const { useUserSentence, useSystemSentence, useSumPoint } = require('../../utils/sentence')
 const pool = require('../../db')
 
@@ -102,6 +102,7 @@ router.post('/start', async (req, res) => {
       }
     }
   } catch (error) {
+    useDoubao(res, system, content)
     console.log(error)
   }
 })
@@ -175,6 +176,7 @@ router.post('/answer', async (req, res) => {
       }
     }
   } catch (error) {
+    useDoubao(res, system, content)
     console.log(error)
   }
 })
@@ -248,6 +250,7 @@ router.post('/help', async (req, res) => {
       }
     }
   } catch (error) {
+    useDoubao(res, system, content)
     console.log(error)
   }
 })
@@ -289,6 +292,59 @@ const getContext = async (isLongTerm, sessionId, areaId) => {
   }
 
   return questions
+}
+
+const useDoubao = async (res, system, content) => {
+  const response = await sendToDoubaoStream(system, content)
+
+  if (!response.ok) {
+    throw new Error(`Doubao API request failed: ${response.statusText}`)
+  }
+
+  try {
+    // 获取响应的可读流
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    while (true) {
+      const { done, value } = await reader.read()
+      
+      if (done) {
+        res.write('data: [DONE]\n\n')
+        res.end()
+        break
+      }
+
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n').filter(line => line.trim() !== '')
+      
+      for (const line of lines) {
+        // console.log('line', line) keep-alive
+        const dataStr = line.replace(/^data: /, '')
+        
+        if (dataStr === '[DONE]') {
+          res.write(`data: ${dataStr}\n\n`)
+          res.end()
+          return
+        }
+        
+        try {
+          const data = JSON.parse(dataStr)
+          if (data.choices && data.choices[0]?.delta?.content) {
+            // console.log('AI返回结果', data.choices[0].delta.content)
+            // 直接写入数据，流会自动处理缓冲
+            res.write(`data: ${JSON.stringify({
+              content: data.choices[0].delta.content
+            })}\n\n`)
+          }
+        } catch (e) {
+          console.error('Error parsing stream chunk:', e)
+        }
+      }
+    } 
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 module.exports = router

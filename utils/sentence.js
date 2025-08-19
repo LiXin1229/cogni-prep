@@ -9,7 +9,7 @@ const useSystemSentence = (type, ...args) => {
   }
 
   if (type === 'answer') {
-    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，给出该回答的优化建议，如果我的回答比较完善了，可以简要给出优化建议，注意：面试场景中容允面试者使用口语化的表述。可以使用Markdown语法格式`
+    return `在${args[0]}面试中，面对问题：${args[1]}。以下是我的回答，对我的回答进行评价。可以使用Markdown语法格式`
   }
 
   if (type === 'help') {
@@ -37,7 +37,7 @@ const useUserSentence = (type, ...args) => {
 // 获取分类语句
 const useSubcategorySentence = (type, ...args) => {
   if (type === 'auto') {
-    return `${args[0]}面试/考试中，关于${args[1]}有哪些内容，选择合理分类尺度，尽量囊括${args[1]}的内容，但最多不超过15点，并给出面试/考试考察频率（或重要性）1-3分，已有 【${args[2].join('；').toString()}】，不要给出重复考点，主要使用中文，按照JSON{"response": [{"name": <分类名称>, "frequency": <重要程度>}, {"name": <分类名称>, "frequency": <重要程度>}, ...]}格式返回`
+    return `${args[0]}面试/考试中，关于${args[1]}有哪些内容，选择合理分类尺度，尽量囊括${args[1]}的内容，但最多不超过12点，并给出面试/考试考察频率（或重要性）1-3分，已有 【${args[2].join('；').toString()}】，不要给出重复考点，主要使用中文，按照JSON{"response": [{"name": <分类名称>, "frequency": <重要程度>}, {"name": <分类名称>, "frequency": <重要程度>}, ...]}格式返回`
   }
 
   if (type === 'manual') { 

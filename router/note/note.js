@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const pool = require('../../db')
-const sendToDSStream = require('../../utils/useDeepseekStream')
+const { sendToDSStream, sendToDoubaoStream } = require('../../utils/useDeepseekStream')
 const { useNoteSentence } = require('../../utils/sentence')
 
 router.post('/initNote', async (req, res) => {
@@ -57,11 +57,11 @@ router.post('/getNote', async (req, res) => {
         break
       }
 
-      const chunk = decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true })
       const lines = chunk.split('\n').filter(line => line.trim() !== '')
       
       for (const line of lines) {
-        // console.log('line', line)
+        // console.log('line', line) keep-alive
         const dataStr = line.replace(/^data: /, '')
         
         if (dataStr === '[DONE]') {
@@ -85,7 +85,61 @@ router.post('/getNote', async (req, res) => {
       }
     }
   } catch (error) {
+    useDoubao()
     console.log(error)
+  }
+
+  async function useDoubao () {
+    const response = await sendToDoubaoStream(system, content)
+
+    if (!response.ok) {
+      throw new Error(`Doubao API request failed: ${response.statusText}`)
+    }
+
+    try {
+      // 获取响应的可读流
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) {
+          res.write('data: [DONE]\n\n')
+          res.end()
+          break
+        }
+
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split('\n').filter(line => line.trim() !== '')
+        
+        for (const line of lines) {
+          // console.log('line', line) keep-alive
+          const dataStr = line.replace(/^data: /, '')
+          
+          if (dataStr === '[DONE]') {
+            res.write(`data: ${dataStr}\n\n`)
+            res.end()
+            return
+          }
+          
+          try {
+            const data = JSON.parse(dataStr)
+            if (data.choices && data.choices[0]?.delta?.content) {
+              // console.log('AI返回结果', data.choices[0].delta.content)
+              // 直接写入数据，流会自动处理缓冲
+              res.write(`data: ${JSON.stringify({
+                content: data.choices[0].delta.content
+              })}\n\n`)
+            }
+          } catch (e) {
+            console.error('Error parsing stream chunk:', e)
+          }
+        }
+      } 
+    } catch (err) {
+      console.log(err)
+    }
   }
 })
 
