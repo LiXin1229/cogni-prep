@@ -92,17 +92,17 @@ const submit = (formRef) => {
 <template>
   <div class="login">
     <div class="login-panel panel" v-show="panelType === 'login'">
-      <el-row justify="space-between" class="top">
-        <el-col :span="6">
+      <div class="top flex justify-between">
+        <div class="title-container">
           <div class="title">登录</div>
-        </el-col>
-        <el-col :span="6" class="switch" @click="switchPanel('register')">
+        </div>
+        <div class="switch-container" @click="switchPanel('register')">
           <div class="switch">
             前往注册
             <font-awesome-icon :icon="faAngleRight" style="color: var(--theme-font-color2);" />
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
       <div class="card">
         <el-form
           ref="loginFormRef"
@@ -126,17 +126,17 @@ const submit = (formRef) => {
     </div>
 
     <div class="register-panel panel" v-show="panelType === 'register'">
-      <el-row justify="space-between" class="top">
-        <el-col :span="6">
+      <div class="top flex justify-between">
+        <div class="title-container">
           <div class="title">注册</div>
-        </el-col>
-        <el-col :span="6" class="switch">
-          <div class="switch" @click="switchPanel('login')">
+        </div>
+        <div class="switch-container" @click="switchPanel('login')">
+          <div class="switch">
             <font-awesome-icon :icon="faAngleLeft" style="color: var(--theme-font-color2);" />
             返回登录
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
       <div class="card">
         <el-form
           ref="registerFormRef"
@@ -166,17 +166,17 @@ const submit = (formRef) => {
   width: 100vw;
   height: 100vh;
   background-image: url('https://img.alicdn.com/imgextra/i3/O1CN01XPGaD31cwcc5WQBM2_!!6000000003665-0-tps-3840-2160.jpg');
-  background-size: cover; /* 图片覆盖整个元素 */
-  background-position: center; /* 图片居中 */
-  background-repeat: no-repeat; /* 不重复图片 */
-  background-attachment: fixed; /* 固定背景不随滚动条移动 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   display: flex;
-  justify-content: center; /* 水平居中 */
-  align-items: center;     /* 垂直居中 */
+  justify-content: center;
+  align-items: center;
 
   .panel {
     width: 600px;
-    padding: 30px 60px 40px 60px;
+    padding: 50px;
     background-color: #fbfbfb;
 
     .title {
@@ -198,6 +198,35 @@ const submit = (formRef) => {
       .form-item {
         margin-bottom: 25px;
       }
+    }
+
+    // Flex布局相关样式
+    .flex {
+      display: flex;
+    }
+    
+    .justify-between {
+      justify-content: space-between;
+    }
+    
+    .top {
+      width: 100%;
+    }
+    
+    .title-container {
+      flex: 1; // 相当于原el-col的span分配
+    }
+    
+    .switch-container {
+      flex: 1; // 相当于原el-col的span分配
+      text-align: right;
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .panel {
+      width: 80%;
+      padding: 30px;
     }
   }
 }

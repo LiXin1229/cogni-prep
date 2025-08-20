@@ -80,6 +80,8 @@ const handleNodeClick = async (data) => {
 
   // 更新当前节点缓存
   noteStore.updateSelectKey(data)
+
+  toggleMenu()
 }
 
 // popup框
@@ -96,10 +98,20 @@ const togglePopup = (e, data) => {
   }
 }
 
+const showMenu = ref(false)
+
+// 移动端打开目录
+const toggleMenu = () => {
+  if (!userStore.isMobile) return
+
+  showMenu.value = !showMenu.value
+}
+
 // 生成笔记
 const createNote = (node) => {
   if (noteStore.sendState !== 'available') return
   noteStore.getNote(node)
+  toggleMenu()
 }
 
 const addNode = (data) => {
@@ -233,14 +245,17 @@ onUnmounted(() => {
         >
           {{ area.name }}
         </div>
-        <div class="tip">
+        <div class="toggle-menu" v-if="userStore.isMobile" @click="toggleMenu">
+          <img src="../../assets/svgs/menu.svg" alt="" class="icon">
+        </div>
+        <div class="tip" v-else>
           点击菜单&nbsp;&nbsp;<img src="../../assets/svgs/ellipsis.svg" style="width:16px;vertical-align:middle;">&nbsp;&nbsp;生成笔记
         </div>
       </div>
     </div>
 
     <div class="main-content">
-      <div class="resize-menu">
+      <div :class="['resize-menu', (userStore.isMobile && showMenu) && 'show-menu']">
         <!-- 目录区 -->
         <div class="sider-menu">
           <div class="warpper">
@@ -538,10 +553,51 @@ onUnmounted(() => {
       .area-list {
         gap: 10px;
       }
+
+      .toggle-menu {
+        border: 1px solid var(--light-border-color-3);
+        border-radius: 5px;
+        padding: 4px;
+        background-color: var(--normal-bgc);
+        position: absolute;
+        right: 10px;
+
+        .icon {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 20px;
+          height: 20px;
+        }
+      }
     }
 
     .resize-menu {
-      width: 170px;
+      width: 75%;
+      position: absolute;
+      left: 0;
+      top: 50px;
+      z-index: 999;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+
+      .resize-handle {
+        display: none;
+      }
+    }
+
+    .resize-menu.show-menu {
+      transform: translateX(0);
+    }
+
+    .warpper {
+      width: 100% !important;
+    }
+
+    .sider-menu {
+      width: 100%;
+      height: calc(100vh - 50px);
+      background-color: var(--normal-bgc);
     }
 
     .custom-tree-node {
@@ -551,6 +607,7 @@ onUnmounted(() => {
     }
 
     .mark-content {
+      padding: 0 5px;
       .text-view, .editor-view {
         width: 100%;
       }

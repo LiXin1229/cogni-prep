@@ -70,7 +70,7 @@ const adjustChartSize = () => {
   if (!chartRef.value || !svg) return
   
   // 获取新的容器尺寸
-  const newWidth = chartRef.value.clientWidth
+  const newWidth = userStore.isMobile ? chartRef.value.clientWidth * 1.75 : chartRef.value.clientWidth
   const newHeight = chartRef.value.clientHeight
   
   // 只有当尺寸真的发生变化时才更新

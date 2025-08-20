@@ -649,6 +649,8 @@ const title = computed(() => {
 
     .scroll-view {
       padding: 0 10px;
+      padding-bottom: 30px;
+      mask-image: none;
 
       .text-view {
         width: 100%;
@@ -664,6 +666,15 @@ const title = computed(() => {
           font-size: 16px !important;
         }
       }
+    }
+
+    .prefer-bottom {
+      width: calc(100% - 20px);
+      margin: 0 10px;
+    }
+
+    .chose-prefer {
+      grid-template-columns: 35px calc(100% - 30px) !important;
     }
   }
 }

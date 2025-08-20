@@ -161,5 +161,25 @@ const navToDetail = (item) => {
       }
     }
   }
+
+  @media (max-aspect-ratio: 1/1) {
+    .scroll-view {
+      padding: 0 10px;
+
+      .prefer-list {
+        width: 100%;
+
+        .prefer-item {
+          height: 130px;
+
+          .content {
+            align-items: flex-start;
+            height: 64px;
+            overflow: hidden;
+          }
+        }
+      }
+    }
+  }
 }
 </style>

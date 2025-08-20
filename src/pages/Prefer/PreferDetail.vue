@@ -233,5 +233,15 @@ onMounted(() => {
       }
     }
   }
+
+  @media (max-aspect-ratio: 1/1) {
+    .scroll-view {
+      padding: 0 10px;
+
+      .text-view {
+        width: 100%;
+      }
+    }
+  }
 }
 </style>

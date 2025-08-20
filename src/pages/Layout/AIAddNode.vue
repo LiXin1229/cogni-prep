@@ -95,14 +95,16 @@ watch(() => props.showDialog, (showDialog) => {
     <cust-dialog ref="dialogRef" title="AI生成子节点" @confirm="confirm" @closeDialog="closeDialog">
       <div class="content">
         <el-form :model="formData">
-          <el-form-item label="添加个数" prop="number">
-            <el-input-number v-model="formData.number" :min="1" :max="30" @click="() => formData.auto = false" />
+          <el-form-item label="添加个数" prop="number" class="form">
+            <el-input-number v-model="formData.number" :min="1" :max="30" @click="() => formData.auto = false" class="number-input" />
 
-            <el-radio-group v-model="formData.auto" class="radio-btn">
-              <el-radio :value="true" border>自动</el-radio>
-            </el-radio-group>
+            <span>
+              <el-radio-group v-model="formData.auto" class="radio-btn">
+                <el-radio :value="true" border>自动</el-radio>
+              </el-radio-group>
 
-            <el-button type="primary" @click="submit" class="submit-btn">生成</el-button>
+              <el-button type="primary" @click="submit" class="submit-btn">生成</el-button>
+            </span>
           </el-form-item>
         </el-form>
 
@@ -137,8 +139,13 @@ watch(() => props.showDialog, (showDialog) => {
   .content {
     padding: 15px 0;
 
-    .radio-btn {
-      margin-left: 10px;
+    .number-input {
+      margin-right: 10px;
+    }
+
+    span {
+      display: flex;
+      align-items: center;
     }
 
     .submit-btn {
@@ -199,6 +206,18 @@ watch(() => props.showDialog, (showDialog) => {
         height: 15px;
 
         @include loading;
+      }
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .form {
+      span {
+        margin-top: 10px;
+
+        .submit-btn {
+          width: 65px;
+        }
       }
     }
   }

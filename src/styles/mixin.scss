@@ -52,11 +52,8 @@
   }
 
   ul li::before {
-    content: ""; /* 圆点符号（也可用其他符号如 "●"） */
-    // color: var(--text-color-4); /* 自定义颜色（这里用谷歌红示例） */
-    // font-weight: bold; /* 加粗圆点 */
+    content: "";
     display: inline-block;
-    // padding-bottom: 10px;
     width: 6px; /* 固定宽度，确保对齐 */
     height: 6px;
     border-radius: 50%;
@@ -83,7 +80,6 @@
     background-color: #f3f4f6;
     padding: 5px 16px;
     height: 40px;
-    // border-radius: 6px;
 
     .copy-btn {
       width: 24px;
@@ -107,6 +103,11 @@
   @media (max-aspect-ratio: 1/1) {
     div {
       line-height: 1.65;
+      font-size: 15px;
+    }
+
+    pre code {
+      font-size: 13px;
     }
 
     h1 {
