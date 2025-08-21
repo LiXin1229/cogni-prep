@@ -53,7 +53,7 @@ const funcBtn = (type, data) => {
   chatStore.customContent = chatStore.funcType[type] + chatStore.customContent
   quillRef.value?.focus()
 
-  chatStore.selectQuestion = data.content
+  data?.content && (chatStore.selectQuestion = data.content)
 }
 
 // 复制按钮
@@ -269,6 +269,9 @@ const title = computed(() => {
                       <el-dropdown-item @click="deleteChat(chat)">
                         删除对话
                       </el-dropdown-item>
+                      <el-dropdown-item @click="funcBtn(5)">
+                        自定义问题
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -327,6 +330,9 @@ const title = computed(() => {
                       </el-dropdown-item>
                       <el-dropdown-item @click="deleteChat(chat)">
                         删除该对话
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="funcBtn(5)">
+                        自定义问题
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -457,7 +463,7 @@ const title = computed(() => {
       transform-origin: center;
       position: fixed;
       bottom: 219px;
-      left: calc(50% + 109px);
+      right: calc(50% - 112px);
     }
 
     .text-view {

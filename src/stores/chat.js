@@ -126,7 +126,7 @@ export const useChatStore = defineStore('chat', () => {
   const customContent = ref('')
 
   // 特殊功能列表
-  const funcType = reactive(['标准', '@回答思路 ', '@标准答案 ', '@思路+答案 ', '@自由对话 '])
+  const funcType = reactive(['标准', '@回答思路 ', '@标准答案 ', '@思路+答案 ', '@自由对话 ', '@自定义问题 '])
 
   // 选择的特殊功能
   const funcStatus = ref(0)
@@ -356,7 +356,7 @@ export const useChatStore = defineStore('chat', () => {
     triggerComponent('scrollToBottom')
 
     const userRes = await saveUserWords(MSG_TYPE['user'], content)
-    console.log('userRes', userRes)
+    // console.log('userRes', userRes)
     pushUserText({ id: userRes.data.chatId }, true)
 
     const res = await initChat(MSG_TYPE['evaluation'])
@@ -374,6 +374,10 @@ export const useChatStore = defineStore('chat', () => {
 
   // 获取答题模板或其他
   const getHelp = async (content, status) => {
+    if (status === 5) {
+      return custQustion(content.slice(7))
+    }
+
     // 更新页面
     pushUserText({
       id: uuidv4(),
@@ -401,6 +405,41 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  // 自定义问题
+  const custQustion = async (content) => {
+    if (!content) return ElMessage({
+      message: '请输入问题',
+      type: 'info'
+    })
+
+    pushUserText({
+      id: uuidv4(),
+      content,
+      sessionId: sessionId.value,
+      messageType: MSG_TYPE['question']
+    })
+
+    triggerComponent('scrollToBottom')
+
+    try {
+      const res = await request({
+        url: API.saveCust,
+        post: 'POST',
+        data: {
+          sessionId: sessionId.value,
+          content: content,
+          messageType: MSG_TYPE['question']
+        }
+      }) 
+
+      if (res.success) {
+        pushUserText({ id: res.data.chatId }, true)
+      }
+    } catch (error) {
+      throw new Error(error)
+    }
+  }
+
   const pushUserText = (data, isReplace = false) => {
     if (isReplace) {
       displayChat.value[displayChat.value.length - 1].id = data.id
@@ -424,6 +463,9 @@ export const useChatStore = defineStore('chat', () => {
 
     if (res.success) {
       displayChat.value = displayChat.value.filter(item => item.id !== selectChat.value.id)
+      if (chatMap.has(sessionId.value)) {
+        chatMap.set(sessionId.value, displayChat.value)
+      }
     }
   }
 

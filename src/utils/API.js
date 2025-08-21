@@ -4,6 +4,7 @@ const API = {
   initChat: '/chat/chat/init',
   saveChat: '/chat/chat/save',
   saveUserWords: '/chat/chat/saveUserWords',
+  saveCust: '/chat/chat/saveCust',
   getChatData: '/chat/chat/getChatData',
   interviewStart: '/chat/interview/start',
   interviewAnswer: '/chat/interview/answer',

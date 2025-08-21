@@ -111,7 +111,7 @@ defineExpose({
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 1000;
+  z-index: 1999;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
