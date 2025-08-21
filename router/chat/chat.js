@@ -93,6 +93,28 @@ router.post('/save', async (req, res) => {
   }
 })
 
+// 保存自定义问题
+router.post('/saveCust', async (req, res) => {
+  const { sessionId, content, messageType } = req.body
+
+  try {
+    const [insertRes] = await pool.query(
+      'INSERT INTO chats (session_id, content, message_type) VALUES (?, ?, ?)',
+      [sessionId, content, messageType]
+    )
+
+    res.send({
+      code: 200,
+      success: true,
+      data: {
+        chatId: insertRes.insertId
+      }
+    })
+  } catch (error) {
+    console.log(error)
+  }
+})
+
 router.post('/saveUserWords', async (req, res) => {
   const { sessionId, customContent } = req.body
 
