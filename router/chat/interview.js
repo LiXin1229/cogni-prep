@@ -1,8 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const sendToDS = require('../../utils/useDeepseek')
-const { sendToDSStream, sendToDoubaoStream } = require('../../utils/useDeepseekStream')
-const { useUserSentence, useSystemSentence, useSumPoint } = require('../../utils/sentence')
+const { sendToMainAIStream, sendSpareAIStream } = require('../../utils/useDeepseekStream')
+const { useUserSentence, useSystemSentence } = require('../../utils/sentence')
 const pool = require('../../db')
 
 const MSG_TYPE = {
@@ -47,7 +46,7 @@ router.post('/start', async (req, res) => {
     res.setHeader('Connection', 'keep-alive')
     res.flushHeaders() // 发送头信息
 
-    const response = await sendToDSStream(system, content)
+    const response = await sendToMainAIStream(system, content)
     // console.log(response)
 
     if (!response.ok) {
@@ -102,7 +101,7 @@ router.post('/start', async (req, res) => {
       }
     }
   } catch (error) {
-    useDoubao(res, system, content)
+    useSpareAI(res, system, content)
     console.log(error)
   }
 })
@@ -121,7 +120,7 @@ router.post('/answer', async (req, res) => {
     res.setHeader('Connection', 'keep-alive')
     res.flushHeaders() // 发送头信息
 
-    const response = await sendToDSStream(system, content)
+    const response = await sendToMainAIStream(system, content)
     // console.log(response)
 
     if (!response.ok) {
@@ -176,7 +175,7 @@ router.post('/answer', async (req, res) => {
       }
     }
   } catch (error) {
-    useDoubao(res, system, content)
+    useSpareAI(res, system, content)
     console.log(error)
   }
 })
@@ -195,7 +194,7 @@ router.post('/help', async (req, res) => {
     res.setHeader('Connection', 'keep-alive')
     res.flushHeaders() // 发送头信息
 
-    const response = await sendToDSStream(system, content)
+    const response = await sendToMainAIStream(system, content)
     // console.log(response)
 
     if (!response.ok) {
@@ -250,7 +249,7 @@ router.post('/help', async (req, res) => {
       }
     }
   } catch (error) {
-    useDoubao(res, system, content)
+    useSpareAI(res, system, content)
     console.log(error)
   }
 })
@@ -294,8 +293,8 @@ const getContext = async (isLongTerm, sessionId, areaId) => {
   return questions
 }
 
-const useDoubao = async (res, system, content) => {
-  const response = await sendToDoubaoStream(system, content)
+const useSpareAI = async (res, system, content) => {
+  const response = await sendSpareAIStream(system, content)
 
   if (!response.ok) {
     throw new Error(`Doubao API request failed: ${response.statusText}`)

@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const pool = require('../../db')
-const { sendToDSStream, sendToDoubaoStream } = require('../../utils/useDeepseekStream')
+const { sendToMainAIStream, sendSpareAIStream } = require('../../utils/useDeepseekStream')
 const { useNoteSentence } = require('../../utils/sentence')
 
 router.post('/initNote', async (req, res) => {
@@ -36,7 +36,7 @@ router.post('/getNote', async (req, res) => {
     res.setHeader('Connection', 'keep-alive')
     res.flushHeaders() // 发送头信息
 
-    const response = await sendToDSStream(system, content)
+    const response = await sendToMainAIStream(system, content)
     // console.log(response)
 
     if (!response.ok) {
@@ -85,12 +85,12 @@ router.post('/getNote', async (req, res) => {
       }
     }
   } catch (error) {
-    useDoubao()
+    useSpareAI()
     console.log(error)
   }
 
-  async function useDoubao () {
-    const response = await sendToDoubaoStream(system, content)
+  async function useSpareAI () {
+    const response = await sendSpareAIStream(system, content)
 
     if (!response.ok) {
       throw new Error(`Doubao API request failed: ${response.statusText}`)

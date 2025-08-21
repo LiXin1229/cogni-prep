@@ -38,7 +38,7 @@ const sendToDS = (system, content) => {
     method: 'post',
     maxBodyLength: Infinity,
     url: 'https://api.deepseek.com/chat/completions',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json', 
       'Accept': 'application/json', 
       'Authorization': 'Bearer sk-2650ba5290754d82930171b2022fdb10'

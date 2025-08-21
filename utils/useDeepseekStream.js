@@ -1,9 +1,18 @@
-const deepseek = {
-  apiKey: 'sk-2650ba5290754d82930171b2022fdb10',
-  baseUrl: 'https://api.deepseek.com/chat/completions'
+const model = 'doubao'
+
+const AImodel = {
+  'deepseek': {
+    apiKey: 'sk-2650ba5290754d82930171b2022fdb10',
+    baseUrl: 'https://api.deepseek.com/chat/completions'
+  },
+  'doubao': {
+    apiKey: '8b0b4298-18e2-4b57-a265-65d4679519a0',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+    model: 'doubao-seed-1-6-flash-250715'
+  }
 }
 
-const sendToDSStream = async (system, content) => {
+const sendToMainAIStream = async (system, content) => {
   const systemArr = [{
       "role": "system",
       "content": system
@@ -19,7 +28,7 @@ const sendToDSStream = async (system, content) => {
 
   const data = JSON.stringify({
     "messages": messages,
-    "model": "deepseek-chat",
+    "model": AImodel[model].model,
     "frequency_penalty": 0,
     "max_tokens": 8192,
     "presence_penalty": 0,
@@ -33,22 +42,17 @@ const sendToDSStream = async (system, content) => {
     "top_logprobs": null
   })
 
-  return await fetch(deepseek.baseUrl, {
+  return await fetch(AImodel[model].baseUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${deepseek.apiKey}`
+      'Authorization': `Bearer ${AImodel[model].apiKey}`
     },
     body: data
   })
 }
 
-const doubao = {
-  apiKey: '8b0b4298-18e2-4b57-a265-65d4679519a0',
-  baseUrl: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
-}
-
-const sendToDoubaoStream = async (system, content) => {
+const sendSpareAIStream = async (system, content) => {
   const systemArr = [{
       "role": "system",
       "content": system
@@ -64,7 +68,7 @@ const sendToDoubaoStream = async (system, content) => {
 
   const data = JSON.stringify({
     "messages": messages,
-    "model": "doubao-seed-1-6-flash-250715",
+    "model": AImodel[model].model,
     "frequency_penalty": 0,
     "max_tokens": 8192,
     "presence_penalty": 0,
@@ -78,17 +82,17 @@ const sendToDoubaoStream = async (system, content) => {
     "top_logprobs": null
   })
 
-  return await fetch(doubao.baseUrl, {
+  return await fetch(AImodel[model].baseUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${doubao.apiKey}`
+      'Authorization': `Bearer ${AImodel[model].apiKey}`
     },
     body: data
   })
 }
 
 module.exports = {
-  sendToDSStream,
-  sendToDoubaoStream
+  sendToMainAIStream,
+  sendSpareAIStream
 }
