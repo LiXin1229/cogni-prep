@@ -46,7 +46,7 @@ router.post('/start', async (req, res) => {
     res.setHeader('Connection', 'keep-alive')
     res.flushHeaders() // 发送头信息
 
-    const response = await sendToMainAIStream(system, content)
+    const response = await sendSpareAIStream(system, content)
     // console.log(response)
 
     if (!response.ok) {
@@ -101,7 +101,7 @@ router.post('/start', async (req, res) => {
       }
     }
   } catch (error) {
-    useSpareAI(res, system, content)
+    useMainAI(res, system, content)
     console.log(error)
   }
 })
@@ -291,6 +291,59 @@ const getContext = async (isLongTerm, sessionId, areaId) => {
   }
 
   return questions
+}
+
+const useMainAI = async (res, system, content) => {
+  const response = await sendToMainAIStream(system, content)
+
+  if (!response.ok) {
+    throw new Error(`Doubao API request failed: ${response.statusText}`)
+  }
+
+  try {
+    // 获取响应的可读流
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    while (true) {
+      const { done, value } = await reader.read()
+      
+      if (done) {
+        res.write('data: [DONE]\n\n')
+        res.end()
+        break
+      }
+
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n').filter(line => line.trim() !== '')
+      
+      for (const line of lines) {
+        // console.log('line', line) keep-alive
+        const dataStr = line.replace(/^data: /, '')
+        
+        if (dataStr === '[DONE]') {
+          res.write(`data: ${dataStr}\n\n`)
+          res.end()
+          return
+        }
+        
+        try {
+          const data = JSON.parse(dataStr)
+          if (data.choices && data.choices[0]?.delta?.content) {
+            // console.log('AI返回结果', data.choices[0].delta.content)
+            // 直接写入数据，流会自动处理缓冲
+            res.write(`data: ${JSON.stringify({
+              content: data.choices[0].delta.content
+            })}\n\n`)
+          }
+        } catch (e) {
+          console.error('Error parsing stream chunk:', e)
+        }
+      }
+    } 
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 const useSpareAI = async (res, system, content) => {

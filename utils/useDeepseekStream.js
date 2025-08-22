@@ -1,9 +1,10 @@
-const model = 'doubao'
+const model = 'deepseek'
 
 const AImodel = {
   'deepseek': {
-    apiKey: 'sk-2650ba5290754d82930171b2022fdb10',
-    baseUrl: 'https://api.deepseek.com/chat/completions'
+    apiKey: 'sk-c65e974ac11740548bc5b6397c9b931c',
+    baseUrl: 'https://api.deepseek.com/chat/completions',
+    model: 'deepseek-chat'
   },
   'doubao': {
     apiKey: '8b0b4298-18e2-4b57-a265-65d4679519a0',
@@ -34,7 +35,7 @@ const sendToMainAIStream = async (system, content) => {
     "presence_penalty": 0,
     "stop": null,
     "stream": true,
-    "temperature": 1.0,
+    "temperature": 0.5,
     "top_p": 1,
     "tools": null,
     "tool_choice": "none",

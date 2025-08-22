@@ -32,7 +32,7 @@ router.post('/init', async (req, res) => {
       [sessionId, msgType]
     )
 
-    res.send({ 
+    res.send({
       code: 200,
       success: true,
       data: {
