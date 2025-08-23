@@ -667,6 +667,11 @@ const title = computed(() => {
         bottom: 150px;
       }
 
+      .rotate-ring {
+        bottom: 148px;
+        right: 18px;
+      }
+
       .text-wrapper.assistant-wrapper {
         .assistant-question {
           font-size: 16px !important;

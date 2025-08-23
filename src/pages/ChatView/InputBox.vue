@@ -347,11 +347,17 @@ defineExpose({
 
       .tool-btns {
         padding: 0 10px;
+        display: flex;
+        justify-content: space-between;
 
         .left {
           .main-area {
             margin-right: 7px;
             padding: 4px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 95px;
 
             .icon {
               scale: 0.9;
@@ -360,8 +366,9 @@ defineExpose({
           }
 
           .surrounding-point {
-            max-width: calc(100vw - 235px);
+            max-width: calc(100vw - 270px);
             padding: 4px 8px;
+            font-size: 14px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -370,8 +377,9 @@ defineExpose({
 
         .right {
           .nextquestion {
-            margin-right: 10px;
+            margin-right: 6px;
             font-size: 13px;
+            min-width: 80px;
           }
         }
       }

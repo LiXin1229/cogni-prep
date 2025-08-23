@@ -38,7 +38,7 @@ const confirm = async () => {
   const isValid = await ruleFormRef.value.validate()
   
   if (isValid) {
-    if (route.name === '知识点图') {
+    if (route.name === '思维导图') {
       mindmapStore.triggerComponent('addNodes', formData.value)
     } else if (route.name === '笔记') {
       noteStore.addNode(formData.value)
