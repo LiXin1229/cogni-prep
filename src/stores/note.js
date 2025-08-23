@@ -175,7 +175,6 @@ export const useNoteStore = defineStore('note', () => {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
-      sendState.value = 'streaming'
       isMarkdownMode.value = true
 
       while (true) {
@@ -187,6 +186,8 @@ export const useNoteStore = defineStore('note', () => {
           saveNote(noteId, note.value, node)
           break
         }
+
+        sendState.value = 'streaming'
 
         // 解析SSE格式数据（格式：data: [JSON]\n\n）
         const chunk = decoder.decode(value)
