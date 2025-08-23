@@ -341,6 +341,10 @@ onUnmounted(() => {
     overflow-x: auto;
     overflow-y: hidden;
 
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
     .toggle-sidebar {
       display: flex;
       justify-content: center;

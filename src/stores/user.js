@@ -32,8 +32,10 @@ export const useUserInfoStore = defineStore('user', () => {
     areaList.value = []
     noteStore.selectKey = []
     mindmapStore.selectedAreaId = {}
+    
+    await new Promise(resolve => setTimeout(resolve, 0))
 
-    router.replace('/login')
+    router.push('/login')
   }
 
   const getUserInfo = async () => {

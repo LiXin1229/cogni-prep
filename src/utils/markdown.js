@@ -1,4 +1,4 @@
-import DOMPurify from 'dompurify'
+import { purifyText } from './purifyText'
 import { marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
@@ -14,24 +14,6 @@ marked.use(markedHighlight({
   }
 }))
 
-// 配置DOMPurify允许的标签和属性，限制安全范围
-const sanitizeOptions = {
-  // 允许的HTML标签
-  ADD_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'li', 
-             'strong', 'em', 'code', 'pre', 'blockquote', 'br', 'table', 
-             'thead', 'tbody', 'tr', 'th', 'td'],
-  // 允许的属性
-  ADD_ATTR: ['class', 'href', 'src', 'alt', 'title'],
-  // 禁止的标签
-  FORBID_TAGS: ['script', 'iframe', 'video', 'audio', 'style'],
-  // 禁止的属性
-  FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus'],
-  // 禁止未知协议，防止javascript:等危险协议
-  ALLOW_UNKNOWN_PROTOCOLS: false,
-  // 净化URL，确保链接安全
-  SANITIZE_URI: true
-}
-
 // 处理代码块，添加头部标题
 export const parseMarkdown = (content) => {
   if (typeof content !== 'string') {
@@ -41,7 +23,7 @@ export const parseMarkdown = (content) => {
   // 先解析原始Markdown
   let html = marked(content)
   
-  const sanitizedHtml = DOMPurify.sanitize(html, sanitizeOptions)
+  const sanitizedHtml = purifyText(html)
 
   // 创建临时DOM元素处理HTML
   const tempDiv = document.createElement('div')
@@ -98,6 +80,6 @@ export const parseMarkdown = (content) => {
       block.appendChild(header)
     }
   })
-  
-  return DOMPurify.sanitize(tempDiv.innerHTML, sanitizeOptions)
+
+  return purifyText(tempDiv.innerHTML)
 }

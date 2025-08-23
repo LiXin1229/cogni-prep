@@ -88,7 +88,7 @@ const togglePreferState = () => {
 
 // 选中对话
 const toggleChecked = (chat) => { 
-  console.log(chat.id)
+  // console.log(chat.id)
   if (chatStore.preferList.has(chat.id)) {
     chatStore.preferList.delete(chat.id)
   } else {
@@ -244,7 +244,7 @@ const title = computed(() => {
           <div @click="() => toggleChecked(chat)">
               <!-- 用户发言wrapper -->
             <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
-              <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>
+              <div class="user" v-if="chat.messageType === 0" v-html="chat.content"></div>
 
               <!-- 功能按钮 -->
               <div class="functionList user-right">

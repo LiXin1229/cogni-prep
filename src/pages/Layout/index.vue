@@ -45,7 +45,7 @@ const toggleSidebar = () => {
 
 const navberList = reactive([
   { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
-  { id: 2, title: '知识点图', icon: siweidaotu, path: 'mindmap' },
+  { id: 2, title: '思维导图', icon: siweidaotu, path: 'mindmap' },
   { id: 3, title: '笔记', icon: penToSquare, path: 'note' },
   { id: 4, title: '收藏', icon: star, path: 'prefer' }
 ])

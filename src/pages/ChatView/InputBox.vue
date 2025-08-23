@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useUserInfoStore } from '@/stores/user'
-import { useSessionStore } from '../../stores/session'
+import { useSessionStore } from '@/stores/session'
+import { purifyText } from '@/utils/purifyText'
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 
 const emit = defineEmits(['toggleSidebar'])
@@ -58,7 +59,7 @@ const nextQuestion = () => {
 const submit = () => {
   // console.log('mainArea', sessionStore.mainArea)
 
-  chatStore.submit(chatStore.customContent, chatStore.funcStatus)
+  chatStore.submit(purifyText(chatStore.customContent), chatStore.funcStatus)
 
   // 重置输入框
   quillRef.value?.resetForm(chatStore.customContent.length)

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Quill from 'quill'
 import 'quill/dist/quill.bubble.css'
 import Delta from 'quill-delta'
@@ -44,17 +44,6 @@ const matchPatterns = computed(() => {
   })
 })
 
-// 转义函数：将 < > 等转成 &lt; &gt;
-const escapeHtml = (html) => {
-  if (!html) return ''
-  return html
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
 // 初始化Quill编辑器
 onMounted(() => {
   if (!editorRef.value) return
@@ -87,8 +76,8 @@ onMounted(() => {
   // 设置初始值
   if (props.modelValue) {
     // 先进行HTML转义处理
-    const escapedText = escapeHtml(props.modelValue)
-    quillInstance.setText(escapedText)
+    const escapedText = props.modelValue
+    quillInstance.setText(props.modelValue)
   }
 
   // 监听编辑器内容变化
@@ -103,15 +92,13 @@ onMounted(() => {
       return
     }
 
-    const unescapedText = escapeHtml(plainText)
-
     // 清除样式
     clearStyle(quillInstance)
 
     // 匹配特定样式
-    matchText(unescapedText)
+    matchText(plainText)
 
-    emit('update:modelValue', unescapedText)
+    emit('update:modelValue', plainText)
 
     updateEditorHeight()
   })
