@@ -1,66 +1,52 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Login from '@/pages/Login/index.vue'
-import Layout from '@/pages/Layout/index.vue'
-import ChatView from '@/pages/ChatView/index.vue'
-import MindMap from '@/pages/MindMap/index.vue'
-import Note from '@/pages/Note/index.vue'
-import Prefer from '@/pages/Prefer/index.vue'
-import PreferDetail from '@/pages/Prefer/PreferDetail.vue'
-import Interview from '@/pages/Interview/index.vue'
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/login',
       name: '登录',
-      component: Login
+      component: () => import('@/pages/Login/index.vue')
     },
     {
       path: '/',
-      component: Layout,
+      component: () => import('@/pages/Layout/index.vue'),
       redirect: '/chat',
       children: [
         {
           path: 'chat',
           name: '每日刷题',
-          component: ChatView,
+          component: () => import('@/pages/ChatView/index.vue'),
           meta: { keepAlive: true }
         },
         {
           path: 'chat/:sessionId',
           name: '会话',
-          component: ChatView,
+          component: () => import('@/pages/ChatView/index.vue'),
           meta: { keepAlive: true }
         },
         {
           path: 'mindmap',
           name: '思维导图',
-          component: MindMap
+          component: () => import('@/pages/MindMap/index.vue'),
         },
         {
           path: 'note',
           name: '笔记',
-          component: Note,
+          component: () => import('@/pages/Note/index.vue'),
           meta: { keepAlive: true }
         },
         {
           path: 'prefer',
           name: '收藏',
-          component: Prefer,
+          component: () => import('@/pages/Prefer/index.vue'),
           children: [
             {
               path: ':preferId',
               name: '收藏详情',
-              component: PreferDetail
+              component: () => import('@/pages/Prefer/PreferDetail.vue'),
             }
           ]
-        },
-        {
-          path: 'interview',
-          name: '模拟面试',
-          component: Interview
         }
       ]
     }

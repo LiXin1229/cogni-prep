@@ -412,6 +412,14 @@ const deleteChildren = () => {
 
 // 开始对话
 const startChat = async (chatId) => {
+  if (mindmapStore.selectedNode.isRoot) {
+    ElMessage({
+      message: '不能选择根节点',
+      type: 'info'
+    })
+    return
+  }
+
   // 该节点没有chatId则开启新对话
   if (chatId === null) {
     await router.push({ name: '每日刷题' })
@@ -501,7 +509,8 @@ defineExpose({
     }
 
     .node text {
-      font: 20px sans-serif;
+      font: 20px;
+      font-family: "Microsoft YaHei", "SimHei", "Heiti SC", sans-serif !important;
       fill: #222;
     }
 

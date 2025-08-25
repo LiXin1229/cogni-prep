@@ -27,10 +27,6 @@ const chatStore = useChatStore()
 
 const chatList = computed(() => chatStore.displayChat)
 
-onMounted(() => {
-  chatStore.initDisplayChat()
-})
-
 const sendState = computed(() => chatStore.sendState)
 
 const inputRef = ref(null)
@@ -41,16 +37,16 @@ const inputHeight = computed(() => inputRef.value?.inputHeight)
 const funcBtn = (type, data) => {
   // 先清除上个@的内容
   if (chatStore.funcStatus > 0) {
-    quillRef.value?.deleteText(chatStore.funcType[chatStore.funcStatus].length)
-    chatStore.customContent = chatStore.customContent.slice(chatStore.funcType[chatStore.funcStatus].length)
+    quillRef.value?.deleteText(chatStore.FUNC_TYPE[chatStore.funcStatus].length)
+    chatStore.customContent = chatStore.customContent.slice(chatStore.FUNC_TYPE[chatStore.funcStatus].length)
   }
   
   // 设置当前功能
   chatStore.funcStatus = type
 
   // 将功能显示到输入框开头
-  quillRef.value?.insertText(chatStore.funcType[type])
-  chatStore.customContent = chatStore.funcType[type] + chatStore.customContent
+  quillRef.value?.insertText(chatStore.FUNC_TYPE[type])
+  chatStore.customContent = chatStore.FUNC_TYPE[type] + chatStore.customContent
   quillRef.value?.focus()
 
   data?.content && (chatStore.selectQuestion = data.content)
@@ -177,7 +173,7 @@ onMounted(() => {
 // 卸载时移除滚动监听
 onUnmounted(() => {
   if (scrollRef.value && scrollHandler) scrollRef.value.removeEventListener('scroll', scrollHandler)
-  chatStore.abortCurrentStream()
+  chatStore.abortStream()
 
   chatStore.registerCallback({})
 })
@@ -235,16 +231,16 @@ const title = computed(() => {
 
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in chatList" :key="chat.id">
-          <div class="left" @click="() => toggleChecked(chat)" v-if="chatStore.isChosePrefer">
+          <div class="left" @click="() => toggleChecked(chat)" v-if="chatStore.isChosePrefer && chat.content">
             <div :class="['check-box', chatStore.preferList.has(chat.id) && 'checked']">
               <font-awesome-icon :icon="faCheck" class="icon" />
             </div>
           </div>
 
-          <div @click="() => toggleChecked(chat)">
+          <div @click="toggleChecked(chat)">
               <!-- 用户发言wrapper -->
             <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
-              <div class="user" v-if="chat.messageType === 0" v-html="chat.content"></div>
+              <div class="user" v-if="chat.messageType === 0 && chat.content" v-html="chat.content"></div>
 
               <!-- 功能按钮 -->
               <div class="functionList user-right">
@@ -281,7 +277,7 @@ const title = computed(() => {
             <!-- 助手发言wrapper -->
             <div class="text-wrapper assistant-wrapper" v-else>
               <!-- 问题 -->
-              <template v-if="chat.messageType === 1">
+              <template v-if="chat.messageType === 1 && chat.content">
                 <div class="assistant-question">{{ chat.content }}</div>
               </template>
 
@@ -290,7 +286,7 @@ const title = computed(() => {
               </template>
 
               <!-- 功能按钮 -->
-              <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']">
+              <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']" v-if="chat.content">
                 <!-- 复制按钮 -->
                 <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
                   <img src="../../assets/svgs/copy.svg" alt="" class="icon">

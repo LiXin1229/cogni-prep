@@ -29,7 +29,7 @@ let quillInstance = null
 
 // 匹配功能的模式
 const matchPatterns = computed(() => {
-  return chatStore.funcType.map(item => {
+  return chatStore.FUNC_TYPE.map(item => {
     if (item === '标准') {
       return {
         regex: /^$/, // 匹配空字符串

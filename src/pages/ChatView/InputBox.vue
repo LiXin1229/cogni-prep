@@ -53,7 +53,7 @@ const quillRef = ref(null)
 
 // 下一题
 const nextQuestion = () => {
-  chatStore.getAIquestion()
+  chatStore.getAIquestion(chatStore.customContent, chatStore.sessionId)
 }
 
 const submit = () => {
@@ -77,7 +77,7 @@ const handleEnter = (e) => {
 }
 
 const abortStream = () => {
-  chatStore.abortCurrentStream()
+  chatStore.abortStream()
   ElMessage({
     message: '取消生成',
     type: 'info'
