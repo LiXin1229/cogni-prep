@@ -37,7 +37,7 @@ router.post('/initSession', async (req, res) => {
 
 // 获取会话列表
 router.get('/getSessionList', async (req, res) => {
-  const { id } = req.query
+  const { id, number } = req.query
 
   if (!id) {
     return res.send({
@@ -54,7 +54,9 @@ router.get('/getSessionList', async (req, res) => {
       id
     )
 
-    rows.forEach(row => {
+    const slicedArr = rows.slice(number - 20, number)
+
+    slicedArr.forEach(row => {
       sessionList.push({
         sessionId: row.session_id,
         title: row.title,
