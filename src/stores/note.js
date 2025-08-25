@@ -27,6 +27,8 @@ export const useNoteStore = defineStore('note', () => {
   const treeData = ref({})
 
   const getTreeData = async () => {
+    if (isEmptyObj(userStore.userInfo)) return
+
     if (isEmptyObj(selectedAreaId.value)) {
       await getSelectedAreaId()
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
@@ -232,7 +234,7 @@ export const useNoteStore = defineStore('note', () => {
 
   // 修改节点笔记
   const updateNoteData = async (markId) => {
-    console.log(markId)
+    // console.log(markId)
     if (!markId) return
 
     const res = await request({
@@ -262,9 +264,8 @@ export const useNoteStore = defineStore('note', () => {
   const selectedNode = ref(null)
 
   const addNode = (data) => {
-    console.log(selectedNode.value)
-    console.log(data)
-
+    // console.log(selectedNode.value)
+    // console.log(data)
     const newNode = { id: uuidv4(), name: data.name, children: [], isFolded: 0, frequency: data.frequency, markId: null, chatId: null }
     treeData.value = addChildrenById(treeData.value, selectedNode.value.id, newNode)
 
@@ -277,7 +278,7 @@ export const useNoteStore = defineStore('note', () => {
 
   // 保存导图数据
   const saveMindmapData = async (data) => {
-    if (isEmptyObj(data) || selectedAreaId.value === null) return
+    if (isEmptyObj(data) || selectedAreaId.value === null || isEmptyObj(userStore.userInfo)) return
 
     await request({
       url: API.saveMindmapData,

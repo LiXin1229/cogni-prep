@@ -49,8 +49,10 @@ export const useChatStore = defineStore('chat', () => {
 
   const abortStream = () => {
     const currentSessionId = sessionId.value
-    chatMap.get(currentSessionId).controller?.abort()
-    chatMap.get(currentSessionId).controller = null
+    if (chatMap.get(currentSessionId)?.controller) {
+      chatMap.get(currentSessionId).controller?.abort()
+      chatMap.get(currentSessionId).controller = null
+    }
   }
 
   // 获取当前会话的聊天列表

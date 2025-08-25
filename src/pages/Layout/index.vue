@@ -1,6 +1,6 @@
 <script setup>
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
@@ -96,6 +96,24 @@ onMounted(async() => {
   await userStore.getUserInfo()
   await sessionStore.getSessionList()
 })
+
+const scrollRef = ref(null)
+const isLoading = ref(false)
+
+const handleScroll = async () => {
+  const clientHeight = document.documentElement.clientHeight || window.innerHeight
+  const { bottom: scrollHeight } = scrollRef.value.getBoundingClientRect()
+
+  if (scrollHeight - clientHeight < 50 && !isLoading.value) {
+    console.log(sessionStore.sessionNumber += 20)
+    isLoading.value = true
+    if (await sessionStore.getSessionList()) {
+      isLoading.value = true
+    } else {
+      isLoading.value = false
+    }
+  }
+}
 </script>
 
 <template>
@@ -134,8 +152,8 @@ onMounted(async() => {
         <div class="history-top">
           <div class="title">历史对话</div>
         </div>
-        <div class="session-rows">
-          <div class="session-wrapper">
+        <div class="session-rows" @scroll="handleScroll">
+          <div class="session-wrapper" ref="scrollRef">
             <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
               <div class="title">{{ session.title }}</div>
               <cust-popup :position="{ top: '20px', left: '-75px' }">

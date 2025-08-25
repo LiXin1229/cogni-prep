@@ -24,6 +24,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
   const treeData = ref({})
 
   const getMindmapData = async () => {
+    if (isEmptyObj(userStore.userInfo)) return
+
     if (isEmptyObj(selectedAreaId.value)) {
       await getSelectedAreaId()
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
@@ -48,8 +50,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // 保存导图数据
   const saveMindmapData = async (data) => {
-    console.log('saveMindmapData', data)
-    if (isEmptyObj(data) || selectedAreaId.value === null) return
+    // console.log('saveMindmapData', data)
+    if (isEmptyObj(data) || selectedAreaId.value === null || isEmptyObj(userStore.userInfo)) return
 
     await request({
       url: API.saveMindmapData,

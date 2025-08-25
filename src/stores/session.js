@@ -13,6 +13,8 @@ export const useSessionStore = defineStore('session', () => {
   const chatStore = useChatStore()
   const mindmapStore = useMindmapStore()
 
+  const sessionNumber = ref(20)
+
   // 会话列表
   const sessionList = ref([])
 
@@ -61,12 +63,14 @@ export const useSessionStore = defineStore('session', () => {
       url: API.getSessionList,
       method: 'GET',
       params: {
-        id: userStore.userInfo.userId
+        id: userStore.userInfo.userId,
+        number: sessionNumber.value
       }
     })
     // console.log(res)
 
-    sessionList.value = res.data.sessionList
+    sessionList.value = [...sessionList.value, ...res.data.sessionList]
+    return res.data.sessionList.length < 20
   }
 
   // 标记是否有节点需要挂载sessionId
@@ -141,6 +145,7 @@ export const useSessionStore = defineStore('session', () => {
     currSession,
     mainArea,
     surroundingPoint,
-    deleteSession
+    deleteSession,
+    sessionNumber
   }
 })
