@@ -1,13 +1,14 @@
+require('dotenv').config()
 const model = 'deepseek'
 
 const AImodel = {
   'deepseek': {
-    apiKey: 'sk-c65e974ac11740548bc5b6397c9b931c',
+    apiKey: process.env.DEEPSEEK_API_KEY,
     baseUrl: 'https://api.deepseek.com/chat/completions',
     model: 'deepseek-chat'
   },
   'doubao': {
-    apiKey: '8b0b4298-18e2-4b57-a265-65d4679519a0',
+    apiKey: process.env.DOUBAO_API_KEY,
     baseUrl: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
     model: 'doubao-seed-1-6-flash-250715'
   }

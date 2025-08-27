@@ -10,9 +10,13 @@ const mindmapRouter = require('./router/mindmap/index.js')
 const noteRouter = require('./router/note/index.js')
 const perferRouter = require('./router/perfer/index.js')
 
-app.use(cors({ origin: 'http://47.108.61.196' }))
+app.use(cors({ 
+  origin: 'http://47.108.61.196',
+  methods: ['GET', 'POST', 'OPTIONS'], // 指定允许的HTTP方法
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'], // 指定允许的请求头
+  maxAge: 86400 // 预检请求的结果缓存24小时（86400秒）
+}))
 
-// 解析 token 的中间件 (以 /login 开头的 以及 下载头像的 不需要检验 token)
 const secretKey = 'isomer 1229 ^.^'
 app.use(expressjwt({ secret: secretKey, algorithms: ['HS256'] }).unless({ path: [/^\/user\//] }))
 

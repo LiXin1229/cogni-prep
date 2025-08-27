@@ -1,4 +1,15 @@
+require('dotenv').config()
 const axios = require('axios')
+
+const model = 'deepseek'
+
+const AImodel = {
+  'deepseek': {
+    apiKey: process.env.DEEPSEEK_API_KEY,
+    baseUrl: 'https://api.deepseek.com/chat/completions',
+    model: 'deepseek-chat'
+  }
+}
 
 const sendToDS = (system, content) => {
   const systemArr = [{
@@ -16,7 +27,7 @@ const sendToDS = (system, content) => {
 
   const data = JSON.stringify({
     "messages": messages,
-    "model": "deepseek-chat",
+    "model": AImodel[model].model,
     "frequency_penalty": 0,
     "max_tokens": 8192,
     "presence_penalty": 0,
@@ -37,11 +48,11 @@ const sendToDS = (system, content) => {
   let config = {
     method: 'post',
     maxBodyLength: Infinity,
-    url: 'https://api.deepseek.com/chat/completions',
+    url: AImodel[model].baseUrl,
     headers: {
       'Content-Type': 'application/json', 
       'Accept': 'application/json', 
-      'Authorization': 'Bearer sk-2650ba5290754d82930171b2022fdb10'
+      'Authorization': `Bearer ${AImodel[model].apiKey}`
     },
     data : data
   }
