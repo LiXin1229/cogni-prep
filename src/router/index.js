@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import Layout from '@/pages/Layout/index.vue'
 import Chat from '@/pages/ChatView/index.vue'
 
 const router = createRouter({
@@ -12,7 +13,7 @@ const router = createRouter({
     },
     {
       path: '/',
-      component: () => import('@/pages/Layout/index.vue'),
+      component: Layout,
       redirect: '/chat',
       children: [
         {
@@ -24,13 +25,13 @@ const router = createRouter({
         {
           path: 'chat/:sessionId',
           name: '会话',
-          component: () => import('@/pages/ChatView/index.vue'),
+          component: Chat,
           meta: { keepAlive: true }
         },
         {
           path: 'mindmap',
           name: '思维导图',
-          component: () => import('@/pages/MindMap/index.vue'),
+          component: () => import('@/pages/MindMap/index.vue')
         },
         {
           path: 'note',
@@ -46,7 +47,9 @@ const router = createRouter({
             {
               path: ':preferId',
               name: '收藏详情',
-              component: () => import('@/pages/Prefer/PreferDetail.vue'),
+              component: () => import(/* @vite-ignore  */ '@/pages/Prefer/PreferDetail.vue', {
+                name: 'preferDetail'
+              })
             }
           ]
         }
@@ -55,18 +58,13 @@ const router = createRouter({
   ]
 })
 
-// router.afterEach(async (to, from) => {
-//   const userStore = useUserInfoStore()
-
-//   // console.log('全局后置守卫', userStore.areaList)
-//   // if (userStore.areaList.length === 0) {
-//   //   await userStore.getUserInfo()
-
-//   //   if (userStore.areaList.length === 0) {
-//   //     userStore.showDialog = 'selectArea'
-//   //     userStore.ableClose = false
-//   //   }
-//   // }
-// })
+router.beforeEach(async (to, from, next) => { 
+  if (to.path === '/prefer') {
+    // 预加载 about 页面的资源
+    import(/* @vite-ignore */ '@/pages/Prefer/PreferDetail.vue', { name: 'preferDetail', preload: true })
+      .catch(err => console.log('预加载失败:', err))
+  }
+  next()
+})
 
 export default router
