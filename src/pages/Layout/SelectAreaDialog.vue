@@ -133,6 +133,10 @@ watch(() => props.showDialog, (showDialog) => {
   .content {
     padding: 15px 0;
 
+    .custom {
+      padding-bottom: 10px;
+    }
+
     .area-category {
       display: flex;
       justify-content: left;
@@ -144,7 +148,6 @@ watch(() => props.showDialog, (showDialog) => {
       .category-list {
         .category-item {
           width: 90px;
-          // background-color: aqua;
           border-radius: 10px;
           margin: 10px 0;
           padding: 5px;
@@ -174,6 +177,15 @@ watch(() => props.showDialog, (showDialog) => {
       .wrapper {
         width: 190px;
       }
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .area-category {
+      gap: 20px !important;
+    }
+    .wrapper {
+      width: 175px !important;
     }
   }
 }

@@ -87,8 +87,12 @@ const handleNodeClick = async (data) => {
 // popup框
 const showNodePopup = ref('')
 
+const menuScrollRef = ref(null)
+const menuScrollTop = ref(0)
+
 const togglePopup = (e, data) => {
-  // console.log(e)
+  menuScrollTop.value = menuScrollRef.value.scrollTop
+
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
   if (svgs.includes(e?.target.tagName)) return
   if (e?.target.className?.includes('toggleNodePopup')) {
@@ -233,7 +237,7 @@ onUnmounted(() => {
     <!-- 顶部区 -->
     <div class="top">
       <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
-        <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon">
       </div>
 
       <div class="area-list">
@@ -257,7 +261,7 @@ onUnmounted(() => {
     <div class="main-content">
       <div :class="['resize-menu', (userStore.isMobile && showMenu) && 'show-menu']">
         <!-- 目录区 -->
-        <div class="sider-menu">
+        <div class="sider-menu" ref="menuScrollRef">
           <div class="warpper">
             <el-tree
               ref="treeRef"
@@ -272,7 +276,7 @@ onUnmounted(() => {
               <template #default="{ node, data }">
                 <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
                   <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
-                  <cust-popup :position="{ top: '20px', left: '-75px' }">
+                  <cust-popup :position="{ top: `${ 20 - menuScrollTop }px`, left: '-75px' }">
                     <div :class="['func-btn', 'toggleNodePopup', data.id === currentNode?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
                       <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
                     </div>
@@ -421,6 +425,7 @@ onUnmounted(() => {
     padding-right: 6px;
     overflow-x: hidden;
     overflow-y: auto;
+    padding-bottom: 45px;
 
     .warpper {
       width: calc(100% - 5px);

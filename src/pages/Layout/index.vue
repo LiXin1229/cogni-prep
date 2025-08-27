@@ -72,8 +72,12 @@ const navToSession = (sessionId) => {
 }
 
 const showSessionPopup = ref('')
+const scrollRef = ref(null)
+const scrollTop = ref(0)
 
 const togglePopup = (e, data) => {
+  scrollTop.value = scrollRef.value.scrollTop
+
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
   if (svgs.includes(e.target.tagName)) return
   if (e.target.className?.includes('toggleSessionPopup')) {
@@ -97,15 +101,15 @@ onMounted(async() => {
   await sessionStore.getSessionList()
 })
 
-const scrollRef = ref(null)
+const boundingClientRef = ref(null)
 const isLoading = ref(false)
 
 const handleScroll = async () => {
   const clientHeight = document.documentElement.clientHeight || window.innerHeight
-  const { bottom: scrollHeight } = scrollRef.value.getBoundingClientRect()
+  const { bottom: scrollHeight } = boundingClientRef.value.getBoundingClientRect()
 
   if (scrollHeight - clientHeight < 50 && !isLoading.value) {
-    console.log(sessionStore.sessionNumber += 20)
+    sessionStore.sessionNumber += 20
     isLoading.value = true
     if (await sessionStore.getSessionList()) {
       isLoading.value = true
@@ -152,11 +156,11 @@ const handleScroll = async () => {
         <div class="history-top">
           <div class="title">历史对话</div>
         </div>
-        <div class="session-rows" @scroll="handleScroll">
-          <div class="session-wrapper" ref="scrollRef">
+        <div class="session-rows" @scroll="handleScroll" ref="scrollRef">
+          <div class="session-wrapper" ref="boundingClientRef">
             <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
               <div class="title">{{ session.title }}</div>
-              <cust-popup :position="{ top: '20px', left: '-75px' }">
+              <cust-popup :position="{ top: `${20 - scrollTop}px`, left: '-75px' }">
                 <div :class="['more-btn', 'toggleSessionPopup', session.sessionId === seclectedSession && 'visible']" @click.stop="(e) => togglePopup(e, session)" >
                   <img :src="ellipsisIcon" alt="" class="icon toggleSessionPopup">
                 </div>

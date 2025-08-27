@@ -204,6 +204,7 @@ watch(() => props.showDialog, (showDialog) => {
         justify-content: space-between;
         width: 20px;
         height: 15px;
+        margin: 10px 0;
 
         @include loading;
       }

@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import Chat from '@/pages/ChatView/index.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -16,7 +18,7 @@ const router = createRouter({
         {
           path: 'chat',
           name: '每日刷题',
-          component: () => import('@/pages/ChatView/index.vue'),
+          component: Chat,
           meta: { keepAlive: true }
         },
         {

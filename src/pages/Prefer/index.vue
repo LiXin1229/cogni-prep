@@ -45,7 +45,7 @@ const navToDetail = (item) => {
     <!-- 顶部区 -->
     <div class="top" v-if="!isDetailPage">
       <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
-        <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
+        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon">
       </div>
       <div>
         <div class="title">我的收藏</div>

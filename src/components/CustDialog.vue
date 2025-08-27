@@ -105,6 +105,11 @@ defineExpose({
       margin-left: 10px;
     }
   }
+
+  @media (max-aspect-ratio: 1/1) {
+    width: 75vw;
+    overflow-x: auto;
+  }
 }
 
 .mask {
