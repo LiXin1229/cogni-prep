@@ -22,6 +22,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // 展示的树数据
   const treeData = ref({})
+  let backupData = null
 
   const getMindmapData = async () => {
     if (isEmptyObj(userStore.userInfo)) return
@@ -41,6 +42,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
       })
 
       if (res.success) {
+        backupData = JSON.parse(JSON.stringify(res.data.mindmap))
         return res.data.mindmap
       }
     } catch (error) {
@@ -53,16 +55,21 @@ export const useMindmapStore = defineStore('mindmap', () => {
     // console.log('saveMindmapData', data)
     if (isEmptyObj(data) || selectedAreaId.value === null || isEmptyObj(userStore.userInfo)) return
 
-    await request({
-      url: API.saveMindmapData,
-      method: 'POST',
-      data: {
-        areaId: selectedAreaId.value,
-        mindmap: data
-      }
-    })
+    try {
+      await request({
+        url: API.saveMindmapData,
+        method: 'POST',
+        data: {
+          areaId: selectedAreaId.value,
+          mindmap: data
+        }
+      })
 
-    noteStore.treeData = data
+      noteStore.treeData = data
+    } catch (error) {
+      treeData.value = backupData
+      triggerComponent('renderChart')
+    }
   }
 
   // 是否正在编辑

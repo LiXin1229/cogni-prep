@@ -40,6 +40,7 @@ export const useChatStore = defineStore('chat', () => {
 
   // 当前展示的聊天记录
   const displayChat = computed(() => chatMap.get(sessionId.value)?.chatList ?? [])
+  const setDisplayChat = (value, currentSessionId) => chatMap.get(currentSessionId) && (chatMap.get(currentSessionId).chatList = value)
 
   const sendState = computed(() => chatMap.get(sessionId.value)?.sendState ?? 'available')
   const setSendState = (value, currentSessionId) => chatMap.get(currentSessionId) && (chatMap.get(currentSessionId).sendState = value)
@@ -74,6 +75,7 @@ export const useChatStore = defineStore('chat', () => {
       
       pushChatQueue(currentSessionId, {
         chatList: res.data.chatList,
+        backupChatList: JSON.parse(JSON.stringify(res.data.chatList)),
         sendState: 'available',
         nextState: true,
         controller: null
@@ -189,6 +191,7 @@ export const useChatStore = defineStore('chat', () => {
       currentSessionId = sessionId.value
       pushChatQueue(currentSessionId, {
         chatList: [],
+        backupChatList: [],
         sendState: 'available',
         nextState: true,
         controller: null
@@ -257,7 +260,7 @@ export const useChatStore = defineStore('chat', () => {
 
         if (done) {
           setSendState('available', data.sessionId)
-          saveChat(chatId, data.sessionId, newText.content, data)
+          saveChat(chatId, data.sessionId, newText.content, data, msgType)
           chatMap.get(data.sessionId).controller = null
           break
         }
@@ -286,7 +289,7 @@ export const useChatStore = defineStore('chat', () => {
         console.error('请求错误:', err)
       }
       setSendState('loading', data.sessionId)
-      saveChat(chatId, data.sessionId, newText.content, data)
+      saveChat(chatId, data.sessionId, newText.content, data, msgType)
       setSendState('available', data.sessionId)
 
       chatMap.get(data.sessionId) && (chatMap.get(data.sessionId).controller = null)
@@ -313,34 +316,56 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  const saveUserWords = async (msgType, content) => { 
-    const res = await request({
-      url: API.saveUserWords,
-      method: 'POST',
-      data: {
-        sessionId: sessionId.value,
-        msgType: msgType,
-        customContent: content
-      }
-    })
+  const saveUserWords = async (msgType, content, currentSessionId) => {
+    try {
+      const res = await request({
+        url: API.saveUserWords,
+        method: 'POST',
+        data: {
+          sessionId: currentSessionId,
+          msgType: msgType,
+          customContent: content
+        }
+      })
 
-    return res
+      chatMap.get(currentSessionId).backupChatList.push({
+        id: res.data.chatId,
+        content,
+        messageType: msgType,
+        sessionId: currentSessionId
+      })
+
+      return res
+    } catch (error) {
+      setDisplayChat(chatMap.get(currentSessionId).backupChatList, currentSessionId)
+    }
   }
 
-  const saveChat = async (chatId, currentSessionId, content, data) => {
+  const saveChat = async (chatId, currentSessionId, content, data, msgType) => {
     // displayChat.value.find(item => item.id === chatId).content = content
-    const res = await request({
-      url: API.saveChat,
-      method: 'POST',
-      data: {
-        chatId,
+    try {
+      const res = await request({
+        url: API.saveChat,
+        method: 'POST',
+        data: {
+          chatId,
+          content,
+          surroundingPoint: data.surroundingPoint,
+          areaId: data.areaId || null
+        }
+      })
+      setNextState(true, currentSessionId)
+      // console.log('保存记录', res)
+
+      chatMap.get(currentSessionId).backupChatList.push({
+        id: chatId,
         content,
-        surroundingPoint: data.surroundingPoint,
-        areaId: data.areaId || null
-      }
-    })
-    setNextState(true, currentSessionId)
-    console.log('保存记录', res)
+        messageType: msgType,
+        sessionId: currentSessionId
+      })
+    } catch (error) {
+      setDisplayChat(chatMap.get(currentSessionId).backupChatList, currentSessionId)
+    }
   }
 
   // 用户正常回答
@@ -355,8 +380,10 @@ export const useChatStore = defineStore('chat', () => {
 
     triggerComponent('scrollToBottom')
 
-    const userRes = await saveUserWords(MSG_TYPE['user'], content)
+    const userRes = await saveUserWords(MSG_TYPE['user'], content, currentSessionId)
+    if (!userRes?.success) return
     // console.log('userRes', userRes)
+
     pushUserText(currentSessionId, { id: userRes.data.chatId }, true)
 
     const res = await initChat(MSG_TYPE['evaluation'], currentSessionId)
@@ -375,7 +402,7 @@ export const useChatStore = defineStore('chat', () => {
   // 获取答题模板或其他
   const getHelp = async (content, status, currentSessionId) => {
     if (status === 5) {
-      return custQustion(content.slice(7))
+      return custQustion(content.slice(7), currentSessionId)
     }
 
     // 更新页面
@@ -388,7 +415,9 @@ export const useChatStore = defineStore('chat', () => {
 
     triggerComponent('scrollToBottom')
 
-    const userRes = await saveUserWords(MSG_TYPE['user'], content)
+    const userRes = await saveUserWords(MSG_TYPE['user'], content, currentSessionId)
+    if (!userRes?.success) return
+
     pushUserText(currentSessionId, { id: userRes.data.chatId }, true)
 
     const res = await initChat(MSG_TYPE['help'], currentSessionId)
@@ -406,7 +435,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   // 自定义问题
-  const custQustion = async (content) => {
+  const custQustion = async (content, currentSessionId) => {
     if (!content) return ElMessage({
       message: '请输入问题',
       type: 'info'
@@ -415,7 +444,7 @@ export const useChatStore = defineStore('chat', () => {
     pushUserText(currentSessionId, {
       id: uuidv4(),
       content,
-      sessionId: sessionId.value,
+      sessionId: currentSessionId,
       messageType: MSG_TYPE['question']
     })
 
@@ -434,18 +463,26 @@ export const useChatStore = defineStore('chat', () => {
 
       if (res.success) {
         pushUserText(currentSessionId, { id: res.data.chatId }, true)
+
+        chatMap.get(currentSessionId).backupChatList.push({
+          id: res.data.chatId,
+          content,
+          messageType: MSG_TYPE['question'],
+          sessionId: currentSessionId
+        })
       }
     } catch (error) {
-      throw new Error(error)
+      setDisplayChat(chatMap.get(currentSessionId).backupChatList, currentSessionId)
     }
   }
 
   const pushUserText = (currentSessionId, data, isReplace = false) => {
+    const curr =  chatMap.get(currentSessionId)
     // console.log('pushUserText', data)
     if (isReplace) {
-      chatMap.get(currentSessionId).chatList.at(-1).id = data.id
+      curr.chatList.at(-1).id = data.id
     } else {
-      chatMap.get(currentSessionId).chatList.push(data)
+      curr.chatList.push(data)
     }
   }
   

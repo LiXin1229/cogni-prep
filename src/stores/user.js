@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
-import { reactive, ref, computed, watch, nextTick } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useChatStore } from './chat'
 import { useSessionStore } from './session'
 import { useMindmapStore } from './mindmap'
 import { useNoteStore } from './note'
@@ -11,7 +10,6 @@ import API from '@/utils/API.js'
 
 export const useUserInfoStore = defineStore('user', () => {
   const router = useRouter()
-  const chatStore = useChatStore()
   const mindmapStore = useMindmapStore()
   const noteStore = useNoteStore()
   const sessionStore = useSessionStore()
@@ -73,7 +71,8 @@ export const useUserInfoStore = defineStore('user', () => {
         id: userInfo.value.userId,
         newArea: area,
         areaList: areaList.value
-      }
+      },
+      showLoading: true
     })
 
     if (res.success) {
@@ -85,26 +84,7 @@ export const useUserInfoStore = defineStore('user', () => {
       sessionStore.mainArea = res.data.newArea
       sessionStore.surroundingPoint = ''
     }
-
-    console.log(res.data)
-  }
-
-  // 设置选中领域
-  const setArea = async (areaId) => {
-    const res = await request({
-      url: API.setArea,
-      method: 'POST',
-      data: {
-        id: userInfo.value.userId,
-        areaId
-      }
-    })
-
-    if (res.success) {
-      router.push({
-        name: '每日刷题'
-      })
-    }
+    // console.log(res.data)
   }
 
   return {
@@ -117,7 +97,6 @@ export const useUserInfoStore = defineStore('user', () => {
     getUserInfo,
     areaList,
     updateArea,
-    setArea,
     logout
   }
 })

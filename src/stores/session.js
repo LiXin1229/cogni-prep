@@ -51,6 +51,7 @@ export const useSessionStore = defineStore('session', () => {
         name: '未选择领域'
       }
       // console.log('mainArea', mainArea.value)
+      surroundingPoint.value = ''
     }
   }, { immediate: true })
 
