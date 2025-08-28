@@ -1,0 +1,26 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "paths": {
+      "@": ["./src"],
+      "@/*": ["./src/*"]
+    },
+    "target": "ES6",
+    "lib": [
+      "DOM",
+      "ES6",
+      "ES2023.Array" // 添加 ES2022 数组方法支持
+    ],
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/utils/request.ts"]
+}
