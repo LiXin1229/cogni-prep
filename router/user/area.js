@@ -30,6 +30,7 @@ router.post('/updateArea', async (req, res) => {
     }
   } catch (err) {
     console.log(err)
+    res.errHandle('导图创建失败')
   }
 
   const area = JSON.stringify([...areaList, newArea])
@@ -42,6 +43,7 @@ router.post('/updateArea', async (req, res) => {
     )
   } catch (err) {
     console.log(err)
+    res.errHandle('添加新领域失败')
   }
 
   res.send({
@@ -51,6 +53,35 @@ router.post('/updateArea', async (req, res) => {
       newArea
     }
   })
+})
+
+router.post('/deleteArea', async (req, res) => {
+  let { id, areaId, areaList } = req.body
+
+  try {
+    await pool.query(
+      'DELETE FROM areas WHERE id = ?',
+      [areaId]
+    )
+
+    const newAreaList = areaList.filter(item => item.areaId !== areaId)
+
+    await pool.query(
+      'UPDATE users SET mainarea = ? WHERE id = ?',
+      [JSON.stringify(newAreaList), id]
+    )
+
+    res.send({
+      code: 200,
+      success: true,
+      data: {
+        areaList: newAreaList
+      }
+    })
+  } catch (err) {
+    console.log(err)
+    res.errHandle('删除领域失败')
+  }
 })
 
 module.exports = router

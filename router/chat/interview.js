@@ -396,6 +396,7 @@ const useSpareAI = async (res, system, content) => {
     } 
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 }
 

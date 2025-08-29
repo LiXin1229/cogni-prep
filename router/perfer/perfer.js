@@ -42,6 +42,7 @@ router.get('/getPreferList', async (req, res) => {
     })
   } catch (error) {
     console.log(error)
+    res.errHandle('获取失败')
   }
 })
 

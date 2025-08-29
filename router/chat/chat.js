@@ -44,7 +44,7 @@ router.post('/init', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
-    return res.errHandle(err)
+    res.errHandle(err)
   }
 })
 
@@ -90,6 +90,7 @@ router.post('/save', async (req, res) => {
     })
   } catch (error) {
     console.log(error)
+    res.errHandle('对话保存失败')
   }
 })
 
@@ -112,6 +113,7 @@ router.post('/saveCust', async (req, res) => {
     })
   } catch (error) {
     console.log(error)
+    res.errHandle('对话保存失败')
   }
 })
 
@@ -134,6 +136,7 @@ router.post('/saveUserWords', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('对话保存失败')
   }
 })
 

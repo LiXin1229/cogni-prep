@@ -35,12 +35,13 @@ router.get('/getMindmapData', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('获取失败')
   }
 })
 
 router.post('/saveMindmapData', async (req, res) => {
   const { areaId, mindmap } = req.body
-  
+
   if (areaId === null || isEmptyObj(mindmap)) return res.errHandle('参数不完整')
 
   try {
@@ -55,6 +56,7 @@ router.post('/saveMindmapData', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('保存失败')
   }
 })
 

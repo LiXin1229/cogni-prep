@@ -32,6 +32,7 @@ router.post('/initSession', async (req, res) => {
     })
   } catch (err) {
     console.error(err)
+    res.errHandle('请求失败')
   }
 })
 
@@ -78,6 +79,7 @@ router.get('/getSessionList', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 })
 
@@ -116,6 +118,7 @@ router.post('/deleteSession', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 })
 

@@ -52,6 +52,7 @@ router.post('/login', async (req, res) => {
     }
   } catch (error) {
     console.log(error)
+    res.errHandle('请求失败')
   }
 })
 
@@ -97,6 +98,7 @@ router.post('/register', async (req, res) => {
     })
   } catch (error) {
     console.log(error)
+    res.errHandle('请求失败')
   }
 })
 
@@ -136,6 +138,7 @@ router.get('/getUserInfo', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 })
 

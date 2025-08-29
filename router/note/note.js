@@ -20,6 +20,7 @@ router.post('/initNote', async (req, res) => {
     })
   } catch (error) {
     console.log(error)
+    res.errHandle('请求失败')
   }
 })
 
@@ -139,6 +140,7 @@ router.post('/getNote', async (req, res) => {
       } 
     } catch (err) {
       console.log(err)
+      res.errHandle('请求失败')
     }
   }
 })
@@ -161,6 +163,7 @@ router.post('/saveNote', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 })
 
@@ -183,6 +186,7 @@ router.get('/getNoteData', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 })
 
@@ -200,6 +204,7 @@ router.post('/updateNote', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
+    res.errHandle('请求失败')
   }
 })
 
