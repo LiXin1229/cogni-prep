@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
@@ -6,6 +6,8 @@ import { useUserInfoStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { purifyText } from '@/utils/purifyText'
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons'
+import type { MainAreaType } from '@/stores/types/session.type'
+import { ElMessage } from 'element-plus'
 
 const emit = defineEmits(['toggleSidebar'])
 
@@ -19,11 +21,11 @@ const nextState = computed(() => chatStore.nextState)
 
 const showAreaPopup = ref(false)
 
-const togglePopup = (e) => {
+const togglePopup = (e: MouseEvent) => {
   // console.log(e)
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
-  if (svgs.includes(e.target.tagName)) return
-  if (e.target.className?.includes('toggleAreaPopup')) {
+  if (svgs.includes((e.target as any).tagName)) return
+  if ((e.target as any).className?.includes('toggleAreaPopup')) {
     showAreaPopup.value = !showAreaPopup.value
   } else {
     showAreaPopup.value = false
@@ -40,16 +42,16 @@ const addArea = () => {
 const mainArea = computed(() => sessionStore.mainArea)
 
 // 选择领域
-const setArea = async (areaId) => {
+const setArea = async (areaId: number) => {
   await router.push({
     name: '每日刷题'
   })
-  sessionStore.mainArea = userStore.areaList.find((item) => item.areaId === areaId)
+  sessionStore.mainArea = userStore.areaList.find((item) => item.areaId === areaId) as MainAreaType
   sessionStore.surroundingPoint = ''
   showAreaPopup.value = false
 }
 
-const quillRef = ref(null)
+const quillRef = ref<any>(null)
 
 // 下一题
 const nextQuestion = () => {
@@ -65,7 +67,7 @@ const submit = () => {
   quillRef.value?.resetForm(chatStore.customContent.length)
 }
 
-const handleEnter = (e) => {
+const handleEnter = (e: KeyboardEvent) => {
   e.preventDefault()
   if (e.ctrlKey) {
     quillRef.value?.insertText('\n', chatStore.customContent.length)

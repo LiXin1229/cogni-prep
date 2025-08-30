@@ -1,9 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import Quill from 'quill'
 import 'quill/dist/quill.bubble.css'
 import Delta from 'quill-delta'
 import { useChatStore } from '@/stores/chat'
+import { FUNC_TYPE } from '@/stores/types/chat.type'
 
 const chatStore = useChatStore()
 
@@ -24,12 +25,12 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'update:height'])
 
-const editorRef = ref(null)
-let quillInstance = null
+const editorRef = ref<HTMLDivElement | null>(null)
+let quillInstance: any = null
 
 // 匹配功能的模式
 const matchPatterns = computed(() => {
-  return chatStore.FUNC_TYPE.map(item => {
+  return FUNC_TYPE.map(item => {
     if (item === '标准') {
       return {
         regex: /^$/, // 匹配空字符串
@@ -56,9 +57,9 @@ onMounted(() => {
       clipboard: {
         matchVisual: false, // 禁用视觉粘贴
         matchers: [
-          [Node.ELEMENT_NODE, (node, delta) => {
+          [Node.ELEMENT_NODE, (_: any, delta: any) => {
             // 提取纯文本
-            const text = delta.reduce((acc, op) => {
+            const text = delta.reduce((acc: string, op: any) => {
               if (typeof op.insert === 'string') {
                 acc += op.insert
               }
@@ -76,12 +77,11 @@ onMounted(() => {
   // 设置初始值
   if (props.modelValue) {
     // 先进行HTML转义处理
-    const escapedText = props.modelValue
     quillInstance.setText(props.modelValue)
   }
 
   // 监听编辑器内容变化
-  quillInstance.on('text-change', (delta, oldDelta, source) => {
+  quillInstance.on('text-change', (_: any, __: any, source: string) => {
     if (source === 'api') return
 
     const plainText = quillInstance.getText()
@@ -110,13 +110,13 @@ onMounted(() => {
 })
 
 // 清除样式
-const clearStyle = (instance) => {
+const clearStyle = (instance: any) => {
   const length = instance.getLength()
   instance.formatText(0, length, { 'color': 'inherit', 'bold': false })
 }
 
 // 匹配特定字符, 修改其样式
-const matchText = (text) => {
+const matchText = (text: string) => {
   const pattern = matchPatterns.value[chatStore.funcStatus]
   const match = text.match(pattern.regex)
 
@@ -138,7 +138,7 @@ const matchText = (text) => {
 // 更新编辑器高度
 const updateEditorHeight = () => {
   if (!editorRef.value) return
-  const innerTextarea = editorRef.value.querySelector('.ql-editor')
+  const innerTextarea = editorRef.value.querySelector('.ql-editor') as HTMLTextAreaElement
 
   if (innerTextarea) {
     // 先重置高度，强制浏览器重新计算
@@ -155,7 +155,7 @@ const updateEditorHeight = () => {
 }
 
 // 插入文本特定文本
-const insertText = (text, position = 0) => {
+const insertText = (text: string, position = 0) => {
   if (!quillInstance) return
 
   clearStyle(quillInstance)
@@ -171,7 +171,7 @@ const insertText = (text, position = 0) => {
   updateEditorHeight()
 }
 
-const deleteText = (length, position = 0) => {
+const deleteText = (length: number, position = 0) => {
   quillInstance.deleteText(position, length)
 }
 
@@ -180,7 +180,7 @@ const focus = () => {
 }
 
 // 重置输入框
-const resetForm = (length) => {
+const resetForm = (length: number) => {
   deleteText(length, 0)
   chatStore.funcStatus = 0
   chatStore.customContent = ''

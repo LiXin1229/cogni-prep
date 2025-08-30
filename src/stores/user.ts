@@ -30,7 +30,7 @@ export const useUserInfoStore = defineStore('user', () => {
     token.value = ''
     areaList.value = []
     noteStore.selectKey = []
-    mindmapStore.selectedAreaId = {}
+    mindmapStore.selectedAreaId = null
     
     await new Promise(resolve => setTimeout(resolve, 0))
 
@@ -88,6 +88,39 @@ export const useUserInfoStore = defineStore('user', () => {
     }
   }
 
+  // 删除领域
+  const deleteArea = async () => {
+    try {
+      const res = await request<{ areaList: AreaType[] }>({
+        url: API.deleteArea,
+        method: 'POST',
+        data: {
+          id: userInfo.value.userId,
+          areaList: areaList.value,
+          areaId: mindmapStore.selectedAreaId,
+        },
+        showLoading: true
+      })
+
+      // console.log(res)
+      areaList.value = res.data.areaList
+
+      if (areaList.value.length === 0) {
+        showDialog.value = 'selectArea'
+        ableClose.value = false
+        return
+      }
+
+      // 重新渲染mindmap和note页面
+      mindmapStore.selectedAreaId = areaList.value[areaList.value.length - 1].areaId
+      mindmapStore.triggerComponent('reloadChart')
+      noteStore.triggerComponent('reLoadNote')
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
   return {
     isMobile,
     isSidebarFolded,
@@ -98,6 +131,7 @@ export const useUserInfoStore = defineStore('user', () => {
     getUserInfo,
     areaList,
     updateArea,
+    deleteArea,
     logout
   }
 })

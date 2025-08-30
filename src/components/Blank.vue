@@ -1,10 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 import { onMounted, ref } from 'vue'
 
 const typeTitle = ref('')
 
-const typeText = (text) => {
+const typeText = (text: string) => {
   for (let i = 0; i < text.length; i++) {
     setTimeout(() => {
       typeTitle.value += text[i]
@@ -13,7 +13,7 @@ const typeText = (text) => {
 }
 
 onMounted(() => {
-  typeText('欢迎使用， 灵犀面试')
+  typeText('欢迎使用， 灵犀刷题')
 })
 </script>
 

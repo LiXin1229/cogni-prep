@@ -1,4 +1,4 @@
-export const formatDate = (date = new Date(), format = 'YY/M/D') => {
+export const formatDate = (date: string, format = 'YY/M/D') => {
   // 确保传入的是有效的日期对象
   const today = new Date(date)
   
@@ -8,7 +8,7 @@ export const formatDate = (date = new Date(), format = 'YY/M/D') => {
   const day = today.getDate()
   
   // 数字补零辅助函数
-  const padZero = (num) => num.toString().padStart(2, '0')
+  const padZero = (num: number) => num.toString().padStart(2, '0')
   
   switch (format) {
     case 'YY/M/D':

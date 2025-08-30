@@ -1,10 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { useUserInfoStore } from '@/stores/user'
 import { computed } from 'vue'
 
 const userStore = useUserInfoStore()
 
-const props = defineProps({
+defineProps({
   title: {
     type: String,
     default: '标题'

@@ -1,26 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useMindmapStore } from '../stores/mindmap'
 import { useUserInfoStore } from '../stores/user'
 import { useRoute } from 'vue-router'
+import type { TreeNode } from '@/stores/types/mindmap.type'
+import { ElMessage } from 'element-plus'
 
 const mindmapStore = useMindmapStore()
 const userStore = useUserInfoStore()
 const route = useRoute()
 
-const props = defineProps({
-  showCustMenu: {
-    type: String,
-    default: ''
-  },
-  position: {
-    type: Object,
-    default: () => ({ x: 0, y: 0 })
-  },
-  node: {
-    type: Object,
-    default: () => ({})
-  }
+const props = withDefaults(defineProps<{
+  showCustMenu: 'node' | 'normal'
+  position: { x: number, y: number }
+  node?: TreeNode
+}>(), {
+  showCustMenu: 'normal',
+  position: () => ({ x: 0, y: 0 })
 })
 
 const emits = defineEmits([
@@ -72,7 +68,7 @@ const positionStyle = computed(() => {
 
 // 选择节点
 const selectNode = () => {
-  if (props.node.isRoot) {
+  if (props.node!.isRoot) {
     ElMessage({
       message: '不能选择根节点',
       type: 'info'
@@ -127,13 +123,13 @@ const deleteChildren = () => {
 
 // 开始对话
 const startChat = () => {
-  emits('startChat', props.node.chatId)
+  emits('startChat', props.node!.chatId)
   closeMenu()
 }
 
 // 生成笔记
 const startNote = () => { 
-  emits('startNote', props.node.id, props.node.markId)
+  emits('startNote', props.node!.id, props.node!.markId)
   closeMenu()
 }
 </script>
@@ -162,8 +158,8 @@ const startNote = () => {
         </div>
       </div>
       <div class="br"></div>
-      <div class="menu-item" @click="startChat">{{ node.chatId ? '继续对话' : '开始对话' }}</div>
-      <div class="menu-item" @click="startNote">{{ node.markId ? '查看笔记' : '生成笔记' }}</div>
+      <div class="menu-item" @click="startChat">{{ node!.chatId ? '继续对话' : '开始对话' }}</div>
+      <div class="menu-item" @click="startNote">{{ node!.markId ? '查看笔记' : '生成笔记' }}</div>
       <div class="br"></div>
       <div class="menu-item" @click="saveView">保存视图</div>
       <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>

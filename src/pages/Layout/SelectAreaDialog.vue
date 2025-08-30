@@ -1,6 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 import { useUserInfoStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
 
 const userStore = useUserInfoStore()
 
@@ -45,13 +46,13 @@ const categorys = [
   }
 ]
 
-const selectArea = async (area) => {
+const selectArea = async (area: string) => {
   custom.value = ''
   await nextTick()
   selectCategoryChildren.value = area
 }
 
-const dialogRef = ref(null)
+const dialogRef = ref<any>(null)
 
 const custom = ref('')
 
@@ -83,6 +84,7 @@ const confirm = async () => {
 watch(() => props.showDialog, (showDialog) => {
   if (showDialog) {
     custom.value = ''
+    selectCategoryChildren.value = ''
   }
 })
 </script>
@@ -108,7 +110,7 @@ watch(() => props.showDialog, (showDialog) => {
             <div class="wrapper">
               <div
                 class="area-item"
-                v-for="area in categorys.find(cate => cate.name === selectCategory).children"
+                v-for="area in categorys.find(cate => cate.name === selectCategory)?.children"
                 @click="selectArea(area)"
               >
                 <div>{{ area }}</div>

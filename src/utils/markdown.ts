@@ -15,15 +15,15 @@ marked.use(markedHighlight({
 }))
 
 // 处理代码块，添加头部标题
-export const parseMarkdown = (content) => {
+export const parseMarkdown = (content: string) => {
   if (typeof content !== 'string') {
-    return '';
+    return ''
   }
 
   // 先解析原始Markdown
   let html = marked(content)
-  
-  const sanitizedHtml = purifyText(html)
+
+  const sanitizedHtml = purifyText(html as string)
 
   // 创建临时DOM元素处理HTML
   const tempDiv = document.createElement('div')

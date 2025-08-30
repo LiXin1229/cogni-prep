@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMindmapStore } from '@/stores/mindmap'
@@ -15,15 +15,15 @@ const props = defineProps({
   }
 })
 
-const dialogRef = ref(null)
-const ruleFormRef = ref(null)
+const dialogRef = ref<any>(null)
+const ruleFormRef = ref<any>(null)
 
 const formData = ref({
   name: '',
   frequency: 0
 })
 
-const verifyName = (rule, value, callback) => {
+const verifyName = (_: any, value: string, callback: any) => {
   if (!value) callback(new Error('请输入节点名'))
   callback()
 }
@@ -39,7 +39,7 @@ const confirm = async () => {
   
   if (isValid) {
     if (route.name === '思维导图') {
-      mindmapStore.triggerComponent('addNodes', formData.value)
+      mindmapStore.triggerComponent('addNodes', [formData.value])
     } else if (route.name === '笔记') {
       noteStore.addNode(formData.value)
     }

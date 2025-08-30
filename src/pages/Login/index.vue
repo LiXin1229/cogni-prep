@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons'
 import { verifyUsername, verifyPassword } from "@/utils/validate"
@@ -26,14 +26,14 @@ const rules = reactive({
 
 const panelType = ref('login')
 
-const switchPanel = (type) => {
+const switchPanel = (type: 'login' | 'register') => {
   panelType.value = type
   Object.assign(ruleForm, { username: '', password: '' })
 }
 
-const submit = (formRef) => {
+const submit = (formRef: any) => {
   if (panelType.value === 'login') {
-    formRef.validate(async (valid) => {
+    formRef.validate(async (valid: any) => {
       if (!valid) return
 
       const username = ruleForm.username
@@ -60,7 +60,7 @@ const submit = (formRef) => {
     })
   }
   else if (panelType.value === 'register') {
-    formRef.validate(async (valid) => {
+    formRef.validate(async (valid: any) => {
       if (!valid) return
 
       const username = ruleForm.username

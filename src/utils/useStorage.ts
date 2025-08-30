@@ -1,4 +1,4 @@
-import { ref, watch, computed, type Ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 type StorageMethodType = 'localStorage' | 'sessionStorage'
 

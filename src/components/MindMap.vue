@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/user'
@@ -11,6 +11,8 @@ import { toggleFoldedNodes, removeFoldedNodes, addChildrenById, modifyNode, dele
 import { calculateDynamicTreeSize } from '@/utils/dynamicTreeSize'
 import { v4 as uuidv4 } from 'uuid'
 import * as d3 from 'd3'
+import type { TreeNode } from '@/stores/types/mindmap.type'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserInfoStore()
@@ -38,15 +40,15 @@ const props = defineProps({
 // 更新数据
 const updateData = async () => {
   const mindmap = await mindmapStore.getMindmapData()
-  treeData.value = mindmap
+  if (mindmap) treeData.value = mindmap
 }
 
 const saveData = () => {
-  mindmapStore.saveMindmapData(treeData.value)
+  if (treeData.value) mindmapStore.saveMindmapData(treeData.value)
   isEdited.value = false
 }
 
-const resizeObserver = ref(null)
+const resizeObserver = ref<ResizeObserver | null>(null)
 
 onMounted(async () => {
   initChart()
@@ -56,7 +58,7 @@ onMounted(async () => {
   const handleResize = throttle(() => adjustChartSize(), 500)
 
   // 监听页面尺寸
-  resizeObserver.value = new ResizeObserver(entries => {
+  resizeObserver.value = new ResizeObserver(() => {
     handleResize()
   })
 
@@ -65,37 +67,16 @@ onMounted(async () => {
   }
 })
 
-// 调整图表尺寸
-const adjustChartSize = () => {
-  if (!chartRef.value || !svg) return
-  
-  // 获取新的容器尺寸
-  const newWidth = userStore.isMobile ? chartRef.value.clientWidth * 1.75 : chartRef.value.clientWidth
-  const newHeight = chartRef.value.clientHeight
-  
-  // 只有当尺寸真的发生变化时才更新
-  if (newWidth !== chartWidth || newHeight !== chartHeight) {
-    chartWidth = newWidth
-    chartHeight = newHeight
-
-    // 更新SVG尺寸
-    svg.attr('width', chartWidth)
-       .attr('height', chartHeight)
-
-    // 重新计算布局并渲染图表
-    renderChart()
-  }
-}
-
 const treeData = computed({ // 树数据
   get: () => mindmapStore.treeData,
   set: (value) => mindmapStore.treeData = value 
 })
-const chartRef = ref(null) // D3绘图容器
-let root
-let chartWidth, chartHeight // 画布尺寸
-let svg, chartGroup, zoom // D3核心对象
-let currentTransform // 当前缩放状态
+
+const chartRef = ref<HTMLElement | null>(null) // D3绘图容器
+let root: d3.HierarchyNode<TreeNode> | null
+let chartWidth: number, chartHeight: number // 画布尺寸
+let svg: any, chartGroup: any, zoom: any // D3核心对象
+let currentTransform: any // 当前缩放状态
 let isEdited = computed({ // 编辑状态
   get: () => mindmapStore.isEdited,
   set: (value) => mindmapStore.isEdited = value  
@@ -114,10 +95,11 @@ const initChart = () => {
   d3.select(chartRef.value).selectAll('*').remove()
 
   const chartContainer = d3.select(chartRef.value)
+  const element = chartContainer.node() as any
 
   // 固定画布尺寸
-  chartWidth = chartContainer.node().clientWidth
-  chartHeight = chartContainer.node().clientHeight
+  chartWidth = element.clientWidth
+  chartHeight = element.clientHeight
 
   // console.log(chartWidth, chartHeight)
 
@@ -144,6 +126,28 @@ const initChart = () => {
   svg.call(zoom)
 }
 
+// 调整图表尺寸
+const adjustChartSize = () => {
+  if (!chartRef.value || !svg) return
+  
+  // 获取新的容器尺寸
+  const newWidth = userStore.isMobile ? chartRef.value.clientWidth * 1.75 : chartRef.value.clientWidth
+  const newHeight = chartRef.value.clientHeight
+  
+  // 只有当尺寸真的发生变化时才更新
+  if (newWidth !== chartWidth || newHeight !== chartHeight) {
+    chartWidth = newWidth
+    chartHeight = newHeight
+
+    // 更新SVG尺寸
+    svg.attr('width', chartWidth)
+       .attr('height', chartHeight)
+
+    // 重新计算布局并渲染图表
+    renderChart()
+  }
+}
+
 // 更新数据
 const renderChart = () => {
   // 清除旧元素
@@ -151,6 +155,7 @@ const renderChart = () => {
   // console.log('treeData', treeData.value)
 
   // 加工原始数据(删除要折叠的节点的子节点)
+  if (!treeData.value) return
   const foldedData = removeFoldedNodes(treeData.value)
 
   let sizeFactor = 1
@@ -169,12 +174,13 @@ const renderChart = () => {
   const treeLayout = d3.tree()
   .size([chartHeight * sizeFactor, chartWidth * sizeFactor])
 
-  treeLayout(root)
+  treeLayout(root as d3.HierarchyNode<unknown>)
 
   // console.log('calculateDynamicTreeSize', calculateDynamicTreeSize(root))
 
-  const svgDimensions = calculateSVGDimensions(root)
+  const svgDimensions = calculateSVGDimensions()
 
+  if (!svgDimensions) return
   // 更新SVG尺寸（超出画布部分可通过滚动查看）
   svg.attr('width', svgDimensions.width)
     .attr('height', svgDimensions.height)
@@ -187,7 +193,7 @@ const renderChart = () => {
     .enter()
     .append('path')
     .attr('class', 'link')
-    .attr('d', d3.linkHorizontal()
+    .attr('d', d3.linkHorizontal<d3.HierarchyLink<unknown>, d3.HierarchyPointNode<unknown>>()
       .x(d => d.y)
       .y(d => d.x))
 
@@ -197,23 +203,23 @@ const renderChart = () => {
     .enter()
     .append('g')
     .attr('class', 'node')
-    .attr('transform', d => `translate(${d.y},${d.x})`)
+    .attr('transform', (d: any) => `translate(${d.y},${d.x})`)
 
   // 展开的节点
-  const foldedNodes = node.filter(d => d.data.isFolded === 0 && d.data.children.length > 0);
+  const foldedNodes = node.filter((d: any) => d.data.isFolded === 0 && d.data.children.length > 0)
 
   // 绘制灰色圆形背景
   foldedNodes.append('circle')
     .attr('r', 12) // 圆半径
-    .attr('transform', d => `translate(${(getTextWidth(d.data.name) + 48) / 2}, 0)`) // 定位到文本右侧
-    .attr('fill', (d) => colorMap[d.data.frequency])
+    .attr('transform', (d: any) => `translate(${(getTextWidth(d.data.name) + 48) / 2}, 0)`) // 定位到文本右侧
+    .attr('fill', (d: any) => colorMap[d.data.frequency])
     .attr('class', 'unfolded-circle')
     .style('cursor', 'pointer')
     .on('click', clickBtn)
 
   // 用path绘制减号（水平直线）
   foldedNodes.append('path')
-    .attr('d', d => {
+    .attr('d', (_: any) => {
       const r = 12
       const lineLength = r * 1.2 // 减号长度（半径的1.2倍）
       const startX = -lineLength / 2 // 线段起点X（左）
@@ -222,34 +228,34 @@ const renderChart = () => {
       return `M ${startX} 0 L ${endX} 0`
     })
     // 定位：和圆形使用相同的X坐标，确保在圆中心
-    .attr('transform', d => `translate(${(getTextWidth(d.data.name) + 48) / 2}, 0)`)
+    .attr('transform', (d: any) => `translate(${(getTextWidth(d.data.name) + 48) / 2}, 0)`)
     .style('pointer-events', 'none') // 减号不拦截点击（点击穿透到圆形）
     .on('click', clickBtn)
 
 
   // 折叠的节点
-  node.filter(d => d.data.isFolded > 0)
+  node.filter((d: any) => d.data.isFolded > 0)
     .append('circle')
-    .attr('r', (d) => d.data.isFolded < 100 ? 14 : 16)
-    .attr('transform', (d) => `translate(${(getTextWidth(d.data.name) + 60) / 2}, 0)`)
+    .attr('r', (d: any) => d.data.isFolded < 100 ? 14 : 16)
+    .attr('transform', (d: any) => `translate(${(getTextWidth(d.data.name) + 60) / 2}, 0)`)
     .attr('class', 'folded-circle')
     .style('cursor', 'pointer')
     .on('click', clickBtn)
 
   // 在圆形内部添加文本
-  node.filter(d => d.data.isFolded > 0) // 同样只给isFolded>0的节点添加文本
+  node.filter((d: any) => d.data.isFolded > 0) // 同样只给isFolded>0的节点添加文本
     .append('text')
     .attr('class', 'folded-circle-text')
-    .attr('transform', (d) => `translate(${(getTextWidth(d.data.name) + 60) / 2}, 0)`) // 和圆形位置一致
+    .attr('transform', (d: any) => `translate(${(getTextWidth(d.data.name) + 60) / 2}, 0)`) // 和圆形位置一致
     .attr('dy', '.35em')
-    .text(d => d.data.isFolded) // 显示isFolded的值
+    .text((d: any) => d.data.isFolded) // 显示isFolded的值
     .style('pointer-events', 'none')
     .on('click', clickBtn)
 
   // 内层可见矩形
   node.append('rect')
     .attr('class', 'content-rect')
-    .attr('width', (d) => {
+    .attr('width', (d: any) => {
       // console.log(d.data.name)
       const width = getTextWidth(d.data.name)
       return width + 15
@@ -257,23 +263,23 @@ const renderChart = () => {
     .attr('height', 30)
     .attr('rx', 10) // 圆角
     .attr('ry', 10)
-    .attr('transform', (d) => `translate(-${(getTextWidth(d.data.name) + 15) / 2}, -15)`) // 居中于外层矩形左侧
-    .attr('stroke', (d) => {
+    .attr('transform', (d: any) => `translate(-${(getTextWidth(d.data.name) + 15) / 2}, -15)`) // 居中于外层矩形左侧
+    .attr('stroke', (d: any) => {
       if (d.data.isRoot) return '#191919'
       return colorMap[d.data.frequency]
     })
     .style('cursor', 'pointer')
-    .on('contextmenu', (e, d) => openCustMenu(e, 'node', d.data))
-    .on('click', (e, d) => openCustMenu(e, 'node', d.data))
+    .on('contextmenu', (e: any, d: any) => openCustMenu(e, 'node', d.data))
+    .on('click', (e: any, d: any) => openCustMenu(e, 'node', d.data))
 
   // 添加文本标签
   node.append('text')
     .attr('dy', '.35em')
     .style('text-anchor', 'middle')
-    .text(d => d.data.name)
+    .text((d: any) => d.data.name)
     .style('pointer-events', 'none')
-    .on('contextmenu', (e, d) => openCustMenu(e, 'node', d.data))
-    .on('click', (e, d) => openCustMenu(e, 'node', d.data))
+    .on('contextmenu', (e: any, d: any) => openCustMenu(e, 'node', d.data))
+    .on('click', (e: any, d: any) => openCustMenu(e, 'node', d.data))
 }
 
 onUnmounted(() => {
@@ -283,13 +289,15 @@ onUnmounted(() => {
   if (resizeObserver.value) resizeObserver.value.disconnect()
 })
 
-const clickBtn = (event, d) => {
+const clickBtn = (_: MouseEvent, d: any) => {
+  if (!treeData.value) return
   treeData.value = toggleFoldedNodes(treeData.value, d.data)
   renderChart()
 }
 
 // 计算SVG实际需要的尺寸（根据树的大小动态调整）
-const calculateSVGDimensions = (root) => {
+const calculateSVGDimensions = () => {
+  if (!root) return
   const descendants = root.descendants()
   // console.log('descendants', descendants)
   const minX = d3.min(descendants, d => d.x)
@@ -298,8 +306,8 @@ const calculateSVGDimensions = (root) => {
   const maxY = d3.max(descendants, d => d.y)
   
   // 计算需要的额外空间
-  const extraWidth = Math.max(0, maxY - minY - chartWidth)
-  const extraHeight = Math.max(0, maxX - minX - chartHeight + 500)
+  const extraWidth = Math.max(0, maxY! - minY! - chartWidth)
+  const extraHeight = Math.max(0, maxX! - minX! - chartHeight + 500)
   // console.log(extraWidth, extraHeight)
   
   return {
@@ -308,7 +316,7 @@ const calculateSVGDimensions = (root) => {
   }
 }
 
-const applyInitialZoom = (svgDimensions) => {
+const applyInitialZoom = (svgDimensions: any) => {
   const scale = Math.min(
     chartWidth / svgDimensions.width,
     chartHeight / svgDimensions.height
@@ -317,6 +325,7 @@ const applyInitialZoom = (svgDimensions) => {
   let translateX = (chartWidth - svgDimensions.width * scale) / 2 - 100
   let translateY = (chartHeight - svgDimensions.height * scale) / 2
 
+  if (!root) return
   if (treeData.value && root.data.children.length <= 0) {
     // 向右移动200px
     const rootOffset = 200
@@ -340,7 +349,7 @@ const showCustMenu = ref('')
 const position = ref({})
 
 // 打开菜单
-const openCustMenu = (e, type, node) => {
+const openCustMenu = (e: MouseEvent, type: 'node' | 'normal', node?: TreeNode) => {
   e.stopPropagation()
   e.preventDefault()
   position.value = {
@@ -349,13 +358,13 @@ const openCustMenu = (e, type, node) => {
   }
   showCustMenu.value = type
 
-  if (type === 'node') {
+  if (type === 'node' && node) {
     mindmapStore.selectedNode = node
   }
 }
 
 // 打开对话框
-const openDialog = (type) => {
+const openDialog = (type: string) => {
   userStore.showDialog = type
 }
 
@@ -363,8 +372,8 @@ const openDialog = (type) => {
 const selectNode = async () => {
   userStore.showDialog = ''
   await router.push({ name: '每日刷题' })
-  sessionStore.surroundingPoint = mindmapStore.selectedNode.name
-  sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
+  sessionStore.surroundingPoint = mindmapStore.selectedNode!.name
+  sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId) || {}
 
   // console.log(sessionStore.mainArea, sessionStore.surroundingPoint)
   sessionStore.markNode = true
@@ -378,41 +387,58 @@ const resetView = async () => {
 }
 
 // 添加节点
-const addNodes = (data) => {
+const addNodes = (data: { name: string, frequency: number }[]) => {
   // console.log('添加节点', data)
   const dataArray = Array.isArray(data) ? data : [data]
   const newNodes = dataArray.map(node => ({ id: uuidv4(), name: node.name, children: [], isFolded: 0, frequency: node.frequency, markId: null, chatId: null }))
   // console.log('newNodes', newNodes)
-  treeData.value = addChildrenById(treeData.value, mindmapStore.selectedNode.id, newNodes)
+  if (!treeData.value) return
+  treeData.value = addChildrenById(treeData.value, mindmapStore.selectedNode!.id, newNodes)
   renderChart()
   isEdited.value = true
 }
 
 // 修改节点
-const editNode = (data) => {
+const editNode = (data: { name: string, rating: number }) => {
   // console.log('editNode', data)
-  treeData.value = modifyNode(treeData.value, mindmapStore.selectedNode.id, data.name, data.rating)
+  if (!treeData.value) return
+  treeData.value = modifyNode(treeData.value, mindmapStore.selectedNode!.id, data.name, data.rating)
   renderChart()
   isEdited.value = true
 }
 
 // 删除节点
-const deleteNode = () => {
-  treeData.value = deleteNodeById(treeData.value, mindmapStore.selectedNode.id)
+const deleteNode = async () => {
+  if (!treeData.value) return
+  const resTree = deleteNodeById(treeData.value, mindmapStore.selectedNode!.id)
+  if (resTree === null) {
+    try {
+      await userStore.deleteArea()
+      ElMessage({
+        message: '已删除该领域',
+        type: 'info'
+      })
+    } catch (error) {
+      console.log(error)
+    }
+    return
+  }
+  treeData.value = resTree
   renderChart()
   isEdited.value = true
 }
 
 // 删除子节点
 const deleteChildren = () => {
-  treeData.value = deleteNodeById(treeData.value, mindmapStore.selectedNode.id, 'children')
+  if (!treeData.value) return
+  treeData.value = deleteNodeById(treeData.value, mindmapStore.selectedNode!.id, 'children')
   renderChart()
   isEdited.value = true
 }
 
 // 开始对话
-const startChat = async (chatId) => {
-  if (mindmapStore.selectedNode.isRoot) {
+const startChat = async (chatId: number | null) => {
+  if (mindmapStore.selectedNode!.isRoot) {
     ElMessage({
       message: '不能选择根节点',
       type: 'info'
@@ -423,8 +449,8 @@ const startChat = async (chatId) => {
   // 该节点没有chatId则开启新对话
   if (chatId === null) {
     await router.push({ name: '每日刷题' })
-    sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
-    sessionStore.surroundingPoint = mindmapStore.selectedNode.name
+    sessionStore.mainArea = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId) || {}
+    sessionStore.surroundingPoint = mindmapStore.selectedNode!.name
     // 记录当前节点的ID
     sessionStore.markNode = true
   }
@@ -438,7 +464,7 @@ const startChat = async (chatId) => {
 }
 
 // 生成笔记
-const startNote = async (id, markId) => {
+const startNote = async (id: string, markId: number | null) => {
   await router.push({ name: '笔记' })
   if (noteStore.sendState !== 'available') return
   noteStore.updateSelectKey({ id, markId })
@@ -450,9 +476,10 @@ mindmapStore.registerCallback('addNodes', addNodes)
 mindmapStore.registerCallback('editNode', editNode)
 mindmapStore.registerCallback('deleteNode', deleteNode)
 mindmapStore.registerCallback('deleteChildren', deleteChildren)
-
-onUnmounted(() => {
-  mindmapStore.registerCallback({})
+mindmapStore.registerCallback('renderChart', renderChart)
+mindmapStore.registerCallback('reloadChart', async () => {
+  await updateData()
+  renderChart()
 })
 
 defineExpose({
@@ -509,7 +536,7 @@ defineExpose({
     }
 
     .node text {
-      font: 20px;
+      font-size: 18.5px;
       font-family: "Microsoft YaHei", "SimHei", "Heiti SC", sans-serif !important;
       fill: #222;
     }

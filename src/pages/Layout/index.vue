@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { onMounted, reactive, ref, computed, watch } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
@@ -24,6 +24,7 @@ import star from '@/assets/svgs/star.svg'
 import logoutIcon from '@/assets/svgs/logout.svg'
 import hideSidebarIcon from '@/assets/svgs/hide-sidebar.svg'
 import ellipsisIcon from '@/assets/svgs/ellipsis.svg'
+import type { SessionType } from '@/stores/types/session.type'
 
 
 const router = useRouter()
@@ -31,8 +32,8 @@ const route = useRoute()
 const sessionStore = useSessionStore()
 const userStore = useUserInfoStore()
 
-const sidebarRef = ref(null)
-const mainViewRef = ref(null)
+const sidebarRef = ref<any>(null)
+const mainViewRef = ref<any>(null)
 
 const isSidebarFolded = computed({
   get: () => userStore.isSidebarFolded,
@@ -43,14 +44,16 @@ const toggleSidebar = () => {
   isSidebarFolded.value = !isSidebarFolded.value
 }
 
-const navberList = reactive([
+type NavType = { id: number, title: string, icon: string, path: string}
+
+const navberList = reactive<NavType[]>([
   { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
   { id: 2, title: '思维导图', icon: siweidaotu, path: 'mindmap' },
   { id: 3, title: '笔记', icon: penToSquare, path: 'note' },
   { id: 4, title: '收藏', icon: star, path: 'prefer' }
 ])
 
-const navToPage = (nav) => {
+const navToPage = (nav: NavType) => {
   router.push({
     name: nav.title,
   })
@@ -63,7 +66,7 @@ const seclectedNav = computed(() => route.path.split('/')[1])
 // 当前选中的会话
 const seclectedSession = computed(() => +route.params.sessionId)
 
-const navToSession = (sessionId) => {
+const navToSession = (sessionId: number) => {
   router.push({
     name: '会话',
     params: { sessionId }
@@ -71,25 +74,25 @@ const navToSession = (sessionId) => {
   if (userStore.isMobile) toggleSidebar()
 }
 
-const showSessionPopup = ref('')
-const scrollRef = ref(null)
+const showSessionPopup = ref(-1)
+const scrollRef = ref<any>(null)
 const scrollTop = ref(0)
 
-const togglePopup = (e, data) => {
+const togglePopup = (e: MouseEvent, data: SessionType) => {
   scrollTop.value = scrollRef.value.scrollTop
 
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
-  if (svgs.includes(e.target.tagName)) return
-  if (e.target.className?.includes('toggleSessionPopup')) {
-    showSessionPopup.value === data.sessionId ? showSessionPopup.value = '' : showSessionPopup.value = data.sessionId
+  if (svgs.includes((e.target as HTMLElement).tagName)) return
+  if ((e.target as HTMLElement).className?.includes('toggleSessionPopup')) {
+    showSessionPopup.value === data.sessionId ? showSessionPopup.value = -1 : showSessionPopup.value = data.sessionId
   } else {
-    showSessionPopup.value = ''
+    showSessionPopup.value = -1
   }
 }
 
-const selectSession = ref(null)
+const selectSession = ref<SessionType | null>(null)
 
-const deleteSession = (session) => {
+const deleteSession = (session: SessionType) => {
   // chatStore.selectChat = chat
   selectSession.value = session
   userStore.showDialog = 'deleteSession'
@@ -101,7 +104,7 @@ onMounted(async() => {
   await sessionStore.getSessionList()
 })
 
-const boundingClientRef = ref(null)
+const boundingClientRef = ref<any>(null)
 const isLoading = ref(false)
 
 const handleScroll = async () => {
@@ -145,7 +148,7 @@ const handleScroll = async () => {
 
       <!-- nav列表区 -->
       <div class="nav-list">
-        <div v-for="navbar in navberList" :key="navbar" :class="['navbar-item', navbar.path === seclectedNav && 'selected-nav']" @click="navToPage(navbar)">
+        <div v-for="navbar in navberList" :key="navbar.id" :class="['navbar-item', navbar.path === seclectedNav && 'selected-nav']" @click="navToPage(navbar)">
           <img :src="navbar.icon" alt="" class="icon">
           <div>{{ navbar.title }}</div>
         </div>
@@ -166,7 +169,7 @@ const handleScroll = async () => {
                 </div>
 
                 <template #popup>
-                  <div class="popup-menu" v-show="showSessionPopup === session.sessionId" v-click-outside.stop="(e) => togglePopup(e, session)">
+                  <div class="popup-menu" v-show="showSessionPopup === session.sessionId" v-click-outside.stop="(e: MouseEvent) => togglePopup(e, session)">
                     <div class="menu-item" @click.stop="() => deleteSession(session)">删除会话</div>
                   </div>
                 </template>

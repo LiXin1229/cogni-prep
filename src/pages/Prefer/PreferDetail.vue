@@ -1,8 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { usePreferStore } from '@/stores/prefer'
 import { computed, onMounted } from 'vue'
 import { parseMarkdown } from '@/utils/markdown'
+import type { ChatType } from '@/stores/types/chat.type'
+import { writeInClipboard } from '@/utils/clipboard'
 
 const router = useRouter()
 
@@ -23,6 +25,24 @@ const preferId = computed(() => +route.params.preferId)
 onMounted(() => {
   preferStore.getdetailChats(preferId.value)
 })
+
+// 复制按钮
+const handleCopy = (e: MouseEvent, data?: ChatType) => {
+  // console.log(e.target.closest('.copy-btn'))
+  const copyBtn = (e.target as HTMLElement).closest('.copy-btn')
+  if (!copyBtn) return
+
+  const preElement = copyBtn.closest('pre')
+  const codeElement = preElement?.querySelector('code')
+
+  const imgElement = copyBtn.querySelector('img.icon') as HTMLImageElement
+
+  if (codeElement) {
+    writeInClipboard(codeElement.textContent, imgElement)
+  } else if (data) {
+    writeInClipboard(data.content, imgElement)
+  }
+}
 </script>
 
 <template>
@@ -49,7 +69,7 @@ onMounted(() => {
       <div :class="['text-view']">
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in preferStore.detailChats" :key="chat.id">
-          <div @click="() => toggleChecked(chat)">
+          <div>
               <!-- 用户发言wrapper -->
             <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
               <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>

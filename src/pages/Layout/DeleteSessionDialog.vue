@@ -1,24 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useSessionStore } from '@/stores/session'
+import type { SessionType } from '@/stores/types/session.type';
 
 const sessionStore = useSessionStore()
 
-const props = defineProps({
-  showDialog: {
-    type: Boolean,
-    default: false
-  },
-  selectSession: {
-    type: Object,
-    default: () => ({})
-  }
+const props = withDefaults(defineProps<{
+  showDialog: boolean,
+  selectSession: SessionType | null
+}>(), {
+  showDialog: false
 })
 
-const dialogRef = ref(null)
+const dialogRef = ref<any>(null)
 
 const confirm = async () => {
-  sessionStore.deleteSession(props.selectSession)
+  sessionStore.deleteSession(props.selectSession as SessionType)
   dialogRef.value.closeDialog()
 }
 </script>

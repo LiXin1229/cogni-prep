@@ -1,21 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useUserInfoStore } from '@/stores/user'
 
 const userStore = useUserInfoStore()
 
-const props = defineProps({
+defineProps({
   showDialog: {
     type: Boolean,
     default: false
-  },
-  selectSession: {
-    type: Object,
-    default: () => ({})
   }
 })
 
-const dialogRef = ref(null)
+const dialogRef = ref<any>(null)
 
 const confirm = async () => {
   userStore.logout()

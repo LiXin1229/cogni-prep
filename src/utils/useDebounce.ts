@@ -1,13 +1,16 @@
 import { ref, getCurrentInstance, onUnmounted } from 'vue'
 
 export const useDebounce = () => {
-  const timer = ref(null) // 用于存储定时器ID
+  const timer = ref<number | null>(null) // 用于存储定时器ID
 
   // 获取当前组件实例，仅在组件环境中注册卸载钩子
   const instance = getCurrentInstance()
   if (instance) {
     onUnmounted(() => {
-      clearTimeout(timer.value) // 组件卸载时清理定时器
+      if (timer.value) {
+        clearTimeout(timer.value)
+        timer.value = null
+      }
     })
   }
 
@@ -18,13 +21,13 @@ export const useDebounce = () => {
    * @param {boolean} [immediate=false] - 是否立即执行（第一次触发时直接执行，后续防抖）
    * @returns {Function} 包装后的防抖函数
    */
-  const debounce = (func, delay, immediate = false) => {
+  const debounce = (func: Function, delay: number, immediate = false) => {
     // 校验func必须是函数
     if (typeof func !== 'function') {
       throw new Error('debounce的第一个参数必须是函数')
     }
 
-    return (...args) => {
+    return (...args: any[]) => {
       // 每次触发时先清除之前的定时器（核心防抖逻辑）
       if (timer.value) {
         clearTimeout(timer.value)

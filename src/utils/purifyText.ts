@@ -18,6 +18,6 @@ const sanitizeOptions = {
   SANITIZE_URI: true
 }
 
-export const purifyText = (text) => {
+export const purifyText = (text: string) => {
   return DOMPurify.sanitize(text, sanitizeOptions)
 }

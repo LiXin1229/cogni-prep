@@ -1,17 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useChatStore } from '@/stores/chat'
 
 const chatStore = useChatStore()
 
-const props = defineProps({
+defineProps({
   showDialog: {
     type: Boolean,
     default: false
   }
 })
 
-const dialogRef = ref(null)
+const dialogRef = ref<any>(null)
 
 const confirm = async () => {
   chatStore.deleteChat()

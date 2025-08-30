@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 
@@ -13,10 +13,10 @@ defineProps({
 
 const emit = defineEmits(['toggleSidebar'])
 
-const mindMapRef = ref(null)
+const mindMapRef = ref<any>(null)
 
 // 切换头部领域
-const selectArea = async (id) => {
+const selectArea = async (id: number) => {
   if (id === mindmapStore.selectedAreaId) return
 
   // 保存上一次数据
@@ -46,7 +46,7 @@ onMounted(() => {
         <div
           :class="['area-item', area.areaId === mindmapStore.selectedAreaId && 'selected-area', mindmapStore.isEdited && 'edited-icon']"
           v-for="area in mindmapStore.areaList"
-          :key="area.id"
+          :key="area.areaId"
           @click="selectArea(area.areaId)"
         >
           {{ area.name }}

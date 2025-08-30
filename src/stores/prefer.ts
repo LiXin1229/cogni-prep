@@ -2,28 +2,31 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useUserInfoStore } from './user'
 import { useRouter } from 'vue-router'
-import { getTextWidth } from '@/utils/getTextWidth.js'
-import { formatDate } from '@/utils/formatDate.js'
+import { getTextWidth } from '@/utils/getTextWidth'
+import { formatDate } from '@/utils/formatDate'
+import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 import API from '@/utils/API.js'
+import type { PreferItemType } from './types/prefer.type'
+import type { ChatType } from './types/chat.type'
 
 export const usePreferStore = defineStore('prefer', () => {
   const userStore = useUserInfoStore()
   const router = useRouter()
 
-  const preferList = ref([])
+  const preferList = ref<PreferItemType[]>([])
 
   // 获取收藏列表
   const getPreferList = async () => {
     try {
-      const res = await request({
+      const res = await request<{ preferList: PreferItemType[] }>({
         url: API.getPreferList,
         method: 'GET',
         params: {
           userId: userStore.userInfo.userId
         }
       })
-
+      // console.log(res)
       preferList.value = res.data.preferList
         .map(ele => {
           const length = getTextWidth(ele.content, { fontSize: '14px' })
@@ -37,14 +40,15 @@ export const usePreferStore = defineStore('prefer', () => {
           }
         })
         .sort((a, b) => b.id - a.id)
-    } catch (error) {
-      throw new Error(error)
+    } catch (error: any) {
+      console.log(error)
+      // throw new Error(error)
     }
   }
 
-  const detailChats = ref([])
+  const detailChats = ref<ChatType[]>([])
 
-  const getdetailChats = async (preferId) => {
+  const getdetailChats = async (preferId: number) => {
     if (!preferId) return
 
     if (preferList.value.length === 0) await getPreferList()
@@ -52,7 +56,7 @@ export const usePreferStore = defineStore('prefer', () => {
     // console.log(IdList)
 
     try {
-      const res = await request({
+      const res = await request<{ chatList: ChatType[] }>({
         url: API.getdetailChats,
         method: 'GET',
         params: {
@@ -60,21 +64,18 @@ export const usePreferStore = defineStore('prefer', () => {
         }
       })
 
-      if (res.success) {
-        // console.log(data)
-        detailChats.value = res.data.chatList
-      }
-    } catch (error) {
+      detailChats.value = res.data.chatList
+    } catch (error: any) {
       throw new Error(error)
     }
   }
 
   // 取消收藏
-  const deletePrefer = async (preferId) => {
+  const deletePrefer = async (preferId: number) => {
     // console.log(preferId)
     router.push('/prefer')
     try {
-      const res = await request({
+      await request({
         url: API.deletePrefer,
         method: 'POST',
         data: {
@@ -82,14 +83,12 @@ export const usePreferStore = defineStore('prefer', () => {
         }
       })
 
-      if (res.success) {
-        preferList.value = preferList.value.filter(ele => ele.id !== preferId)
-        ElMessage({
-          message: '删除成功',
-          type: 'success'
-        })
-      }
-    } catch (error) {
+      preferList.value = preferList.value.filter(ele => ele.id !== preferId)
+      ElMessage({
+        message: '删除成功',
+        type: 'success'
+      })
+    } catch (error: any) {
       throw new Error(error)
     }
   }

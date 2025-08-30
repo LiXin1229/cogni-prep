@@ -8,6 +8,7 @@ import { isEmptyObj } from '@/utils/verifyEmpty'
 import request from '@/utils/request'
 import API from '@/utils/API.js'
 import { v4 as uuidv4 } from 'uuid'
+import type { CallbackMap, KeyNodeType, PartialNode, SendStateType, StreamRequestConfigType, TreeNode } from './types/note.type'
 
 export const useNoteStore = defineStore('note', () => {
   const userStore = useUserInfoStore()
@@ -24,33 +25,32 @@ export const useNoteStore = defineStore('note', () => {
     await userStore.getUserInfo()
   }
 
-  const treeData = ref({})
+  const treeData = ref<TreeNode | null>(null)
 
   const getTreeData = async () => {
     if (isEmptyObj(userStore.userInfo)) return
 
-    if (isEmptyObj(selectedAreaId.value)) {
+    if (selectedAreaId.value === null) {
       await getSelectedAreaId()
       selectedAreaId.value = userStore.areaList[userStore.areaList.length - 1].areaId
     }
 
-    const res = await request({
+    const res = await request<{ mindmap: TreeNode }>({
       url: API.getMindmapData,
       method: 'GET',
       params: {
         areaId: selectedAreaId.value
       }
     })
-    // console.log('getTreeData', res.data)
-
+    // console.log('getMindmapData', res)
     treeData.value = res.data.mindmap
   }
 
   // 本地存储展开的树节点
-  const { value: selectKey } = useLocalStorage('cogni_select_key', [])
+  const { value: selectKey } = useLocalStorage<KeyNodeType[]>('cogni_select_key', [])
 
   // 更新当前选中的树节点
-  const updateSelectKey = (data) => {
+  const updateSelectKey = (data: PartialNode) => {
     if (!data) return
     const node = selectKey.value.find(item => item.areaId === selectedAreaId.value)
 
@@ -71,7 +71,7 @@ export const useNoteStore = defineStore('note', () => {
   const isMarkdownMode = ref(true)
 
   // 当前状态
-  const sendState = ref('available')
+  const sendState = ref<SendStateType>('available')
 
   // 当前笔记
   const note = ref('')
@@ -81,19 +81,19 @@ export const useNoteStore = defineStore('note', () => {
     sendState.value = 'loading'
 
     try {
-      const res = await request({
+      const res = await request<{ noteId: number }>({
         url: API.initNote,
         method: 'POST'
       })
-      // console.log(res)
+      console.log(res)
 
       return res
-    } catch (error) {
-      throw new Error(error)
+    } catch (error: any) {
+      console.log(error)
     }
   }
 
-  const saveNote = async (noteId, content, node) => {
+  const saveNote = async (noteId: number, content: string, node: TreeNode) => {
     // console.log('!noteId || !content', !noteId || !content)
     if (!noteId || !content) return
 
@@ -111,8 +111,9 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // AI生成笔记
-  const getNote = async (node) => {
+  const getNote = async (node: TreeNode) => {
     let point = ''
+    if (treeData.value === null) return
     const { parent, grandparent } = findAncestorsById(treeData.value, node.id)
     
     if (parent && grandparent) {
@@ -130,7 +131,7 @@ export const useNoteStore = defineStore('note', () => {
     try {
       const res = await initNote()
 
-      if (res.success) {
+      if (res?.success) {
         modifyNodeProp(node.id, 'markId', res.data.noteId)
 
         await getStreamResponse(API.getNote, {
@@ -150,16 +151,16 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // 中断信号
-  let controller = null
+  let controller: AbortController | null = null
 
-  const getStreamResponse = async (url, data, noteId, node) => {
+  const getStreamResponse = async (url: string, data: StreamRequestConfigType, noteId: number, node: TreeNode) => {
     controller = new AbortController()
     // 保存信号，用于外部中断
     const abortSignal = controller.signal
 
     try {
       const baseUrl = import.meta.env.VITE_BASE_URL + url
-      const headers = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json'
       }
       if (userStore.token) {
@@ -172,6 +173,14 @@ export const useNoteStore = defineStore('note', () => {
         body: JSON.stringify(data),
         signal: abortSignal
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null')
+      }
 
       // 读取流式响应
       const reader = response.body.getReader()
@@ -205,7 +214,7 @@ export const useNoteStore = defineStore('note', () => {
           }
         })
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err.name === 'AbortError') {
         console.log('请求被主动中断')
       } else {
@@ -218,9 +227,9 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // 获取节点笔记
-  const getNoteData = async (node) => {
+  const getNoteData = async (node: Partial<TreeNode>) => {
     // console.log(node.markId)
-    const res = await request({
+    const res = await request<{ content: string }>({
       url: API.getNoteData,
       method: 'GET',
       params: {
@@ -233,7 +242,7 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // 修改节点笔记
-  const updateNoteData = async (markId) => {
+  const updateNoteData = async (markId: number) => {
     // console.log(markId)
     if (!markId) return
 
@@ -255,29 +264,31 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // 修改节点markId属性
-  const modifyNodeProp = (targetId, propName, id) => {
+  const modifyNodeProp = (targetId: string, propName: string, id: number) => {
     // console.log('!!!', treeData.value, targetId, propName, id)
+    if (treeData.value === null) return
     treeData.value = modifyTreeNodeProp(treeData.value, targetId, propName, id)
     saveMindmapData(treeData.value)
   }
 
-  const selectedNode = ref(null)
+  const selectedNode = ref<TreeNode | null>(null)
 
-  const addNode = (data) => {
+  const addNode = (data: { name: string, frequency: number }) => {
     // console.log(selectedNode.value)
-    // console.log(data)
     const newNode = { id: uuidv4(), name: data.name, children: [], isFolded: 0, frequency: data.frequency, markId: null, chatId: null }
-    treeData.value = addChildrenById(treeData.value, selectedNode.value.id, newNode)
+    if (treeData.value === null) return
+    treeData.value = addChildrenById(treeData.value, selectedNode.value!.id, newNode)
 
     try {
+      if (treeData.value === null) return
       mindmapStore.saveMindmapData(treeData.value) 
     } catch (err) {
-      throw new Error(err)
+      console.log(err)
     }
   }
 
   // 保存导图数据
-  const saveMindmapData = async (data) => {
+  const saveMindmapData = async (data: TreeNode) => {
     if (isEmptyObj(data) || selectedAreaId.value === null || isEmptyObj(userStore.userInfo)) return
 
     await request({
@@ -291,18 +302,21 @@ export const useNoteStore = defineStore('note', () => {
   }
 
   // 组件回调
-  const componentCallback = ref({})
+  const componentCallback = ref<Partial<CallbackMap>>({})
 
   // 注册组件方法
-  const registerCallback = (funcName, callback) => {
+  const registerCallback = <K extends keyof CallbackMap>(funcName: K, callback: CallbackMap[K]) => {
     componentCallback.value[funcName] = callback
   }
 
   // 触发组件方法
-  const triggerComponent = (funcName, ...args) => {
-    if (typeof componentCallback.value[funcName] === 'function') {
-      componentCallback.value[funcName](...args) // 调用组件方法并传参
-    }
+  const triggerComponent = <K extends keyof CallbackMap>(
+    funcName: K,
+    ...args: Parameters<CallbackMap[K]>
+  ): ReturnType<CallbackMap[K]> | undefined => {
+    const fn = componentCallback.value[funcName]
+    if (typeof fn !== 'function') return undefined
+    return (fn as Function)(...args) as ReturnType<CallbackMap[K]>
   }
 
   return {
@@ -321,6 +335,7 @@ export const useNoteStore = defineStore('note', () => {
     abortCurrentStream,
     updateSelectKey,
     updateNoteData,
-    registerCallback
+    registerCallback,
+    triggerComponent
   }
 })

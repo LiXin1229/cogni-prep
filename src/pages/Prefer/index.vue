@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePreferStore } from '@/stores/prefer'
-import { formatDate } from '@/utils/formatDate'
+import type { PreferItemType } from '@/stores/types/prefer.type'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,7 +27,7 @@ const isDetailPage = computed(() => {
 
 const preferList = computed(() => preferStore.preferList)
 
-const navToDetail = (item) => { 
+const navToDetail = (item: PreferItemType) => { 
   preferStore.detailChats = []
   router.push({
     name: '收藏详情',

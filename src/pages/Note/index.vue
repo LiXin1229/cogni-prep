@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useNoteStore } from '@/stores/note'
 import { useUserInfoStore } from '@/stores/user'
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
@@ -7,6 +7,7 @@ import Quill from 'quill'
 import Delta from 'quill-delta'
 import 'quill/dist/quill.bubble.css'
 import { writeInClipboard } from '@/utils/clipboard'
+import type { PartialNode, TreeNode } from '@/stores/types/note.type'
 
 const noteStore = useNoteStore()
 const userStore = useUserInfoStore()
@@ -20,10 +21,10 @@ defineProps({
 
 const emit = defineEmits(['toggleSidebar'])
 
-const scrollRef = ref(null)
+const scrollRef = ref<any>(null)
 
 // 切换头部领域
-const selectArea = async (id) => {
+const selectArea = async (id: number) => {
   if (noteStore.sendState !== 'available') return
 
   if (id === noteStore.selectedAreaId) return
@@ -32,7 +33,7 @@ const selectArea = async (id) => {
   noteStore.getTreeData()
 }
 
-const treeRef = ref(null)
+const treeRef = ref<any>(null)
 
 // 初始化目录
 const initTreeData = async () => {
@@ -53,7 +54,7 @@ watch(() => noteStore.selectedAreaId, () => {
   initTreeData()
 })
 
-const treeData = computed(() => [noteStore.treeData])
+const treeData = computed(() => [noteStore.treeData ?? []])
 
 const defaultProps = {
   children: 'children',
@@ -62,10 +63,10 @@ const defaultProps = {
 
 const selectKey = computed(() => noteStore.selectKey)
 
-const currentNode = computed(() => selectKey.value.find(item => item.areaId === noteStore.selectedAreaId) || {})
+const currentNode = computed(() => selectKey.value.find(item => item.areaId === noteStore.selectedAreaId) || null)
 
 // 点击节点
-const handleNodeClick = async (data) => {
+const handleNodeClick = async (data: PartialNode) => {
   // console.log(data)
   if (noteStore.sendState !== 'available') return
 
@@ -87,16 +88,16 @@ const handleNodeClick = async (data) => {
 // popup框
 const showNodePopup = ref('')
 
-const menuScrollRef = ref(null)
+const menuScrollRef = ref<any>(null)
 const menuScrollTop = ref(0)
 
-const togglePopup = (e, data) => {
+const togglePopup = (e?: MouseEvent, data?: TreeNode) => {
   menuScrollTop.value = menuScrollRef.value.scrollTop
 
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
-  if (svgs.includes(e?.target.tagName)) return
-  if (e?.target.className?.includes('toggleNodePopup')) {
-    showNodePopup.value === data.id ? showNodePopup.value = '' : showNodePopup.value = data.id
+  if (svgs.includes((e?.target as HTMLElement).tagName)) return
+  if ((e?.target as HTMLElement).className?.includes('toggleNodePopup')) {
+    showNodePopup.value === data!.id ? showNodePopup.value = '' : showNodePopup.value = data!.id
   } else {
     showNodePopup.value = ''
   }
@@ -112,22 +113,22 @@ const toggleMenu = () => {
 }
 
 // 生成笔记
-const createNote = (node) => {
+const createNote = (node: TreeNode) => {
   if (noteStore.sendState !== 'available') return
   noteStore.getNote(node)
   toggleMenu()
 }
 
-const addNode = (data) => {
+const addNode = (data: TreeNode) => {
   togglePopup()
   noteStore.selectedNode = data
   userStore.showDialog = 'userAddNode'
 }
 
 // 复制按钮
-const handleClick = (e) => {
+const handleClick = (e: MouseEvent) => {
   // console.log(e.target.closest('.copy-btn'))
-  const copyBtn = e.target.closest('.copy-btn')
+  const copyBtn = (e.target as HTMLElement).closest('.copy-btn')
   if (!copyBtn) return
 
   const preElement = copyBtn.closest('pre')
@@ -136,7 +137,7 @@ const handleClick = (e) => {
   const imgElement = copyBtn.querySelector('img.icon')
 
   if (codeElement) {
-    writeInClipboard(codeElement.textContent, imgElement)
+    writeInClipboard(codeElement.textContent, imgElement as HTMLImageElement)
   }
 }
 
@@ -149,7 +150,7 @@ const isModified = ref(false)
 
 // 切换模式
 const toggleMode = () => {
-  if (noteStore.sendState !== 'available') return
+  if (noteStore.sendState !== 'available' || !quillInstance) return
 
   if (isMarkdownMode.value) {
     insertText(noteStore.note)
@@ -164,7 +165,7 @@ const toggleMode = () => {
 }
 
 const editorRef = ref(null)
-let quillInstance = null
+let quillInstance: any = null
 
 onMounted(async () => {
   await initTreeData()
@@ -179,9 +180,9 @@ onMounted(async () => {
       clipboard: {
         matchVisual: false, // 禁用视觉粘贴
         matchers: [
-          [Node.ELEMENT_NODE, (node, delta) => {
+          [Node.ELEMENT_NODE, (_: any, delta: any) => {
             // 提取纯文本
-            const text = delta.reduce((acc, op) => {
+            const text = delta.reduce((acc: any, op: any) => {
               if (typeof op.insert === 'string') {
                 acc += op.insert
               }
@@ -196,7 +197,7 @@ onMounted(async () => {
     }
   })
 
-  quillInstance.on('text-change', (delta, oldContents, source) => {
+  quillInstance.on('text-change', (_: any, __: any, source: string) => {
     if (source === 'user') { // 仅处理用户操作导致的变化
       isModified.value = true
     }
@@ -206,14 +207,15 @@ onMounted(async () => {
 // 保存笔记
 const saveNote = async () => {
   const markId = currentNode.value?.markId
-  // return
+  if (!markId) return
+
   if (await noteStore.updateNoteData(markId)) {
     isModified.value = false
   }
 }
 
 // 插入文本
-const insertText = (text, position = 0) => {
+const insertText = (text: string, position = 0) => {
   if (!quillInstance) return
   quillInstance.deleteText(0, quillInstance.getLength())
   quillInstance.insertText(position, text)
@@ -221,14 +223,16 @@ const insertText = (text, position = 0) => {
 
 // 在组件中注册插入方法
 noteStore.registerCallback('insertText', insertText)
+noteStore.registerCallback('reLoadNote', async () => {
+  await initTreeData()
+  await initNote()
+})
 
 onUnmounted(() => {
   if (quillInstance) {
     quillInstance = null
   }
   noteStore.abortCurrentStream()
-
-  noteStore.registerCallback({})
 })
 </script>
 
@@ -244,7 +248,7 @@ onUnmounted(() => {
         <div
           :class="['area-item', area.areaId === noteStore.selectedAreaId && 'selected-area']"
           v-for="area in noteStore.areaList"
-          :key="area.id"
+          :key="area.areaId"
           @click="selectArea(area.areaId)"
         >
           {{ area.name }}
@@ -282,7 +286,7 @@ onUnmounted(() => {
                     </div>
 
                     <template #popup>
-                      <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e) => togglePopup(e, data)">
+                      <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e: MouseEvent) => togglePopup(e, data)">
                         <div class="menu-item" @click="createNote(data)">生成笔记</div>
                         <div class="menu-item" @click.stop="addNode(data)">添加子节点</div>
                       </div>

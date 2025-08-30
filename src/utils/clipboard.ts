@@ -1,7 +1,8 @@
 import GouIcon from '@/assets/svgs/gou.svg'
+import { ElMessage } from 'element-plus'
 
 // 写入剪贴板（HTTP / HTTPS 通用）
-export const writeInClipboard = (text, imgElement) => {
+export const writeInClipboard = (text: string, imgElement: HTMLImageElement) => {
   // 1. 现代浏览器 + HTTPS / localhost
   if (navigator.clipboard && window.isSecureContext) {
     return navigator.clipboard.writeText(text)
@@ -21,7 +22,7 @@ export const writeInClipboard = (text, imgElement) => {
     try {
       const ok = document.execCommand('copy')
       document.body.removeChild(textarea)
-      ok ? (onCopied(imgElement), resolve()) : (onError(), reject())
+      ok ? (onCopied(imgElement), resolve) : (onError(), reject)
     } catch (e) {
       document.body.removeChild(textarea)
       onError()
@@ -30,7 +31,7 @@ export const writeInClipboard = (text, imgElement) => {
   })
 }
 
-const onCopied = (img) => {
+const onCopied = (img: HTMLImageElement) => {
   if (!img) return
 
   const originalSrc = img.src

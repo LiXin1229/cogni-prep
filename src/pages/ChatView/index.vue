@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import InputBox from './InputBox.vue'
 import { faAngleDown, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -9,6 +9,7 @@ import { parseMarkdown } from '@/utils/markdown'
 import { stickBlockTop } from '@/utils/stickBlockTop'
 import { useThrottle } from '@/utils/useThrottle'
 import { writeInClipboard } from '@/utils/clipboard'
+import { FUNC_TYPE, type ChatType, type FuncStatusType } from '@/stores/types/chat.type'
 
 const { throttle } = useThrottle()
 const userStore = useUserInfoStore()
@@ -29,49 +30,49 @@ const chatList = computed(() => chatStore.displayChat)
 
 const sendState = computed(() => chatStore.sendState)
 
-const inputRef = ref(null)
+const inputRef = ref<any>(null)
 
 const quillRef = computed(() => inputRef.value.quillRef)
 const inputHeight = computed(() => inputRef.value?.inputHeight)
 
-const funcBtn = (type, data) => {
+const funcBtn = (type: FuncStatusType, data?: ChatType) => {
   // 先清除上个@的内容
   if (chatStore.funcStatus > 0) {
-    quillRef.value?.deleteText(chatStore.FUNC_TYPE[chatStore.funcStatus].length)
-    chatStore.customContent = chatStore.customContent.slice(chatStore.FUNC_TYPE[chatStore.funcStatus].length)
+    quillRef.value?.deleteText(FUNC_TYPE[chatStore.funcStatus].length)
+    chatStore.customContent = chatStore.customContent.slice(FUNC_TYPE[chatStore.funcStatus].length)
   }
   
   // 设置当前功能
   chatStore.funcStatus = type
 
   // 将功能显示到输入框开头
-  quillRef.value?.insertText(chatStore.FUNC_TYPE[type])
-  chatStore.customContent = chatStore.FUNC_TYPE[type] + chatStore.customContent
+  quillRef.value?.insertText(FUNC_TYPE[type])
+  chatStore.customContent = FUNC_TYPE[type] + chatStore.customContent
   quillRef.value?.focus()
 
   data?.content && (chatStore.selectQuestion = data.content)
 }
 
 // 复制按钮
-const handleCopy = (e, data) => {
+const handleCopy = (e: MouseEvent, data?: ChatType) => {
   // console.log(e.target.closest('.copy-btn'))
-  const copyBtn = e.target.closest('.copy-btn')
+  const copyBtn = (e.target as HTMLElement).closest('.copy-btn')
   if (!copyBtn) return
 
   const preElement = copyBtn.closest('pre')
   const codeElement = preElement?.querySelector('code')
 
-  const imgElement = copyBtn.querySelector('img.icon')
+  const imgElement = copyBtn.querySelector('img.icon') as HTMLImageElement
 
   if (codeElement) {
     writeInClipboard(codeElement.textContent, imgElement)
-  } else {
+  } else if (data) {
     writeInClipboard(data.content, imgElement)
   }
 }
 
 // 删除对话
-const deleteChat = (chat) => {
+const deleteChat = (chat: ChatType) => {
   chatStore.selectChat = chat
   userStore.showDialog = 'deleteChat'
 }
@@ -83,12 +84,12 @@ const togglePreferState = () => {
 }
 
 // 选中对话
-const toggleChecked = (chat) => { 
+const toggleChecked = (chat: ChatType) => { 
   // console.log(chat.id)
   if (chatStore.preferList.has(chat.id)) {
     chatStore.preferList.delete(chat.id)
   } else {
-    chatStore.preferList.add(chat.id)
+    chatStore.preferList.set(chat.id, chat)
   }
 }
 
@@ -99,7 +100,7 @@ const checkAll = () => {
     chatStore.preferList.clear()
   } else {
     chatStore.displayChat.forEach(chat => {
-      chatStore.preferList.add(chat.id)
+      chatStore.preferList.set(chat.id, chat)
     })
   }
 }
@@ -149,8 +150,8 @@ onMounted(async () => {
 })
 
 // 代码块吸顶
-const scrollRef = ref(null)
-let scrollHandler
+const scrollRef = ref<any>(null)
+let scrollHandler: any
 
 const setStickBlockTop = () => {
   if (userStore.isMobile) return
@@ -174,8 +175,6 @@ onMounted(() => {
 onUnmounted(() => {
   if (scrollRef.value && scrollHandler) scrollRef.value.removeEventListener('scroll', scrollHandler)
   chatStore.abortStream()
-
-  chatStore.registerCallback({})
 })
 
 const title = computed(() => {
@@ -225,117 +224,119 @@ const title = computed(() => {
 
       <!-- 对话内容区 -->
       <div :class="['text-view', chatStore.isChosePrefer && 'chose-prefer']">
-        <div class="blank" v-if="!chatList.length && chatStore.sendState === 'available' && !chatStore.sessionId">
+        <div class="blank" v-if="!chatList.length && chatStore.sendState === 'available' && chatStore.sessionId < 0">
           <blank />
         </div>
 
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in chatList" :key="chat.id">
-          <div class="left" @click="() => toggleChecked(chat)" v-if="chatStore.isChosePrefer && chat.content">
-            <div :class="['check-box', chatStore.preferList.has(chat.id) && 'checked']">
-              <font-awesome-icon :icon="faCheck" class="icon" />
-            </div>
-          </div>
-
-          <div @click="toggleChecked(chat)">
-              <!-- 用户发言wrapper -->
-            <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
-              <div class="user" v-if="chat.messageType === 0 && chat.content" v-html="chat.content"></div>
-
-              <!-- 功能按钮 -->
-              <div class="functionList user-right">
-                <!-- 复制按钮 -->
-                <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
-                  <img src="../../assets/svgs/copy.svg" alt="" class="icon">
-                </div>
-                <!-- 收藏按钮 -->
-                <div class="btn prefer prefer-btn" @click="togglePreferState">
-                  <img src="../../assets/svgs/tag.svg" alt="" class="icon">
-                </div>
-                <!-- 其他按钮 -->
-                <el-dropdown placement="right">
-                  <div class="btn other">
-                    <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
-                  </div>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item @click="funcBtn(4, chat)">
-                        自由对话
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="deleteChat(chat)">
-                        删除对话
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="funcBtn(5)">
-                        自定义问题
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+          <template v-if="chat.content">
+            <div class="left" @click="() => toggleChecked(chat)" v-if="chatStore.isChosePrefer">
+              <div :class="['check-box', chatStore.preferList.has(chat.id) && 'checked']">
+                <font-awesome-icon :icon="faCheck" class="icon" />
               </div>
             </div>
 
-            <!-- 助手发言wrapper -->
-            <div class="text-wrapper assistant-wrapper" v-else>
-              <!-- 问题 -->
-              <template v-if="chat.messageType === 1 && chat.content">
-                <div class="assistant-question">{{ chat.content }}</div>
-              </template>
+            <div @click="toggleChecked(chat)">
+                <!-- 用户发言wrapper -->
+              <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
+                <div class="user" v-if="chat.messageType === 0" v-html="chat.content"></div>
 
-              <template v-else>
-                <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy"></div>
-              </template>
+                <!-- 功能按钮 -->
+                <div class="functionList user-right">
+                  <!-- 复制按钮 -->
+                  <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
+                    <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+                  </div>
+                  <!-- 收藏按钮 -->
+                  <div class="btn prefer prefer-btn" @click="togglePreferState">
+                    <img src="../../assets/svgs/tag.svg" alt="" class="icon">
+                  </div>
+                  <!-- 其他按钮 -->
+                  <el-dropdown placement="right">
+                    <div class="btn other">
+                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="funcBtn(4, chat)">
+                          自由对话
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="deleteChat(chat)">
+                          删除对话
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(5)">
+                          自定义问题
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </div>
 
-              <!-- 功能按钮 -->
-              <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']" v-if="chat.content">
-                <!-- 复制按钮 -->
-                <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
-                  <img src="../../assets/svgs/copy.svg" alt="" class="icon">
-                </div>
-                <!-- 收藏按钮 -->
-                <div class="btn prefer prefer-btn" @click="togglePreferState">
-                  <img src="../../assets/svgs/tag.svg" alt="" class="icon">
-                </div>
-                <!-- 帮助按钮 -->
-                <el-dropdown placement="right" v-if="chat.messageType === 1">
-                  <div class="btn help">
-                    <img src="../../assets/svgs/help.svg" alt="" class="icon">
+              <!-- 助手发言wrapper -->
+              <div class="text-wrapper assistant-wrapper" v-else>
+                <!-- 问题 -->
+                <template v-if="chat.messageType === 1">
+                  <div class="assistant-question">{{ chat.content }}</div>
+                </template>
+
+                <template v-else>
+                  <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy($event)"></div>
+                </template>
+
+                <!-- 功能按钮 -->
+                <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']" v-if="chat.content">
+                  <!-- 复制按钮 -->
+                  <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
+                    <img src="../../assets/svgs/copy.svg" alt="" class="icon">
                   </div>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item @click="funcBtn(1, chat)">
-                        回答思路
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="funcBtn(2, chat)">
-                        标准答案
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="funcBtn(3, chat)">
-                        思路+答案
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-                <!-- 其他按钮 -->
-                <el-dropdown placement="right">
-                  <div class="btn other">
-                    <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                  <!-- 收藏按钮 -->
+                  <div class="btn prefer prefer-btn" @click="togglePreferState">
+                    <img src="../../assets/svgs/tag.svg" alt="" class="icon">
                   </div>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item @click="funcBtn(4, chat)">
-                        自由对话
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="deleteChat(chat)">
-                        删除该对话
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="funcBtn(5)">
-                        自定义问题
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+                  <!-- 帮助按钮 -->
+                  <el-dropdown placement="right" v-if="chat.messageType === 1">
+                    <div class="btn help">
+                      <img src="../../assets/svgs/help.svg" alt="" class="icon">
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="funcBtn(1, chat)">
+                          回答思路
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(2, chat)">
+                          标准答案
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(3, chat)">
+                          思路+答案
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                  <!-- 其他按钮 -->
+                  <el-dropdown placement="right">
+                    <div class="btn other">
+                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="funcBtn(4, chat)">
+                          自由对话
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="deleteChat(chat)">
+                          删除该对话
+                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(5)">
+                          自定义问题
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </template>
 
         <!-- 等待响应的图标 -->
@@ -548,6 +549,7 @@ const title = computed(() => {
         justify-content: space-between;
         width: 20px;
         height: 15px;
+        margin: 10px;
 
         @include loading;
       }

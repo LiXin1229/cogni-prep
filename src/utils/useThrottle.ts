@@ -1,8 +1,8 @@
 import { ref, onUnmounted, getCurrentInstance } from 'vue'
 
-export function useThrottle() {
+export const useThrottle = () => {
   // 节流定时器
-  const timer = ref(null)
+  const timer = ref<number | null>(null)
   // 上一次执行的时间戳
   const lastInvokeTime = ref(0)
 
@@ -10,7 +10,7 @@ export function useThrottle() {
   const instance = getCurrentInstance()
   if (instance) {
     onUnmounted(() => {
-      if (timer.value !== null) {
+      if (timer.value) {
         clearTimeout(timer.value)
         timer.value = null
       }
@@ -25,10 +25,14 @@ export function useThrottle() {
    *   - leading:  是否在节流开始前立即执行第一次，默认 true
    *   - trailing: 是否在节流结束后追加执行一次，默认 true
    */
-  function throttle(fn, delay, options = {}) {
+  const throttle = <T extends (...args: any[]) => any>(
+    fn: T,
+    delay: number,
+    options: OptionsType = {}
+  ) => {
     const { leading = true, trailing = true } = options
 
-    return (...args) => {
+    return (...args: Parameters<T>) => {
       const now = Date.now()
 
       // 首次执行
@@ -62,4 +66,9 @@ export function useThrottle() {
   return {
     throttle
   }
+}
+
+interface OptionsType {
+  leading?: boolean
+  trailing?: boolean
 }

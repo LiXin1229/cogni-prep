@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from './user.js'
 import { useChatStore } from './chat.js'
@@ -38,12 +38,13 @@ export const useSessionStore = defineStore('session', () => {
       surroundingPoint.value = session.surroundingPoint
     }
     else {
-      await nextTick()
+      // await nextTick()
       if (userStore.areaList.length === 0) {
         await userStore.getUserInfo()
       }
 
       const area = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
+
       mainArea.value = area ? {
         areaId: area.areaId,
         name: area.name
@@ -93,7 +94,6 @@ export const useSessionStore = defineStore('session', () => {
           surroundingPoint: surroundingPoint.value
         }
       })
-      console.log('res_session', res)
 
       sessionList.value.unshift(res.data)
 
@@ -102,7 +102,8 @@ export const useSessionStore = defineStore('session', () => {
 
       // 清空目标节点
       if (markNode.value) {
-        mindmapStore.modifyNodeProp(mindmapStore.selectedNode.id, 'chatId', currSession.value?.sessionId)
+        if (!currSession.value) return
+        mindmapStore.modifyNodeProp(mindmapStore.selectedNode!.id, 'chatId', currSession.value.sessionId)
         markNode.value = false
       }
     } catch (err) {

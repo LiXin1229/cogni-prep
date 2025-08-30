@@ -1,8 +1,10 @@
-<script setup>
-import { reactive, ref, watch } from 'vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 import { faCircleXmark } from '@fortawesome/free-solid-svg-icons'
 import { getTextWidth } from '@/utils/getTextWidth.js'
+import type { PointListType } from '@/stores/types/mindmap.type'
+import { ElMessage } from 'element-plus'
 
 const mindmapStore = useMindmapStore()
 
@@ -20,7 +22,7 @@ const colorMap = [
   '#E55E6C' // 红色
 ]
 
-const dialogRef = ref(null)
+const dialogRef = ref<any>(null)
 
 const formData = ref({
   number: 1,
@@ -31,7 +33,8 @@ const submit = async () => {
   console.log('submit')
   const res = await mindmapStore.getSubcategory(formData.value, pointList.value)
 
-  if (res.success) {
+  if (res?.success) {
+    console.log('res', res)
     pointList.value = [...pointList.value, ...res.data.pointList].map(point => {
       return {
         ...point,
@@ -41,7 +44,7 @@ const submit = async () => {
   }
 }
 
-const pointList = ref([])
+const pointList = ref<PointListType[]>([])
 
 watch(() => pointList.value, (pointList) => {
   pointList.forEach(point => {
@@ -49,7 +52,7 @@ watch(() => pointList.value, (pointList) => {
   })
 }, { deep: true })
 
-const deletePoint = (index) => {
+const deletePoint = (index: number) => {
   pointList.value.splice(index, 1)
 }
 
@@ -78,7 +81,7 @@ const closeDialog = () => {
   mindmapStore.sendState = false
 }
 
-const checkList = (list) => {
+const checkList = (list: PointListType[]) => {
   // 检查list中的每个元素的name都不为空
   return list.every(item => item.name !== '')
 }

@@ -1,10 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { useMindmapStore } from '@/stores/mindmap'
 import { faAngleRight } from '@fortawesome/free-solid-svg-icons'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserInfoStore()
@@ -18,11 +19,12 @@ const props = defineProps({
   }
 })
 
-const dialogRef = ref(null)
+const dialogRef = ref<any>(null)
 
 const custom = ref('')
 
 const openQuoteMindmapDialog = () => {
+  if (sessionStore.mainArea.areaId)
   mindmapStore.selectedAreaId = sessionStore.mainArea.areaId
   userStore.showDialog = 'quoteMindmap'
 }

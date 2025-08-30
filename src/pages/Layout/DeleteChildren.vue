@@ -1,5 +1,5 @@
-<script setup>
-import { reactive, ref, watch } from 'vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 
 const mindmapStore = useMindmapStore()
@@ -11,8 +11,8 @@ const props = defineProps({
   }
 })
 
-const dialogRef = ref(null)
-const ruleFormRef = ref(null)
+const dialogRef = ref<any>(null)
+const ruleFormRef = ref<any>(null)
 
 const formData = ref({
   name: ''
@@ -26,7 +26,7 @@ const confirm = async () => {
 watch(() => props.showDialog, (showDialog) => {
   if (showDialog) {
     formData.value = {
-      name: mindmapStore.selectedNode.name
+      name: mindmapStore.selectedNode!.name
     }
   }
 })

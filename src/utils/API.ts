@@ -13,7 +13,7 @@ const API = {
   getSessionList: '/chat/session/getSessionList',
   getUserInfo: '/user/user/getUserInfo',
   updateArea: '/user/area/updateArea',
-  setArea: '/user/area/setArea',
+  deleteArea: '/user/area/deleteArea',
   getMindmapData: '/mindmap/mindmap/getMindmapData',
   saveMindmapData: '/mindmap/mindmap/saveMindmapData',
   getSubcategory: '/mindmap/mindmap/getSubcategory',

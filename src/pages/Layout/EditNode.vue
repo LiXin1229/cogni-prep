@@ -1,5 +1,5 @@
-<script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+<script setup lang="ts">
+import { reactive, ref, watch } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 
 const mindmapStore = useMindmapStore()
@@ -11,15 +11,15 @@ const props = defineProps({
   }
 })
 
-const dialogRef = ref(null)
-const ruleFormRef = ref(null)
+const dialogRef = ref<any>(null)
+const ruleFormRef = ref<any>(null)
 
 const formData = ref({
   name: '',
   rating: 0
 })
 
-const verifyName = (rule, value, callback) => {
+const verifyName = (_: any, value: string, callback: any) => {
   if (!value) callback(new Error('请输入节点名'))
   callback()
 }
@@ -42,8 +42,8 @@ const confirm = async () => {
 watch(() => props.showDialog, (showDialog) => {
   if (showDialog) {
     formData.value = {
-      name: mindmapStore.selectedNode.name,
-      rating: mindmapStore.selectedNode.frequency
+      name: mindmapStore.selectedNode!.name,
+      rating: mindmapStore.selectedNode!.frequency
     }
   }
 })

@@ -35,11 +35,6 @@ export const FUNC_TYPE = ['标准', '@回答思路 ', '@标准答案 ', '@思路
 
 export type FuncStatusType = 0 | 1 | 2 | 3 | 4 | 5
 
-interface MainAreaType {
-  areaId?: number | null
-  name?: string
-}
-
 export interface StreamRequestConfigType {
   sessionId: number,
   mainArea: string,
@@ -56,4 +51,9 @@ export interface ChatInitRespType {
   sessionId: number
   mainArea: string
   surroundingPoint: string
+}
+
+export interface CallbackMap {
+  scrollToBottom: () => void
+  // 可以继续加
 }

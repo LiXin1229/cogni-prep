@@ -1,4 +1,4 @@
-export const verifyUsername = (rule, value, callback) => {
+export const verifyUsername = (_: any, value: string, callback: Function) => {
   if (!value) {
     callback(new Error('请输入用户名'))
   } else if (value.length > 12) {
@@ -8,7 +8,7 @@ export const verifyUsername = (rule, value, callback) => {
   }
 }
 
-export const verifyPassword = (rule, value, callback) => {
+export const verifyPassword = (_: any, value: string, callback: Function) => {
   if (!value) {
     callback(new Error('请输入密码'))
   } else {

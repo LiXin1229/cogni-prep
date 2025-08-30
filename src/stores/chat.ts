@@ -1,37 +1,35 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useSessionStore } from '@/stores/session.js'
-import { useUserInfoStore } from '@/stores/user.js'
+import { useSessionStore } from '@/stores/session'
+import { useUserInfoStore } from '@/stores/user'
 import API from '@/utils/API.js'
 import request from '@/utils/request'
 import { v4 as uuidv4 } from 'uuid'
+import rfdc from 'rfdc'
+import { MSG_TYPE } from './types/chat.type'
+import type { ChatType, ChatMapValueTpye, SendStateType, ChatStatusType, FuncStatusType, StreamRequestConfigType, ChatInitRespType, TemTextType, CallbackMap } from './types/chat.type'
+import { ElMessage } from 'element-plus'
 
 export const useChatStore = defineStore('chat', () => {
   const route = useRoute()
   const router = useRouter()
   const sessionStore = useSessionStore()
   const userStore = useUserInfoStore()
-
-  const MSG_TYPE = {
-    'user': 0, // 用户发言
-    'question': 1, // AI提问
-    'evaluation': 2, // AI评价
-    'help': 3
-  }
+  const clone = rfdc({ circles: true })
 
   // 会话ID
-  const sessionId = computed(() => +route.params.sessionId || '')
+  const sessionId = computed(() => +route.params.sessionId || -1)
 
-  const chatMap = reactive(new Map())
+  const chatMap = reactive(new Map<number, ChatMapValueTpye>())
 
-  const chatQueue = []
+  const chatQueue: number[] = []
 
-  const pushChatQueue = (currentSessionId, data) => {
+  const pushChatQueue = (currentSessionId: number, data: ChatMapValueTpye) => {
     const length = chatQueue.length
     if (length >= 5) {
-      const removeId = chatQueue.shift()
-      chatMap.get(removeId).controller?.abort()
+      const removeId = chatQueue.shift() as number
+      chatMap.get(removeId)?.controller?.abort()
       chatMap.delete(removeId)
     }
     chatMap.set(currentSessionId, data)
@@ -40,53 +38,65 @@ export const useChatStore = defineStore('chat', () => {
 
   // 当前展示的聊天记录
   const displayChat = computed(() => chatMap.get(sessionId.value)?.chatList ?? [])
-  const setDisplayChat = (value, currentSessionId) => chatMap.get(currentSessionId) && (chatMap.get(currentSessionId).chatList = value)
+  const setDisplayChat = (value: ChatType[], currentSessionId: number) => {
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) chatMapValue.chatList = value
+  }
 
   const sendState = computed(() => chatMap.get(sessionId.value)?.sendState ?? 'available')
-  const setSendState = (value, currentSessionId) => chatMap.get(currentSessionId) && (chatMap.get(currentSessionId).sendState = value)
+  const setSendState = (value: SendStateType, currentSessionId: number) => {
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) chatMapValue.sendState = value
+  }
 
   const nextState = computed(() => chatMap.get(sessionId.value)?.nextState ?? true)
-  const setNextState = (value, currentSessionId) => chatMap.get(currentSessionId) && (chatMap.get(currentSessionId).nextState = value)
+  const setNextState = (value: boolean, currentSessionId: number) => {
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) chatMapValue.nextState = value
+  }
 
   const abortStream = () => {
     const currentSessionId = sessionId.value
-    if (chatMap.get(currentSessionId)?.controller) {
-      chatMap.get(currentSessionId).controller?.abort()
-      chatMap.get(currentSessionId).controller = null
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) {
+      chatMapValue.controller?.abort()
+      chatMapValue.controller = null
     }
   }
 
   // 获取当前会话的聊天列表
-  const initDisplayChat = async () => {
-    const currentSessionId = sessionId.value
-
-    if (!currentSessionId) return
+  const initDisplayChat = async (currentSessionId: number) => {
+    // console.log('initDisplayChat', currentSessionId)
+    if (currentSessionId < 0) return
 
     if (!chatMap.has(currentSessionId)) {
-      const res = await request({
-        url: API.getChatData,
-        method: 'GET',
-        params: {
-          sessionId: currentSessionId
-        }
-      })
+      try {
+        const res = await request<{ chatList: ChatType[] }>({
+          url: API.getChatData,
+          method: 'GET',
+          params: {
+            sessionId: currentSessionId
+          }
+        })
 
-      if (res.data.chatList.length === 0) return
-      
-      pushChatQueue(currentSessionId, {
-        chatList: res.data.chatList,
-        backupChatList: JSON.parse(JSON.stringify(res.data.chatList)),
-        sendState: 'available',
-        nextState: true,
-        controller: null
-      })
+        pushChatQueue(currentSessionId, {
+          chatList: res.data.chatList,
+          backupChatList: clone(res.data.chatList),
+          sendState: 'available',
+          nextState: true,
+          controller: null
+        })
+      } catch (error) {
+        // 获取聊天失败的处理
+        console.log(error)
+      }
     }
   }
 
-  watch(() => sessionId.value, () => {
-    initDisplayChat()
+  watch(() => sessionId.value, (sessionId) => {
+    initDisplayChat(sessionId)
     // console.log('map', chatMap)
-  }, { immediate: true })
+  }, { immediate: true, flush: 'sync' })
 
   // 上一条消息
   const lastMessage = computed(() => {
@@ -103,50 +113,22 @@ export const useChatStore = defineStore('chat', () => {
   const selectQuestion = ref('')
 
   // 当前的发言状态
-  const chatStatus = computed(() => {
-    if (displayChat.value.length <= 0) return MSG_TYPE['question']
+  const chatStatus = computed<ChatStatusType>(() => {
+    if (lastMessage.value.messageType !== MSG_TYPE['user']) return MSG_TYPE['user'] as ChatStatusType
 
-    if (lastMessage.value.messageType === MSG_TYPE['question']) {
-      return MSG_TYPE['user']
-    }
-
-    if (lastMessage.value.messageType === MSG_TYPE['help']) {
-      return MSG_TYPE['user']
-    }
-
-    if (lastMessage.value.messageType === MSG_TYPE['evaluation']) {
-      return MSG_TYPE['user']
-    }
-
-    return MSG_TYPE['question']
+    return MSG_TYPE['question'] as ChatStatusType
   })
 
   // 输入框内容
   const customContent = ref('')
 
-  // 特殊功能列表
-  const FUNC_TYPE = reactive(['标准', '@回答思路 ', '@标准答案 ', '@思路+答案 ', '@自由对话 ', '@自定义问题 '])
-
   // 选择的特殊功能
-  const funcStatus = ref(0)
+  const funcStatus = ref<FuncStatusType>(0)
 
-  const submit = async (content, status) => {
+  const submit = async (content: string, status: FuncStatusType) => {
     if (!checkArea()) return
 
     let currentSessionId = sessionId.value
-
-    // 初始化session
-    if (!currentSessionId) {
-      try {
-        await sessionStore.initSession()
-        currentSessionId = sessionId.value
-        await getAIquestion(content, currentSessionId)
-      } catch (err) {
-        console.log(err)
-      }
-
-      return
-    }
 
     // 发送请求让AI开始提问
     if (chatStatus.value === MSG_TYPE['question']) {
@@ -182,24 +164,18 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   // 发送请求让AI开始提问
-  const getAIquestion = async (content, currentSessionId) => {
+  const getAIquestion = async (content: string, currentSessionId: number) => {
     if (!checkArea()) return
     triggerComponent('scrollToBottom')
 
-    if (!currentSessionId) {
+    if (currentSessionId < 0) {
       await sessionStore.initSession()
       currentSessionId = sessionId.value
-      pushChatQueue(currentSessionId, {
-        chatList: [],
-        backupChatList: [],
-        sendState: 'available',
-        nextState: true,
-        controller: null
-      })
+      await initDisplayChat(currentSessionId)
     }
 
     try {
-      const res = await initChat(MSG_TYPE['question'], currentSessionId)
+      const res = await initChat(MSG_TYPE['question'] as ChatStatusType, currentSessionId)
 
       if (res.success) {
         await getStreamResponse(API.interviewStart, {
@@ -207,8 +183,8 @@ export const useChatStore = defineStore('chat', () => {
           mainArea: res.data.mainArea,
           surroundingPoint: res.data.surroundingPoint,
           customContent: content,
-          areaId: sessionStore.mainArea.areaId
-        }, res.data.chatId, MSG_TYPE['question'])
+          areaId: sessionStore.mainArea.areaId as number
+        }, res.data.chatId, MSG_TYPE['question'] as ChatStatusType)
       } else {
         throw new Error('初始化会话失败')
       }
@@ -219,12 +195,13 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  const getStreamResponse = async (url, data, chatId, msgType) => {
+  const getStreamResponse = async (url: string, data: StreamRequestConfigType, chatId: number, msgType: ChatStatusType) => {
     // console.log('getStreamResponse', data)
-    chatMap.get(data.sessionId).controller = new AbortController()
+    const chatMapValue = chatMap.get(data.sessionId)
+    if (chatMapValue) chatMapValue.controller = new AbortController()
 
     // 保存信号，用于外部中断
-    const abortSignal = chatMap.get(data.sessionId).controller.signal
+    const abortSignal: AbortSignal | undefined  = chatMapValue?.controller?.signal
 
     const newText = reactive({
       content: '',
@@ -235,25 +212,35 @@ export const useChatStore = defineStore('chat', () => {
 
     try {
       const baseUrl = import.meta.env.VITE_BASE_URL + url
-      const headers = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json'
       }
       if (userStore.token) {
         headers['Authorization'] = `Bearer ${userStore.token}`
       }
 
-      const response = await fetch(baseUrl, {
+      const response: Response = await fetch(baseUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
         signal: abortSignal // 关联中断信号
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null')
+      }
+
       // 读取流式响应
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
-      chatMap.get(data.sessionId).chatList.push(newText)
+      const chatMapValue = chatMap.get(data.sessionId)
+      if (!chatMapValue) return
+      chatMapValue.chatList.push(newText)
 
       while (true) {
         const { done, value } = await reader.read()
@@ -261,7 +248,9 @@ export const useChatStore = defineStore('chat', () => {
         if (done) {
           setSendState('available', data.sessionId)
           saveChat(chatId, data.sessionId, newText.content, data, msgType)
-          chatMap.get(data.sessionId).controller = null
+
+          const chatMapValue = chatMap.get(data.sessionId)
+          if (chatMapValue) chatMapValue.controller = null
           break
         }
 
@@ -275,13 +264,13 @@ export const useChatStore = defineStore('chat', () => {
           if (line.startsWith('data: ')) {
             const data = line.slice(6) // 去掉'data: '前缀
             if (data === '[DONE]') return // 结束标记
-            const json = JSON.parse(data) // 解析为JSON
+            const json: { content: string } = JSON.parse(data) // 解析为JSON
             // console.log('收到流式数据：', json)
             newText.content += json.content
           }
         })
       }
-    } catch (err) {
+    } catch (err: any) {
       // 捕获中断错误（区别于其他错误）
       if (err.name === 'AbortError') {
         console.log('请求被主动中断')
@@ -292,35 +281,35 @@ export const useChatStore = defineStore('chat', () => {
       saveChat(chatId, data.sessionId, newText.content, data, msgType)
       setSendState('available', data.sessionId)
 
-      chatMap.get(data.sessionId) && (chatMap.get(data.sessionId).controller = null)
+      const chatMapValue = chatMap.get(data.sessionId)
+      if (chatMapValue) chatMapValue.controller = null
     }
   }
 
-  const initChat = async (msgType, currentSessionId) => {
+  // 初始化对话
+  const initChat = async (msgType: ChatStatusType, currentSessionId: number) => {
     setSendState('loading', currentSessionId)
     setNextState(false, currentSessionId)
 
     try {
-      const res = await request({
+      const res = await request<ChatInitRespType>({
         url: API.initChat,
-        method: 'POST',
         data: {
           sessionId: currentSessionId,
           msgType: msgType
         }
       })
-
+      // console.log(res)
       return res 
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error)
     }
   }
 
-  const saveUserWords = async (msgType, content, currentSessionId) => {
+  const saveUserWords = async (msgType: ChatStatusType, content: string, currentSessionId: number) => {
     try {
-      const res = await request({
+      const res = await request<{ chatId:number }>({
         url: API.saveUserWords,
-        method: 'POST',
         data: {
           sessionId: currentSessionId,
           msgType: msgType,
@@ -328,7 +317,8 @@ export const useChatStore = defineStore('chat', () => {
         }
       })
 
-      chatMap.get(currentSessionId).backupChatList.push({
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) chatMapValue.backupChatList.push({
         id: res.data.chatId,
         content,
         messageType: msgType,
@@ -337,16 +327,16 @@ export const useChatStore = defineStore('chat', () => {
 
       return res
     } catch (error) {
-      setDisplayChat(chatMap.get(currentSessionId).backupChatList, currentSessionId)
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
-  const saveChat = async (chatId, currentSessionId, content, data, msgType) => {
+  const saveChat = async (chatId: number, currentSessionId: number, content: string, data: StreamRequestConfigType, msgType: ChatStatusType) => {
     // displayChat.value.find(item => item.id === chatId).content = content
     try {
-      const res = await request({
+      await request({
         url: API.saveChat,
-        method: 'POST',
         data: {
           chatId,
           content,
@@ -357,50 +347,57 @@ export const useChatStore = defineStore('chat', () => {
       setNextState(true, currentSessionId)
       // console.log('保存记录', res)
 
-      chatMap.get(currentSessionId).backupChatList.push({
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) chatMapValue.backupChatList.push({
         id: chatId,
         content,
         messageType: msgType,
         sessionId: currentSessionId
       })
     } catch (error) {
-      setDisplayChat(chatMap.get(currentSessionId).backupChatList, currentSessionId)
+      console.log(error)
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
   // 用户正常回答
-  const userAnwer = async (content, currentSessionId) => {
+  const userAnwer = async (content: string, currentSessionId: number) => {
     // 更新页面
     pushUserText(currentSessionId, {
       id: uuidv4(),
       content: customContent.value,
       sessionId: currentSessionId,
-      messageType: MSG_TYPE['user']
+      messageType: MSG_TYPE['user'] as ChatStatusType
     })
 
     triggerComponent('scrollToBottom')
 
-    const userRes = await saveUserWords(MSG_TYPE['user'], content, currentSessionId)
-    if (!userRes?.success) return
-    // console.log('userRes', userRes)
+    try {
+      const userRes = await saveUserWords(MSG_TYPE['user'] as ChatStatusType, content, currentSessionId)
+      if (!userRes?.success) return
+      // console.log('userRes', userRes)
 
-    pushUserText(currentSessionId, { id: userRes.data.chatId }, true)
+      pushUserText(currentSessionId, { id: userRes.data.chatId }, true)
 
-    const res = await initChat(MSG_TYPE['evaluation'], currentSessionId)
+      const res = await initChat(MSG_TYPE['evaluation'] as ChatStatusType, currentSessionId)
 
-    if (res.success) {
-      await getStreamResponse(API.interviewAnswer, {
-        sessionId: res.data.sessionId,
-        mainArea: res.data.mainArea,
-        surroundingPoint: res.data.surroundingPoint,
-        answer: content,
-        question: lastQuestion.value
-      }, res.data.chatId, MSG_TYPE['evaluation'])
+      if (res.success) {
+        await getStreamResponse(API.interviewAnswer, {
+          sessionId: res.data.sessionId,
+          mainArea: res.data.mainArea,
+          surroundingPoint: res.data.surroundingPoint,
+          answer: content,
+          question: lastQuestion.value
+        }, res.data.chatId, MSG_TYPE['evaluation'] as ChatStatusType)
+      } 
+    } catch (error) {
+      console.log(error)
     }
   }
 
   // 获取答题模板或其他
-  const getHelp = async (content, status, currentSessionId) => {
+  const getHelp = async (content: string, status: FuncStatusType, currentSessionId: number) => {
     if (status === 5) {
       return custQustion(content.slice(7), currentSessionId)
     }
@@ -410,17 +407,17 @@ export const useChatStore = defineStore('chat', () => {
       id: uuidv4(),
       content: customContent.value,
       sessionId: currentSessionId,
-      messageType: MSG_TYPE['user']
+      messageType: MSG_TYPE['user'] as ChatStatusType
     })
 
     triggerComponent('scrollToBottom')
 
-    const userRes = await saveUserWords(MSG_TYPE['user'], content, currentSessionId)
+    const userRes = await saveUserWords(MSG_TYPE['user'] as ChatStatusType, content, currentSessionId)
     if (!userRes?.success) return
 
     pushUserText(currentSessionId, { id: userRes.data.chatId }, true)
 
-    const res = await initChat(MSG_TYPE['help'], currentSessionId)
+    const res = await initChat(MSG_TYPE['help'] as ChatStatusType, currentSessionId)
 
     if (res.success) {
       await getStreamResponse(API.interviewHelp, {
@@ -430,12 +427,12 @@ export const useChatStore = defineStore('chat', () => {
         customContent: content,
         funcType: status,
         question: selectQuestion.value
-      }, res.data.chatId, MSG_TYPE['help'])
+      }, res.data.chatId, MSG_TYPE['help'] as ChatStatusType)
     }
   }
 
   // 自定义问题
-  const custQustion = async (content, currentSessionId) => {
+  const custQustion = async (content: string, currentSessionId: number) => {
     if (!content) return ElMessage({
       message: '请输入问题',
       type: 'info'
@@ -445,64 +442,73 @@ export const useChatStore = defineStore('chat', () => {
       id: uuidv4(),
       content,
       sessionId: currentSessionId,
-      messageType: MSG_TYPE['question']
+      messageType: MSG_TYPE['question'] as ChatStatusType
     })
 
     triggerComponent('scrollToBottom')
 
     try {
-      const res = await request({
+      const res = await request<{ chatId: number }>({
         url: API.saveCust,
-        post: 'POST',
         data: {
           sessionId: sessionId.value,
           content: content,
           messageType: MSG_TYPE['question']
         }
-      }) 
+      })
 
-      if (res.success) {
-        pushUserText(currentSessionId, { id: res.data.chatId }, true)
+      pushUserText(currentSessionId, { id: res.data.chatId }, true)
 
-        chatMap.get(currentSessionId).backupChatList.push({
-          id: res.data.chatId,
-          content,
-          messageType: MSG_TYPE['question'],
-          sessionId: currentSessionId
-        })
-      }
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) chatMapValue.backupChatList.push({
+        id: res.data.chatId,
+        content,
+        messageType: MSG_TYPE['question'] as ChatStatusType,
+        sessionId: currentSessionId
+      })
     } catch (error) {
-      setDisplayChat(chatMap.get(currentSessionId).backupChatList, currentSessionId)
+      console.log(error)
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
-  const pushUserText = (currentSessionId, data, isReplace = false) => {
-    const curr =  chatMap.get(currentSessionId)
+  const pushUserText = (currentSessionId: number, data: TemTextType, isReplace = false) => {
+    const curr = chatMap.get(currentSessionId) as ChatMapValueTpye
     // console.log('pushUserText', data)
     if (isReplace) {
-      curr.chatList.at(-1).id = data.id
+      const lastLength = curr.chatList.length - 1
+      curr.chatList[lastLength].id = data.id as number
     } else {
-      curr.chatList.push(data)
+      curr.chatList.push(data as ChatType)
     }
   }
-  
+
   // 删除对话
-  const selectChat = ref(null)
+  const selectChat = ref<ChatType | null>(null)
 
   const deleteChat = async () => {
     const currentSessionId = sessionId.value
+    const selectedChat = selectChat.value
+    if (selectedChat === null) return
 
-    const res = await request({
-      url: API.deleteChat,
-      method: 'POST',
-      data: {
-        chatId: selectChat.value.id
+    try {
+      if (selectChat.value === null) return
+      await request({
+        url: API.deleteChat,
+        data: {
+          chatId: selectedChat.id
+        }
+      })
+      // console.log(res)
+
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) {
+        chatMapValue.chatList = displayChat.value.filter(item => item.id !== selectedChat.id)
+        chatMapValue.backupChatList = clone(chatMapValue.chatList)
       }
-    })
-    // console.log(res)
-
-    if (res.success) {
-      chatMap.get(currentSessionId).chatList = displayChat.value.filter(item => item.id !== selectChat.value.id)
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -510,7 +516,7 @@ export const useChatStore = defineStore('chat', () => {
   const isChosePrefer = ref(false)
 
   // 已选中的对话
-  const preferList = ref(new Set())
+  const preferList = ref(new Map<number, ChatType>())
 
   // 是否全选
   const isChoseAll = computed(() => preferList.value.size === displayChat.value.length)
@@ -528,17 +534,16 @@ export const useChatStore = defineStore('chat', () => {
     isChosePrefer.value = false
 
     try {
-      const sortChats = Array.from(preferList.value).sort((a, b) => a - b)
-      const content = displayChat.value.find(item => item.id === sortChats[0]).content + displayChat.value.find(item => item.id === sortChats[1] || -1)?.content || ''
+      const sortChats = Array.from(preferList.value, chat => chat[1]).sort((a, b) => a.id - b.id)
+      const content: string = sortChats[0].content + sortChats?.[1]?.content || '' + sortChats?.[2]?.content || ''
 
-      const res = await request({
+      const res = await request<{ perferId: number }>({
         url: API.initPrefer,
-        method: 'POST',
         data: {
           userId: userStore.userInfo.userId,
-          title: sessionStore.currSession.title,
+          title: sessionStore.currSession?.title,
           content: content,
-          chatIds: sortChats
+          chatIds: sortChats.map(chat => chat.id)
         }
       })
 
@@ -559,24 +564,27 @@ export const useChatStore = defineStore('chat', () => {
           }
         })
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error)
     }
   }
 
   // 组件回调
-  const componentCallback = ref({})
+  const componentCallback = ref<Partial<CallbackMap>>({})
 
   // 注册组件方法
-  const registerCallback = (funcName, callback) => {
+  const registerCallback = <K extends keyof CallbackMap>(funcName: K, callback: CallbackMap[K]) => {
     componentCallback.value[funcName] = callback
   }
 
   // 触发组件方法
-  const triggerComponent = (funcName, ...args) => {
-    if (typeof componentCallback.value[funcName] === 'function') {
-      componentCallback.value[funcName](...args) // 调用组件方法并传参
-    }
+  const triggerComponent = <K extends keyof CallbackMap>(
+    funcName: K,
+    ...args: Parameters<CallbackMap[K]>
+  ): ReturnType<CallbackMap[K]> | undefined => {
+    const fn = componentCallback.value[funcName]
+    if (typeof fn !== 'function') return undefined
+    return (fn as Function)(...args) as ReturnType<CallbackMap[K]>
   }
 
   return {
@@ -587,7 +595,6 @@ export const useChatStore = defineStore('chat', () => {
     funcStatus,
     lastMessage,
     selectQuestion,
-    FUNC_TYPE,
     sessionId,
     submit,
     customContent,

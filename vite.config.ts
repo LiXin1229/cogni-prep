@@ -28,7 +28,6 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        // 当请求的 URL 以 /api 开头时，就会触发代理规则
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
