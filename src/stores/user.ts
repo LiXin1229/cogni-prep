@@ -31,6 +31,9 @@ export const useUserInfoStore = defineStore('user', () => {
     areaList.value = []
     noteStore.selectKey = []
     mindmapStore.selectedAreaId = null
+    sessionStore.sessionList = []
+    sessionStore.sessionNumber = 20
+    sessionStore.mainArea = { areaId: null,name: '未选择领域' }
     
     await new Promise(resolve => setTimeout(resolve, 0))
 

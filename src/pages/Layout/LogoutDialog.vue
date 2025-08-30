@@ -20,8 +20,8 @@ const confirm = async () => {
 </script>
 
 <template>
-  <div class="user-add-node" v-if="showDialog">
-    <cust-dialog ref="dialogRef" title="确认退出登录" @confirm="confirm">
+  <div class="user-add-node">
+    <cust-dialog ref="dialogRef" title="确认退出登录" @confirm="confirm" :visible="showDialog">
       <div class="content">
         退出登录不会丢失任何数据，你仍可以登录此账号。
       </div>

@@ -12,6 +12,10 @@ defineProps({
   exitBottom: {
     type: Boolean,
     default: true
+  },
+  visible: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -35,25 +39,30 @@ defineExpose({
 </script>
 
 <template>
-  <div class="cust-dialog" v-bind="$attrs">
-    <div class="top">
-      <div class="title">{{ title }}</div>
-      <div class="close-btn" @click="closeDialog" v-if="ableClose">
-        <img src="../assets/svgs/close.svg" alt="" style="width: 16px; height: 16px;">
+  <transition name="fade">
+    <div v-if="visible">
+      <div class="cust-dialog" v-bind="$attrs">
+        <div class="top">
+          <div class="title">{{ title }}</div>
+          <div class="close-btn" @click="closeDialog" v-if="ableClose">
+            <img src="../assets/svgs/close.svg" alt="" style="width: 16px; height: 16px;">
+          </div>
+        </div>
+
+        <div class="content">
+          <slot></slot>
+        </div>
+
+        <div class="bottom" v-if="exitBottom">
+          <div class="cancel-btn btn" @click="closeDialog" v-if="ableClose">取消</div>
+          <div class="confirm-btn btn" @click="confirm">确定</div>
+        </div>
       </div>
     </div>
-
-    <div class="content">
-      <slot></slot>
-    </div>
-
-    <div class="bottom" v-if="exitBottom">
-      <div class="cancel-btn btn" @click="closeDialog" v-if="ableClose">取消</div>
-      <div class="confirm-btn btn" @click="confirm">确定</div>
-    </div>
-  </div>
-
-  <div class="mask" @click="closeDialog"></div>
+  </transition>
+  <transition name="mask">
+    <div class="mask" @click="closeDialog" v-if="visible"></div>
+  </transition>
 </template>
 
 <style scoped lang="scss">
@@ -120,5 +129,41 @@ defineExpose({
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+}
+
+// 进入动画 - 活跃状态
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-leave-from {
+  opacity: 1;
+}
+
+.fade-leave-to {
+  opacity: 0;
+}
+
+.mask-enter-active,
+.mask-leave-active {
+  transition: all 0.2s ease;
+}
+
+.mask-enter-from {
+  // opacity: 0;
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.mask-enter-to {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.mask-leave-from {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.mask-leave-to {
+  background-color: rgba(0, 0, 0, 0);
 }
 </style>

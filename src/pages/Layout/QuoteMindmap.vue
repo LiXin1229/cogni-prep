@@ -8,8 +8,8 @@ defineProps({
 </script>
 
 <template>
-  <div class="quote-mindmap" v-if="showDialog">
-    <cust-dialog title="选择图中节点" :exitBottom="false">
+  <div class="quote-mindmap">
+    <cust-dialog title="选择图中节点" :exitBottom="false" :visible="showDialog">
       <div class="content">
         <mind-map :style="{ height: '100%' }" :mouseFacter="{ x: -150, y: -40 }" />
       </div>

@@ -94,8 +94,8 @@ watch(() => props.showDialog, (showDialog) => {
 </script>
 
 <template>
-  <div class="add-node-dialog" v-if="showDialog">
-    <cust-dialog ref="dialogRef" title="AI生成子节点" @confirm="confirm" @closeDialog="closeDialog">
+  <div class="add-node-dialog">
+    <cust-dialog ref="dialogRef" title="AI生成子节点" @confirm="confirm" @closeDialog="closeDialog" :visible="showDialog">
       <div class="content">
         <el-form :model="formData">
           <el-form-item label="添加个数" prop="number" class="form">

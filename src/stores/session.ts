@@ -29,6 +29,8 @@ export const useSessionStore = defineStore('session', () => {
   const surroundingPoint = ref('')
 
   watch(() => currSession.value, async (session) => {
+    if (!userStore.userInfo) return
+
     // console.log('currSession', currSession.value)
     if (session) {
       mainArea.value = {
