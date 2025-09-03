@@ -50,8 +50,9 @@ const initNote = async () => {
   await noteStore.getNoteData({ markId })
 }
 
-watch(() => noteStore.selectedAreaId, () => {
-  initTreeData()
+watch(() => noteStore.selectedAreaId, async () => {
+  await initTreeData()
+  await initNote()
 })
 
 const treeData = computed(() => [noteStore.treeData ?? []])
@@ -93,6 +94,7 @@ const menuScrollTop = ref(0)
 
 const togglePopup = (e?: MouseEvent, data?: TreeNode) => {
   menuScrollTop.value = menuScrollRef.value.scrollTop
+  if (!e?.target) return showNodePopup.value = ''
 
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
   if (svgs.includes((e?.target as HTMLElement).tagName)) return
@@ -137,7 +139,7 @@ const handleClick = (e: MouseEvent) => {
   const imgElement = copyBtn.querySelector('img.icon')
 
   if (codeElement) {
-    writeInClipboard(codeElement.textContent, imgElement as HTMLImageElement)
+    writeInClipboard(codeElement.textContent as string, imgElement as HTMLImageElement)
   }
 }
 
@@ -274,11 +276,10 @@ onUnmounted(() => {
               :props="defaultProps"
               @node-click="handleNodeClick"
               highlight-current
-              :default-expanded-keys="selectKey.map(node => node.nodeId)"
               :expand-on-click-node="false"
             >
               <template #default="{ node, data }">
-                <div class="custom-tree-node" @click="(e) => togglePopup(e, data)">
+                <div class="custom-tree-node">
                   <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
                   <cust-popup :position="{ top: `${ 20 - menuScrollTop }px`, left: '-75px' }">
                     <div :class="['func-btn', 'toggleNodePopup', data.id === currentNode?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >

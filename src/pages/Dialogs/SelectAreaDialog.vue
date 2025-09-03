@@ -17,7 +17,7 @@ const selectCategoryChildren = ref('')
 
 const categorys = [
   {
-    name: '大学水课',
+    name: '大学课程',
     children: ['测绘学漫谈', '工程制图', '数字地形测量学', '普通测量实验', '大地测量学基础', '人文地理学', '摄影测量学基础', '数字测图实习', '控制测量与平差实习']
   },
   {

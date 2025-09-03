@@ -228,17 +228,21 @@ export const useNoteStore = defineStore('note', () => {
 
   // 获取节点笔记
   const getNoteData = async (node: Partial<TreeNode>) => {
-    // console.log(node.markId)
-    const res = await request<{ content: string }>({
-      url: API.getNoteData,
-      method: 'GET',
-      params: {
-        markId: node.markId ?? -1
-      }
-    })
-    // console.log('获取节点笔记', res)
+    if (!node.markId) return
+    try {
+      const res = await request<{ content: string }>({
+        url: API.getNoteData,
+        method: 'GET',
+        params: {
+          markId: node.markId
+        }
+      })
+      // console.log('获取节点笔记', res)
 
-    note.value = res.data.content || '### 暂无笔记'
+      note.value = res.data.content || '### 暂无笔记' 
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   // 修改节点笔记

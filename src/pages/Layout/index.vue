@@ -1,21 +1,10 @@
 <script setup lang="ts">
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref, computed, defineAsyncComponent, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
-
-import SelectAreaDialog from './SelectAreaDialog.vue'
-import SelectPointDialog from './SelectPointDialog.vue'
-import DeleteChatDialog from './DeleteChatDialog.vue'
-import DeleteSessionDialog from './DeleteSessionDialog.vue'
-import UserAddNode from './UserAddNode.vue'
-import AIAddNode from './AIAddNode.vue'
-import EditNode from './EditNode.vue'
-import DeleteNode from './DeleteNode.vue'
-import DeleteChildren from './DeleteChildren.vue'
-import QuoteMindmap from './QuoteMindmap.vue'
-import LogoutDialog from './LogoutDialog.vue'
+import type { SessionType } from '@/stores/types/session.type'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
@@ -24,13 +13,25 @@ import star from '@/assets/svgs/star.svg'
 import logoutIcon from '@/assets/svgs/logout.svg'
 import hideSidebarIcon from '@/assets/svgs/hide-sidebar.svg'
 import ellipsisIcon from '@/assets/svgs/ellipsis.svg'
-import type { SessionType } from '@/stores/types/session.type'
-
 
 const router = useRouter()
 const route = useRoute()
 const sessionStore = useSessionStore()
 const userStore = useUserInfoStore()
+
+const AsyncDialogs = defineAsyncComponent(() => import('@/pages/Dialogs/index.vue'))
+
+const hasUsedDialog = ref(false)
+const stopDialogWatch = watch(
+  () => userStore.showDialog,
+  (newVal) => {
+    // 当用户首次触发任何对话框显示时，标记为已使用，此时才会渲染 AsyncDialogs 并加载组件
+    if (newVal && !hasUsedDialog.value) {
+      hasUsedDialog.value = true
+      stopDialogWatch()
+    }
+  }
+)
 
 const sidebarRef = ref<any>(null)
 const mainViewRef = ref<any>(null)
@@ -99,7 +100,6 @@ const deleteSession = (session: SessionType) => {
 }
 
 onMounted(async() => {
-  // toggleSidebar()
   await userStore.getUserInfo()
   await sessionStore.getSessionList()
 })
@@ -192,17 +192,7 @@ const handleScroll = async () => {
     </div>
 
     <!-- Dialog -->
-    <select-area-dialog :showDialog="userStore.showDialog === 'selectArea'" />
-    <select-point-dialog :showDialog="userStore.showDialog === 'selectPoint'" />
-    <delete-chat-dialog :showDialog="userStore.showDialog === 'deleteChat'" />
-    <delete-session-dialog :showDialog="userStore.showDialog === 'deleteSession'" :selectSession="selectSession" />
-    <user-add-node :showDialog="userStore.showDialog === 'userAddNode'" />
-    <AI-add-node :showDialog="userStore.showDialog === 'AIAddNode'" />
-    <edit-node :showDialog="userStore.showDialog === 'editNode'" />
-    <delete-node :showDialog="userStore.showDialog === 'deleteNode'" />
-    <delete-children :showDialog="userStore.showDialog === 'deleteChildren'" />
-    <quote-mindmap :showDialog="userStore.showDialog === 'quoteMindmap'" />
-    <logout-dialog :showDialog="userStore.showDialog === 'logout'" />
+    <AsyncDialogs v-if="hasUsedDialog" :selectSession="selectSession" />
   </div>
 </template>
 

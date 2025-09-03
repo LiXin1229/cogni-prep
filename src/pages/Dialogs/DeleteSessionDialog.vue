@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useSessionStore } from '@/stores/session'
-import type { SessionType } from '@/stores/types/session.type';
+import type { SessionType } from '@/stores/types/session.type'
 
 const sessionStore = useSessionStore()
 

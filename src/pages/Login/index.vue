@@ -52,10 +52,9 @@ const submit = (formRef: any) => {
       if (res.success) {
         userStore.userInfo = res.data.userInfo
         userStore.token = res.data.token
-        // console.log('userStore.token', userStore.token)
-        await userStore.getUserInfo()
-
-        router.push('/')
+        
+        await router.push('/')
+        userStore.getUserInfo()
       }
     })
   }
@@ -79,10 +78,9 @@ const submit = (formRef: any) => {
       if (res.success) {
         userStore.userInfo = res.data.userInfo
         userStore.token = res.data.token
-        await userStore.getUserInfo()
-        // userStore.showDialog = ''
-
-        router.push('/')
+        
+        await router.push('/')
+        userStore.getUserInfo()
       }
     })
   }

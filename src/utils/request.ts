@@ -119,7 +119,7 @@ const request = <T = any> ({
       return res.data
     })
     .catch(err => {
-      throw Error(`请求失败 ${err}`)
+      console.log(`请求失败 ${err}`)
     })
 }
 

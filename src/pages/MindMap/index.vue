@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
 
 const mindmapStore = useMindmapStore()
@@ -28,10 +28,6 @@ const selectArea = async (id: number) => {
   await mindMapRef.value.updateData()
   mindMapRef.value.renderChart()
 }
-
-onMounted(() => {
-  // mindmapStore.getMindmapData()
-})
 </script>
 
 <template>

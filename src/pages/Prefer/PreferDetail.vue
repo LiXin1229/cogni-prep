@@ -38,7 +38,7 @@ const handleCopy = (e: MouseEvent, data?: ChatType) => {
   const imgElement = copyBtn.querySelector('img.icon') as HTMLImageElement
 
   if (codeElement) {
-    writeInClipboard(codeElement.textContent, imgElement)
+    writeInClipboard(codeElement.textContent as string, imgElement)
   } else if (data) {
     writeInClipboard(data.content, imgElement)
   }
