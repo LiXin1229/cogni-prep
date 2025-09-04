@@ -7,9 +7,11 @@ import request from '@/utils/request'
 import API from '@/utils/API'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/user'
+import { useSessionStore } from '@/stores/session'
 
 const router = useRouter()
 const userStore = useUserInfoStore()
+const sessionStore = useSessionStore()
 
 const loginFormRef = ref(null)
 const registerFormRef = ref(null)
@@ -55,6 +57,10 @@ const submit = (formRef: any) => {
         
         await router.push('/')
         userStore.getUserInfo()
+        sessionStore.mainArea = {
+          areaId: null,
+          name: '未选择领域'
+        }
       }
     })
   }
@@ -81,6 +87,10 @@ const submit = (formRef: any) => {
         
         await router.push('/')
         userStore.getUserInfo()
+        sessionStore.mainArea = {
+          areaId: null,
+          name: '未选择领域'
+        }
       }
     })
   }

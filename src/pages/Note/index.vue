@@ -114,10 +114,17 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
+const openSelectedNode = () => {
+  if (!selectKey.value.map(node => node.nodeId)?.[0]) return
+  treeRef.value.setCurrentKey(selectKey.value.map(node => node.nodeId)[0], true)
+}
+
 // 生成笔记
 const createNote = (node: TreeNode) => {
   if (noteStore.sendState !== 'available') return
   noteStore.getNote(node)
+  showNodePopup.value = ''
+
   toggleMenu()
 }
 
@@ -211,6 +218,8 @@ const saveNote = async () => {
   const markId = currentNode.value?.markId
   if (!markId) return
 
+  if (!isMarkdownMode.value) toggleMode()
+
   if (await noteStore.updateNoteData(markId)) {
     isModified.value = false
   }
@@ -225,6 +234,7 @@ const insertText = (text: string, position = 0) => {
 
 // 在组件中注册插入方法
 noteStore.registerCallback('insertText', insertText)
+noteStore.registerCallback('openSelectedNode', openSelectedNode)
 noteStore.registerCallback('reLoadNote', async () => {
   await initTreeData()
   await initNote()
@@ -555,6 +565,7 @@ onUnmounted(() => {
       justify-content: space-between;
       width: 20px;
       height: 15px;
+      margin-left: 20px;
 
       @include loading;
     }

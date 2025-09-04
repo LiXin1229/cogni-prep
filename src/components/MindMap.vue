@@ -469,6 +469,7 @@ const startNote = async (id: string, markId: number | null) => {
   if (noteStore.sendState !== 'available') return
   noteStore.updateSelectKey({ id, markId })
   noteStore.getNoteData({ markId })
+  noteStore.triggerComponent('openSelectedNode')
 }
 
 // store注册方法, 便于在Dialog组件中触发

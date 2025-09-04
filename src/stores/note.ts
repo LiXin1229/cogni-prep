@@ -228,7 +228,9 @@ export const useNoteStore = defineStore('note', () => {
 
   // 获取节点笔记
   const getNoteData = async (node: Partial<TreeNode>) => {
-    if (!node.markId) return
+    if (!node.markId) {
+      return note.value = '### 暂无笔记' 
+    }
     try {
       const res = await request<{ content: string }>({
         url: API.getNoteData,

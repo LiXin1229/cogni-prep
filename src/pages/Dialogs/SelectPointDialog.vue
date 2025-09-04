@@ -44,11 +44,12 @@ const confirm = async () => {
     return
   }
 
-  if (custom.value.length >= 20) {
+  if (custom.value.length >= 30) {
     ElMessage({
-      message: '不能超过20个字',
+      message: '不能超过30个字',
       type: 'info'
     })
+    return
   }
 
   dialogRef.value.closeDialog()

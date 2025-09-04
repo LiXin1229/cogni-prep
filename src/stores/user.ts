@@ -30,7 +30,9 @@ export const useUserInfoStore = defineStore('user', () => {
     token.value = ''
     areaList.value = []
     noteStore.selectKey = []
+    noteStore.treeData = null
     mindmapStore.selectedAreaId = null
+    mindmapStore.treeData = null
     sessionStore.sessionList = []
     sessionStore.sessionNumber = 20
     sessionStore.mainArea = { areaId: null,name: '未选择领域' }

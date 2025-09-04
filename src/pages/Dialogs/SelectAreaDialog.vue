@@ -12,17 +12,13 @@ const props = defineProps({
   }
 })
 
-const selectCategory = ref('大学水课')
+const selectCategory = ref('互联网')
 const selectCategoryChildren = ref('')
 
 const categorys = [
   {
-    name: '大学课程',
-    children: ['测绘学漫谈', '工程制图', '数字地形测量学', '普通测量实验', '大地测量学基础', '人文地理学', '摄影测量学基础', '数字测图实习', '控制测量与平差实习']
-  },
-  {
-    name: '互联网/AI',
-    children: ['Java', 'C++', '后端开发', '前端/移动开发', '算法工程师', '运维', '测试']
+    name: '互联网',
+    children: ['Java', 'C++', '后端开发', '前端开发', '算法工程师', '运维', '测试']
   },
   {
     name: '产品',

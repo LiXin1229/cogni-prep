@@ -29,5 +29,6 @@ export interface StreamRequestConfigType {
 
 export interface CallbackMap {
   insertText: (text: string, position: number) => void
+  openSelectedNode: () => void
   reLoadNote: () => void
 }
