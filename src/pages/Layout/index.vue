@@ -83,7 +83,7 @@ const togglePopup = (e: MouseEvent, data: SessionType) => {
   scrollTop.value = scrollRef.value.scrollTop
 
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
-  if (svgs.includes((e.target as HTMLElement).tagName)) return
+  if (svgs.includes((e.target as HTMLElement).tagName)) return showSessionPopup.value = -1
   if ((e.target as HTMLElement).className?.includes('toggleSessionPopup')) {
     showSessionPopup.value === data.sessionId ? showSessionPopup.value = -1 : showSessionPopup.value = data.sessionId
   } else {

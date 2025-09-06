@@ -55,7 +55,7 @@ onMounted(async () => {
   await updateData()
   renderChart()
 
-  const handleResize = throttle(() => adjustChartSize(), 500)
+  const handleResize = throttle(() => adjustChartSize(), 500, { leading: false })
 
   // 监听页面尺寸
   resizeObserver.value = new ResizeObserver(() => {
@@ -128,6 +128,7 @@ const initChart = () => {
 
 // 调整图表尺寸
 const adjustChartSize = () => {
+  console.log('adjustChartSize')
   if (!chartRef.value || !svg) return
   
   // 获取新的容器尺寸
@@ -148,7 +149,7 @@ const adjustChartSize = () => {
   }
 }
 
-// 更新数据
+// 渲染图表
 const renderChart = () => {
   // 清除旧元素
   chartGroup.selectAll("*").remove()
@@ -168,11 +169,10 @@ const renderChart = () => {
   }
 
   root = d3.hierarchy(foldedData)
-
   // console.log('初始化', root)
 
   const treeLayout = d3.tree()
-  .size([chartHeight * sizeFactor, chartWidth * sizeFactor])
+    .size([chartHeight * sizeFactor, chartWidth * sizeFactor]) // 根据树的大小决定sizeFactor的大小调整树占据的尺寸
 
   treeLayout(root as d3.HierarchyNode<unknown>)
 
@@ -181,13 +181,11 @@ const renderChart = () => {
   const svgDimensions = calculateSVGDimensions()
 
   if (!svgDimensions) return
-  // 更新SVG尺寸（超出画布部分可通过滚动查看）
-  svg.attr('width', svgDimensions.width)
-    .attr('height', svgDimensions.height)
 
   // 应用初始缩放
   applyInitialZoom(svgDimensions)
 
+  // 绘制路径
   chartGroup.selectAll('.link')
     .data(root.links())
     .enter()
@@ -195,7 +193,8 @@ const renderChart = () => {
     .attr('class', 'link')
     .attr('d', d3.linkHorizontal<d3.HierarchyLink<unknown>, d3.HierarchyPointNode<unknown>>()
       .x(d => d.y)
-      .y(d => d.x))
+      .y(d => d.x)
+    )
 
   // 创建节点组
   const node = chartGroup.selectAll('.node')
@@ -208,7 +207,7 @@ const renderChart = () => {
   // 展开的节点
   const foldedNodes = node.filter((d: any) => d.data.isFolded === 0 && d.data.children.length > 0)
 
-  // 绘制灰色圆形背景
+  // 绘制灰色圆形按钮
   foldedNodes.append('circle')
     .attr('r', 12) // 圆半径
     .attr('transform', (d: any) => `translate(${(getTextWidth(d.data.name) + 48) / 2}, 0)`) // 定位到文本右侧
@@ -231,7 +230,6 @@ const renderChart = () => {
     .attr('transform', (d: any) => `translate(${(getTextWidth(d.data.name) + 48) / 2}, 0)`)
     .style('pointer-events', 'none') // 减号不拦截点击（点击穿透到圆形）
     .on('click', clickBtn)
-
 
   // 折叠的节点
   node.filter((d: any) => d.data.isFolded > 0)

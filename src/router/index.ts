@@ -46,7 +46,7 @@ const routes: RouteRecordRaw[] = [
             {
               path: ':preferId',
               name: '收藏详情',
-              component: () => import('@/pages/Prefer/PreferDetail.vue' /* @vite-ignore  */)
+              component: () => import('@/pages/Prefer/PreferDetail.vue')
             }
           ]
         }

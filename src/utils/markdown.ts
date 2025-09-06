@@ -34,7 +34,6 @@ export const parseMarkdown = (content: string) => {
   
   codeBlocks.forEach((block) => {
     // 获取语言信息（从code标签的class中提取）
-    // 获取语言信息（从code标签的class中提取）
     const codeElement = block.querySelector('code')
     let language = 'text'
 

@@ -46,8 +46,6 @@ export const useSessionStore = defineStore('session', () => {
       }
 
       const area = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
-      console.log('area', userStore.areaList)
-      console.log('area', area)
 
       mainArea.value = area ? {
         areaId: area.areaId,
