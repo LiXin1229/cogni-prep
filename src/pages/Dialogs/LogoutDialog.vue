@@ -21,7 +21,7 @@ const confirm = async () => {
 
 <template>
   <div class="user-add-node">
-    <cust-dialog ref="dialogRef" title="确认退出登录" @confirm="confirm" :visible="showDialog">
+    <cust-dialog ref="dialogRef" title="确认退出登录" :visible="showDialog" @confirm="confirm">
       <div class="content">
         退出登录不会丢失任何数据，你仍可以登录此账号。
       </div>

@@ -21,7 +21,7 @@ export const parseMarkdown = (content: string) => {
   }
 
   // 先解析原始Markdown
-  let html = marked(content)
+  const html = marked(content)
 
   const sanitizedHtml = purifyText(html as string)
 

@@ -34,15 +34,15 @@ const selectArea = async (id: number) => {
   <div class="mind-map">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
+      <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
         <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon">
       </div>
 
       <div class="area-list">
         <div
-          :class="['area-item', area.areaId === mindmapStore.selectedAreaId && 'selected-area', mindmapStore.isEdited && 'edited-icon']"
           v-for="area in mindmapStore.areaList"
           :key="area.areaId"
+          :class="['area-item', area.areaId === mindmapStore.selectedAreaId && 'selected-area', mindmapStore.isEdited && 'edited-icon']"
           @click="selectArea(area.areaId)"
         >
           {{ area.name }}

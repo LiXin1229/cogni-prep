@@ -21,37 +21,25 @@ const userStore = useUserInfoStore()
 
 const AsyncDialogs = defineAsyncComponent(() => import('@/pages/Dialogs/index.vue'))
 
-const hasUsedDialog = ref(false)
-const stopDialogWatch = watch(
-  () => userStore.showDialog,
-  (newVal) => {
-    // 当用户首次触发任何对话框显示时，标记为已使用，此时才会渲染 AsyncDialogs 并加载组件
-    if (newVal && !hasUsedDialog.value) {
-      hasUsedDialog.value = true
-      stopDialogWatch()
-    }
-  }
-)
-
 const sidebarRef = ref<any>(null)
 const mainViewRef = ref<any>(null)
 
 const isSidebarFolded = computed({
   get: () => userStore.isSidebarFolded,
-  set: value => userStore.isSidebarFolded = value
+  set: (value) => (userStore.isSidebarFolded = value),
 })
 
 const toggleSidebar = () => {
   isSidebarFolded.value = !isSidebarFolded.value
 }
 
-type NavType = { id: number, title: string, icon: string, path: string}
+type NavType = { id: number; title: string; icon: string; path: string }
 
 const navberList = reactive<NavType[]>([
   { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
   { id: 2, title: '思维导图', icon: siweidaotu, path: 'mindmap' },
   { id: 3, title: '笔记', icon: penToSquare, path: 'note' },
-  { id: 4, title: '收藏', icon: star, path: 'prefer' }
+  { id: 4, title: '收藏', icon: star, path: 'prefer' },
 ])
 
 const navToPage = (nav: NavType) => {
@@ -70,7 +58,7 @@ const seclectedSession = computed(() => +route.params.sessionId)
 const navToSession = (sessionId: number) => {
   router.push({
     name: '会话',
-    params: { sessionId }
+    params: { sessionId },
   })
   if (userStore.isMobile) toggleSidebar()
 }
@@ -83,9 +71,13 @@ const togglePopup = (e: MouseEvent, data: SessionType) => {
   scrollTop.value = scrollRef.value.scrollTop
 
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
-  if (svgs.includes((e.target as HTMLElement).tagName)) return showSessionPopup.value = -1
+  if (svgs.includes((e.target as HTMLElement).tagName)) return (showSessionPopup.value = -1)
   if ((e.target as HTMLElement).className?.includes('toggleSessionPopup')) {
-    showSessionPopup.value === data.sessionId ? showSessionPopup.value = -1 : showSessionPopup.value = data.sessionId
+    if (showSessionPopup.value === data.sessionId) {
+      showSessionPopup.value = -1
+    } else {
+      showSessionPopup.value = data.sessionId
+    }
   } else {
     showSessionPopup.value = -1
   }
@@ -99,7 +91,7 @@ const deleteSession = (session: SessionType) => {
   userStore.showDialog = 'deleteSession'
 }
 
-onMounted(async() => {
+onMounted(async () => {
   await userStore.getUserInfo()
   await sessionStore.getSessionList()
 })
@@ -125,13 +117,13 @@ const handleScroll = async () => {
 
 <template>
   <div class="layout">
-    <div :class="['sidebar', isSidebarFolded && 'sidebar-folded']" ref="sidebarRef">
+    <div ref="sidebarRef" :class="['sidebar', isSidebarFolded && 'sidebar-folded']">
       <div class="tooltips">
         <div class="logout" @click="userStore.showDialog = 'logout'">
-          <img :src="logoutIcon" alt="" class="icon">
+          <img :src="logoutIcon" alt="" class="icon" />
         </div>
         <div class="toggle-sidebar" @click="toggleSidebar">
-          <img :src="hideSidebarIcon" alt="" class="icon">
+          <img :src="hideSidebarIcon" alt="" class="icon" />
         </div>
       </div>
 
@@ -142,34 +134,89 @@ const handleScroll = async () => {
             <font-awesome-icon :icon="faMagnifyingGlass" class="icon" />
             <div>搜索</div>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="37" height="14" fill="none" viewBox="0 0 37 14" class="short"><rect width="22.3" height="12.3" x="0.35" y="0.85" stroke="currentColor" stroke-width="0.7" rx="1.65"></rect><path fill="currentColor" d="M6.97 10.666c-1.913 0-3.11-1.416-3.11-3.682v-.01c0-2.27 1.192-3.686 3.106-3.686 1.484 0 2.642.933 2.852 2.285l-.005.01h-.884l-.005-.01C8.69 4.67 7.938 4.1 6.966 4.1c-1.353 0-2.202 1.113-2.202 2.876v.01c0 1.762.85 2.87 2.207 2.87.981 0 1.728-.502 1.948-1.313l.01-.01h.889v.01c-.235 1.289-1.348 2.124-2.847 2.124m5.885-.127c-1.084 0-1.538-.4-1.538-1.406V5.939h-.83v-.703h.83V3.874h.879v1.362h1.152v.703h-1.152v2.979c0 .62.215.87.761.87.152 0 .235-.006.391-.02v.722c-.166.03-.327.05-.493.05m1.563-.039V5.236h.85v.782h.077c.2-.552.694-.874 1.407-.874.16 0 .341.02.424.034v.825a3 3 0 0 0-.522-.049c-.81 0-1.387.513-1.387 1.284V10.5zm3.657 0V3.146h.85V10.5z"></path><rect width="12.3" height="12.3" x="24.35" y="0.85" stroke="currentColor" stroke-width="0.7" rx="1.65"></rect><path fill="currentColor" d="M28.103 10.5V3.454h.878v3.423h.079l3.085-3.423h1.104l-2.817 3.042 3.076 4.004H32.37l-2.544-3.394-.845.933V10.5z"></path></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="37"
+            height="14"
+            fill="none"
+            viewBox="0 0 37 14"
+            class="short"
+          >
+            <rect
+              width="22.3"
+              height="12.3"
+              x="0.35"
+              y="0.85"
+              stroke="currentColor"
+              stroke-width="0.7"
+              rx="1.65"
+            ></rect>
+            <path
+              fill="currentColor"
+              d="M6.97 10.666c-1.913 0-3.11-1.416-3.11-3.682v-.01c0-2.27 1.192-3.686 3.106-3.686 1.484 0 2.642.933 2.852 2.285l-.005.01h-.884l-.005-.01C8.69 4.67 7.938 4.1 6.966 4.1c-1.353 0-2.202 1.113-2.202 2.876v.01c0 1.762.85 2.87 2.207 2.87.981 0 1.728-.502 1.948-1.313l.01-.01h.889v.01c-.235 1.289-1.348 2.124-2.847 2.124m5.885-.127c-1.084 0-1.538-.4-1.538-1.406V5.939h-.83v-.703h.83V3.874h.879v1.362h1.152v.703h-1.152v2.979c0 .62.215.87.761.87.152 0 .235-.006.391-.02v.722c-.166.03-.327.05-.493.05m1.563-.039V5.236h.85v.782h.077c.2-.552.694-.874 1.407-.874.16 0 .341.02.424.034v.825a3 3 0 0 0-.522-.049c-.81 0-1.387.513-1.387 1.284V10.5zm3.657 0V3.146h.85V10.5z"
+            ></path>
+            <rect
+              width="12.3"
+              height="12.3"
+              x="24.35"
+              y="0.85"
+              stroke="currentColor"
+              stroke-width="0.7"
+              rx="1.65"
+            ></rect>
+            <path
+              fill="currentColor"
+              d="M28.103 10.5V3.454h.878v3.423h.079l3.085-3.423h1.104l-2.817 3.042 3.076 4.004H32.37l-2.544-3.394-.845.933V10.5z"
+            ></path>
+          </svg>
         </div>
       </div>
 
       <!-- nav列表区 -->
       <div class="nav-list">
-        <div v-for="navbar in navberList" :key="navbar.id" :class="['navbar-item', navbar.path === seclectedNav && 'selected-nav']" @click="navToPage(navbar)">
-          <img :src="navbar.icon" alt="" class="icon">
+        <div
+          v-for="navbar in navberList"
+          :key="navbar.id"
+          :class="['navbar-item', navbar.path === seclectedNav && 'selected-nav']"
+          @click="navToPage(navbar)"
+        >
+          <img :src="navbar.icon" alt="" class="icon" />
           <div>{{ navbar.title }}</div>
         </div>
       </div>
 
       <!-- 历史对话区 -->
-      <div class="session-list" v-show="sessionStore.sessionList.length">
+      <div v-show="sessionStore.sessionList.length" class="session-list">
         <div class="history-top">
           <div class="title">历史对话</div>
         </div>
-        <div class="session-rows" @scroll="handleScroll" ref="scrollRef">
-          <div class="session-wrapper" ref="boundingClientRef">
-            <div v-for="session in sessionStore.sessionList" :key="session.sessionId" :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']" @click="navToSession(session.sessionId)">
+        <div ref="scrollRef" class="session-rows" @scroll="handleScroll">
+          <div ref="boundingClientRef" class="session-wrapper">
+            <div
+              v-for="session in sessionStore.sessionList"
+              :key="session.sessionId"
+              :class="['session-item', session.sessionId === seclectedSession && 'selected-nav']"
+              @click="navToSession(session.sessionId)"
+            >
               <div class="title">{{ session.title }}</div>
               <cust-popup :position="{ top: `${20 - scrollTop}px`, left: '-75px' }">
-                <div :class="['more-btn', 'toggleSessionPopup', session.sessionId === seclectedSession && 'visible']" @click.stop="(e) => togglePopup(e, session)" >
-                  <img :src="ellipsisIcon" alt="" class="icon toggleSessionPopup">
+                <div
+                  :class="[
+                    'more-btn',
+                    'toggleSessionPopup',
+                    session.sessionId === seclectedSession && 'visible',
+                  ]"
+                  @click.stop="(e) => togglePopup(e, session)"
+                >
+                  <img :src="ellipsisIcon" alt="" class="icon toggleSessionPopup" />
                 </div>
 
                 <template #popup>
-                  <div class="popup-menu" v-show="showSessionPopup === session.sessionId" v-click-outside.stop="(e: MouseEvent) => togglePopup(e, session)">
+                  <div
+                    v-show="showSessionPopup === session.sessionId"
+                    v-click-outside.stop="(e: MouseEvent) => togglePopup(e, session)"
+                    class="popup-menu"
+                  >
                     <div class="menu-item" @click.stop="() => deleteSession(session)">删除会话</div>
                   </div>
                 </template>
@@ -181,18 +228,22 @@ const handleScroll = async () => {
     </div>
 
     <!-- 主视图区 -->
-    <div :class="['main-view', isSidebarFolded && 'main-folded']" ref="mainViewRef">
+    <div ref="mainViewRef" :class="['main-view', isSidebarFolded && 'main-folded']">
       <!-- <router-view @toggleSidebar="toggleSidebar" :isSidebarFolded="isSidebarFolded" /> -->
-      <router-view v-slot="{ Component, route }" @toggleSidebar="toggleSidebar" :isSidebarFolded="isSidebarFolded">
+      <router-view
+        v-slot="{ Component, route }"
+        :is-sidebar-folded="isSidebarFolded"
+        @toggle-sidebar="toggleSidebar"
+      >
         <keep-alive :max="3">
-          <component :is="Component" :key="route.name" v-if="route.meta.keepAlive" />
+          <component :is="Component" v-if="route.meta.keepAlive" :key="route.name" />
         </keep-alive>
-        <component :is="Component" :key="route.name" v-if="!route.meta.keepAlive" />
+        <component :is="Component" v-if="!route.meta.keepAlive" :key="route.name" />
       </router-view>
     </div>
 
     <!-- Dialog -->
-    <AsyncDialogs v-if="hasUsedDialog" :selectSession="selectSession" />
+    <AsyncDialogs :select-session="selectSession" />
   </div>
 </template>
 
@@ -221,7 +272,8 @@ const handleScroll = async () => {
       justify-content: space-between;
       align-items: center;
 
-      .toggle-sidebar, .logout {
+      .toggle-sidebar,
+      .logout {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -313,7 +365,7 @@ const handleScroll = async () => {
         display: flex;
         justify-content: space-between;
         padding: 0 10px;
-        
+
         .title {
           display: flex;
           justify-content: space-between;
@@ -457,7 +509,7 @@ const handleScroll = async () => {
       margin-left: 0;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
@@ -473,7 +525,7 @@ const handleScroll = async () => {
       margin-left: 0;
 
       &::before {
-        content: "";
+        content: '';
         opacity: 0;
         pointer-events: none;
       }

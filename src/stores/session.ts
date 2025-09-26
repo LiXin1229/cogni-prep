@@ -21,43 +21,48 @@ export const useSessionStore = defineStore('session', () => {
 
   // 当前的会话
   const currSession = computed(() => {
-    return sessionList.value.find(item => item.sessionId === chatStore.sessionId)
+    return sessionList.value.find((item) => item.sessionId === chatStore.sessionId)
   })
 
   const mainArea = ref<MainAreaType>({})
 
   const surroundingPoint = ref('')
 
-  watch(() => currSession.value, async (session) => {
-    if (!userStore.userInfo) return
+  watch(
+    () => currSession.value,
+    async (session) => {
+      if (!userStore.userInfo) return
 
-    // console.log('currSession', currSession.value)
-    if (session) {
-      mainArea.value = {
-        areaId: session.areaId,
-        name: session.mainArea
-      }
-      surroundingPoint.value = session.surroundingPoint
-    }
-    else {
-      // await nextTick()
-      if (userStore.areaList.length === 0) {
-        await userStore.getUserInfo()
-      }
+      // console.log('currSession', currSession.value)
+      if (session) {
+        mainArea.value = {
+          areaId: session.areaId,
+          name: session.mainArea,
+        }
+        surroundingPoint.value = session.surroundingPoint
+      } else {
+        // await nextTick()
+        if (userStore.areaList.length === 0) {
+          await userStore.getUserInfo()
+        }
 
-      const area = userStore.areaList.find(item => item.areaId === mindmapStore.selectedAreaId)
+        const area = userStore.areaList.find((item) => item.areaId === mindmapStore.selectedAreaId)
 
-      mainArea.value = area ? {
-        areaId: area.areaId,
-        name: area.name
-      } : {
-        areaId: null,
-        name: '未选择领域'
+        mainArea.value = area
+          ? {
+              areaId: area.areaId,
+              name: area.name,
+            }
+          : {
+              areaId: null,
+              name: '未选择领域',
+            }
+        // console.log('mainArea', mainArea.value)
+        surroundingPoint.value = ''
       }
-      // console.log('mainArea', mainArea.value)
-      surroundingPoint.value = ''
-    }
-  }, { immediate: true })
+    },
+    { immediate: true }
+  )
 
   const getSessionList = async () => {
     if (!userStore.userInfo.userId) {
@@ -69,8 +74,8 @@ export const useSessionStore = defineStore('session', () => {
       method: 'GET',
       params: {
         id: userStore.userInfo.userId,
-        number: sessionNumber.value
-      }
+        number: sessionNumber.value,
+      },
     })
     // console.log(res)
 
@@ -93,8 +98,8 @@ export const useSessionStore = defineStore('session', () => {
           userId: userStore.userInfo.userId,
           mainArea: mainArea.value!.name,
           areaId: mainArea.value!.areaId,
-          surroundingPoint: surroundingPoint.value
-        }
+          surroundingPoint: surroundingPoint.value,
+        },
       })
 
       sessionList.value.unshift(res.data)
@@ -105,11 +110,15 @@ export const useSessionStore = defineStore('session', () => {
       // 清空目标节点
       if (markNode.value) {
         if (!currSession.value) return
-        mindmapStore.modifyNodeProp(mindmapStore.selectedNode!.id, 'chatId', currSession.value.sessionId)
+        mindmapStore.modifyNodeProp(
+          mindmapStore.selectedNode!.id,
+          'chatId',
+          currSession.value.sessionId
+        )
         markNode.value = false
       }
     } catch (err) {
-      throw err
+      console.log(err)
     }
   }
 
@@ -122,23 +131,27 @@ export const useSessionStore = defineStore('session', () => {
         data: {
           sessionId: session.sessionId,
           areaId: session.areaId,
-          userId: userStore.userInfo.userId
-        }
+          userId: userStore.userInfo.userId,
+        },
       })
       // console.log('res_session', data)
 
       if (chatStore.sessionId === session.sessionId) {
         router.push('/chat')
       }
-      sessionList.value = sessionList.value.filter(item => item.sessionId !== session.sessionId)
+      sessionList.value = sessionList.value.filter((item) => item.sessionId !== session.sessionId)
     } catch (err) {
       console.log(err)
     }
   }
 
-  watch(() => surroundingPoint.value, () => {
-    markNode.value = false
-  }, { flush: 'sync' })
+  watch(
+    () => surroundingPoint.value,
+    () => {
+      markNode.value = false
+    },
+    { flush: 'sync' }
+  )
 
   return {
     sessionList,
@@ -149,6 +162,6 @@ export const useSessionStore = defineStore('session', () => {
     mainArea,
     surroundingPoint,
     deleteSession,
-    sessionNumber
+    sessionNumber,
   }
 })

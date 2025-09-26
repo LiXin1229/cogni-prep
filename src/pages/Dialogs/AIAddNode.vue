@@ -11,22 +11,22 @@ const mindmapStore = useMindmapStore()
 const props = defineProps({
   showDialog: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const colorMap = [
   '#949899', // 灰色
   '#008dff', // 蓝色
   '#E6C229', // 金色
-  '#E55E6C' // 红色
+  '#E55E6C', // 红色
 ]
 
 const dialogRef = ref<any>(null)
 
 const formData = ref({
   number: 1,
-  auto: false
+  auto: false,
 })
 
 const submit = async () => {
@@ -35,10 +35,10 @@ const submit = async () => {
 
   if (res?.success) {
     console.log('res', res)
-    pointList.value = [...pointList.value, ...res.data.pointList].map(point => {
+    pointList.value = [...pointList.value, ...res.data.pointList].map((point) => {
       return {
         ...point,
-        width: getTextWidth(point.name, { fontSize: '14px' }) + 'px'
+        width: getTextWidth(point.name, { fontSize: '14px' }) + 'px',
       }
     })
   }
@@ -46,11 +46,15 @@ const submit = async () => {
 
 const pointList = ref<PointListType[]>([])
 
-watch(() => pointList.value, (pointList) => {
-  pointList.forEach(point => {
-    point.width = point.name ? getTextWidth(point.name, { fontSize: '14px' }) + 'px' : '40px'
-  })
-}, { deep: true })
+watch(
+  () => pointList.value,
+  (pointList) => {
+    pointList.forEach((point) => {
+      point.width = point.name ? getTextWidth(point.name, { fontSize: '14px' }) + 'px' : '40px'
+    })
+  },
+  { deep: true }
+)
 
 const deletePoint = (index: number) => {
   pointList.value.splice(index, 1)
@@ -60,7 +64,7 @@ const confirm = async () => {
   if (pointList.value.length === 0) {
     ElMessage({
       message: '请先生成子节点',
-      type: 'info'
+      type: 'info',
     })
     return
   }
@@ -68,7 +72,7 @@ const confirm = async () => {
   if (!checkList(pointList.value)) {
     ElMessage({
       message: '所有子节点名称均不能为空',
-      type: 'info'
+      type: 'info',
     })
     return
   }
@@ -83,47 +87,50 @@ const closeDialog = () => {
 
 const checkList = (list: PointListType[]) => {
   // 检查list中的每个元素的name都不为空
-  return list.every(item => item.name !== '')
+  return list.every((item) => item.name !== '')
 }
 
-watch(() => props.showDialog, (showDialog) => {
-  if (showDialog) {
-    pointList.value = []
+watch(
+  () => props.showDialog,
+  (showDialog) => {
+    if (showDialog) {
+      pointList.value = []
+    }
   }
-})
+)
 </script>
 
 <template>
   <div class="add-node-dialog">
-    <cust-dialog ref="dialogRef" title="AI生成子节点" @confirm="confirm" @closeDialog="closeDialog" :visible="showDialog">
+    <cust-dialog ref="dialogRef" title="AI生成子节点" :visible="showDialog" @confirm="confirm" @close-dialog="closeDialog">
       <div class="content">
         <el-form :model="formData">
           <el-form-item label="添加个数" prop="number" class="form">
-            <el-input-number v-model="formData.number" :min="1" :max="30" @click="() => formData.auto = false" class="number-input" />
+            <el-input-number v-model="formData.number" :min="1" :max="30" class="number-input" @click="() => (formData.auto = false)" />
 
             <span>
               <el-radio-group v-model="formData.auto" class="radio-btn">
                 <el-radio :value="true" border>自动</el-radio>
               </el-radio-group>
 
-              <el-button type="primary" @click="submit" class="submit-btn">生成</el-button>
+              <el-button type="primary" class="submit-btn" @click="submit">生成</el-button>
             </span>
           </el-form-item>
         </el-form>
 
         <div class="point-list">
           <!-- 等待响应的图标 -->
-          <div class="loading-icon" v-show="mindmapStore.sendState">
+          <div v-show="mindmapStore.sendState" class="loading-icon">
             <div class="left-ball"></div>
             <div class="right-ball"></div>
           </div>
 
-          <div class="point-item" v-for="(point, index) in pointList" :key="index">
+          <div v-for="(point, index) in pointList" :key="index" class="point-item">
             <div class="tag" :style="{ borderColor: colorMap[point.frequency] }">
               <el-input v-model="point.name" :style="{ width: point.width }" :maxlength="36" />
             </div>
             <div class="frequency">
-              <el-rate v-model="point.frequency" size="large" :max="3" clearable  />
+              <el-rate v-model="point.frequency" size="large" :max="3" clearable />
             </div>
             <div class="delete-btn" @click="deletePoint(index)">
               <font-awesome-icon :icon="faCircleXmark" />
@@ -136,7 +143,7 @@ watch(() => props.showDialog, (showDialog) => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/loading.scss" as *;
+@use '@/styles/loading.scss' as *;
 
 .add-node-dialog {
   .content {

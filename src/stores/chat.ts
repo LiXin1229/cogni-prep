@@ -128,7 +128,7 @@ export const useChatStore = defineStore('chat', () => {
   const submit = async (content: string, status: FuncStatusType) => {
     if (!checkArea()) return
 
-    let currentSessionId = sessionId.value
+    const currentSessionId = sessionId.value
 
     // 发送请求让AI开始提问
     if (chatStatus.value === MSG_TYPE['question']) {

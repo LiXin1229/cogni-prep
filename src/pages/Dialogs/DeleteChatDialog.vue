@@ -22,7 +22,7 @@ const confirm = async () => {
 
 <template>
   <div class="user-add-node">
-    <cust-dialog ref="dialogRef" title="是否删除该条消息" @confirm="confirm" :visible="showDialog">
+    <cust-dialog ref="dialogRef" title="是否删除该条消息" :visible="showDialog" @confirm="confirm">
       <div class="content">
         删除后，聊天记录不可恢复。
       </div>

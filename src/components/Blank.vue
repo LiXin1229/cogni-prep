@@ -23,20 +23,16 @@ onMounted(() => {
 
     <div class="layer">
       选择
-      <div class="main-area">
-        领域
-      </div>
+      <div class="main-area">领域</div>
 
       限定
-      <div class="surrounding-point">
-        范围
-      </div>
+      <div class="surrounding-point">范围</div>
     </div>
 
     <div class="layer">
       点击
       <div class="nextquestion">
-        <img src="../assets/svgs/next.svg" alt="" class="icon"></img>
+        <img src="../assets/svgs/next.svg" alt="" class="icon" />
         <div class="text">下一题</div>
       </div>
       开始出题
@@ -53,7 +49,7 @@ onMounted(() => {
     <div class="layer">
       点击题目下方的
       <div class="btn help">
-        <img src="../assets/svgs/help.svg" alt="" class="icon">
+        <img src="../assets/svgs/help.svg" alt="" class="icon" />
       </div>
       获取帮助
     </div>

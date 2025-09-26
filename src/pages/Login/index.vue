@@ -99,7 +99,7 @@ const submit = (formRef: any) => {
 
 <template>
   <div class="login">
-    <div class="login-panel panel" v-show="panelType === 'login'">
+    <div v-show="panelType === 'login'" class="login-panel panel">
       <div class="top flex justify-between">
         <div class="title-container">
           <div class="title">登录</div>
@@ -133,7 +133,7 @@ const submit = (formRef: any) => {
       </div>
     </div>
 
-    <div class="register-panel panel" v-show="panelType === 'register'">
+    <div v-show="panelType === 'register'" class="register-panel panel">
       <div class="top flex justify-between">
         <div class="title-container">
           <div class="title">注册</div>

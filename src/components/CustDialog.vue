@@ -7,16 +7,16 @@ const userStore = useUserInfoStore()
 defineProps({
   title: {
     type: String,
-    default: '标题'
+    default: '标题',
   },
   exitBottom: {
     type: Boolean,
-    default: true
+    default: true,
   },
   visible: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emits = defineEmits(['confirm', 'closeDialog'])
@@ -34,7 +34,7 @@ const closeDialog = () => {
 }
 
 defineExpose({
-  closeDialog
+  closeDialog,
 })
 </script>
 
@@ -44,8 +44,8 @@ defineExpose({
       <div class="cust-dialog" v-bind="$attrs">
         <div class="top">
           <div class="title">{{ title }}</div>
-          <div class="close-btn" @click="closeDialog" v-if="ableClose">
-            <img src="../assets/svgs/close.svg" alt="" style="width: 16px; height: 16px;">
+          <div v-if="ableClose" class="close-btn" @click="closeDialog">
+            <img src="../assets/svgs/close.svg" alt="" style="width: 16px; height: 16px" />
           </div>
         </div>
 
@@ -53,15 +53,15 @@ defineExpose({
           <slot></slot>
         </div>
 
-        <div class="bottom" v-if="exitBottom">
-          <div class="cancel-btn btn" @click="closeDialog" v-if="ableClose">取消</div>
+        <div v-if="exitBottom" class="bottom">
+          <div v-if="ableClose" class="cancel-btn btn" @click="closeDialog">取消</div>
           <div class="confirm-btn btn" @click="confirm">确定</div>
         </div>
       </div>
     </div>
   </transition>
   <transition name="mask">
-    <div class="mask" @click="closeDialog" v-if="visible"></div>
+    <div v-if="visible" class="mask" @click="closeDialog"></div>
   </transition>
 </template>
 
@@ -108,7 +108,7 @@ defineExpose({
       cursor: pointer;
     }
 
-    .confirm-btn { 
+    .confirm-btn {
       background-color: var(--theme-color-1);
       color: var(--normal-bgc);
       margin-left: 10px;

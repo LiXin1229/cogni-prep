@@ -4,7 +4,7 @@ import SelectPointDialog from './SelectPointDialog.vue'
 import DeleteChatDialog from './DeleteChatDialog.vue'
 import DeleteSessionDialog from './DeleteSessionDialog.vue'
 import UserAddNode from './UserAddNode.vue'
-import AIAddNode from './AIAddNode.vue'
+import AiAddNode from './AIAddNode.vue'
 import EditNode from './EditNode.vue'
 import DeleteNode from './DeleteNode.vue'
 import DeleteChildren from './DeleteChildren.vue'
@@ -22,15 +22,18 @@ defineProps<{
 </script>
 
 <template>
-  <select-area-dialog :showDialog="userStore.showDialog === 'selectArea'" />
-  <select-point-dialog :showDialog="userStore.showDialog === 'selectPoint'" />
-  <delete-chat-dialog :showDialog="userStore.showDialog === 'deleteChat'" />
-  <delete-session-dialog :showDialog="userStore.showDialog === 'deleteSession'" :selectSession="selectSession" />
-  <user-add-node :showDialog="userStore.showDialog === 'userAddNode'" />
-  <AI-add-node :showDialog="userStore.showDialog === 'AIAddNode'" />
-  <edit-node :showDialog="userStore.showDialog === 'editNode'" />
-  <delete-node :showDialog="userStore.showDialog === 'deleteNode'" />
-  <delete-children :showDialog="userStore.showDialog === 'deleteChildren'" />
-  <quote-mindmap :showDialog="userStore.showDialog === 'quoteMindmap'" />
-  <logout-dialog :showDialog="userStore.showDialog === 'logout'" />
+  <select-area-dialog :show-dialog="userStore.showDialog === 'selectArea'" />
+  <select-point-dialog :show-dialog="userStore.showDialog === 'selectPoint'" />
+  <delete-chat-dialog :show-dialog="userStore.showDialog === 'deleteChat'" />
+  <delete-session-dialog
+    :show-dialog="userStore.showDialog === 'deleteSession'"
+    :select-session="selectSession"
+  />
+  <user-add-node :show-dialog="userStore.showDialog === 'userAddNode'" />
+  <ai-add-node :show-dialog="userStore.showDialog === 'aiAddNode'" />
+  <edit-node :show-dialog="userStore.showDialog === 'editNode'" />
+  <delete-node :show-dialog="userStore.showDialog === 'deleteNode'" />
+  <delete-children :show-dialog="userStore.showDialog === 'deleteChildren'" />
+  <quote-mindmap :show-dialog="userStore.showDialog === 'quoteMindmap'" />
+  <logout-dialog :show-dialog="userStore.showDialog === 'logout'" />
 </template>

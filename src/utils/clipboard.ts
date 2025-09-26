@@ -5,13 +5,14 @@ import { ElMessage } from 'element-plus'
 export const writeInClipboard = (text: string, imgElement: HTMLImageElement) => {
   // 1. 现代浏览器 + HTTPS / localhost
   if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text)
+    return navigator.clipboard
+      .writeText(text)
       .then(() => onCopied(imgElement))
       .catch(() => onError())
   }
 
   // 2. 降级：execCommand('copy')（兼容 HTTP）
-  return new Promise((resolve, reject) => {
+  return new Promise((_, reject) => {
     const textarea = document.createElement('textarea')
     textarea.value = text
     textarea.style.position = 'fixed'
@@ -22,7 +23,13 @@ export const writeInClipboard = (text: string, imgElement: HTMLImageElement) => 
     try {
       const ok = document.execCommand('copy')
       document.body.removeChild(textarea)
-      ok ? (onCopied(imgElement), resolve) : (onError(), reject)
+
+      if (ok) {
+        onCopied(imgElement)
+      } else {
+        onError()
+        reject() // 明确调用 reject
+      }
     } catch (e) {
       document.body.removeChild(textarea)
       onError()

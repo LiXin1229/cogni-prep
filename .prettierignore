@@ -1,0 +1,14 @@
+dist*
+node_modules
+public
+resource
+.env*
+
+**/*.d.ts
+eslint.config.js
+index.html
+package.json
+package-lock.json
+README.md
+tsconfig.*.json
+vite.config.ts

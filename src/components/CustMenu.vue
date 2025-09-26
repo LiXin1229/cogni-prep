@@ -10,17 +10,31 @@ const mindmapStore = useMindmapStore()
 const userStore = useUserInfoStore()
 const route = useRoute()
 
-const props = withDefaults(defineProps<{
-  showCustMenu: 'node' | 'normal'
-  position: { x: number, y: number }
-  node?: TreeNode
-}>(), {
-  showCustMenu: 'normal',
-  position: () => ({ x: 0, y: 0 })
-})
+const props = withDefaults(
+  defineProps<{
+    showCustMenu?: 'node' | 'normal'
+    position?: { x: number; y: number }
+    node?: TreeNode | null
+  }>(),
+  {
+    showCustMenu: 'normal',
+    position: () => ({ x: 0, y: 0 }),
+    node: null,
+  }
+)
 
 const emits = defineEmits([
-  'update:showCustMenu', 'resetView', 'saveView', 'userAddNode', 'AIAddNode', 'editNode', 'deleteNode', 'deleteChildren', 'startChat', 'selectNode', 'startNote'
+  'update:showCustMenu',
+  'resetView',
+  'saveView',
+  'userAddNode',
+  'aiAddNode',
+  'editNode',
+  'deleteNode',
+  'deleteChildren',
+  'startChat',
+  'selectNode',
+  'startNote',
 ])
 
 // 关闭菜单
@@ -29,14 +43,14 @@ const closeMenu = () => {
 }
 
 const sizeMap = {
-  'node': {
+  node: {
     width: 140,
-    height: 350
+    height: 350,
   },
-  'normal': {
+  normal: {
     width: 90,
-    height: 100
-  }
+    height: 100,
+  },
 }
 
 // 菜单位置样式
@@ -44,25 +58,31 @@ const positionStyle = computed(() => {
   const { width, height } = sizeMap[props.showCustMenu]
 
   if (route.path.split('/')[1] === 'chat') {
-    const x = Math.min(props.position.x, window.innerWidth - width - (userStore.isSidebarFolded ? 20 : 280))
+    const x = Math.min(
+      props.position.x,
+      window.innerWidth - width - (userStore.isSidebarFolded ? 20 : 280)
+    )
     const y = Math.min(props.position.y - 20, window.innerHeight - height)
 
     return {
       left: x + 'px',
       top: y + 'px',
-      width: width + 'px'
+      width: width + 'px',
     }
   }
 
   const left = userStore.isSidebarFolded ? 260 : 0
 
-  const x = Math.min(props.position.x + left, window.innerWidth - width - (userStore.isSidebarFolded ? 20 : 280))
+  const x = Math.min(
+    props.position.x + left,
+    window.innerWidth - width - (userStore.isSidebarFolded ? 20 : 280)
+  )
   const y = Math.min(props.position.y, window.innerHeight - height)
 
   return {
     left: x + 'px',
     top: y + 'px',
-    width: width + 'px'
+    width: width + 'px',
   }
 })
 
@@ -71,7 +91,7 @@ const selectNode = () => {
   if (props.node!.isRoot) {
     ElMessage({
       message: '不能选择根节点',
-      type: 'info'
+      type: 'info',
     })
     return
   }
@@ -98,8 +118,8 @@ const userAddNode = () => {
 }
 
 // AI添加节点
-const AIAddNode = () => {
-  emits('AIAddNode')
+const aiAddNode = () => {
+  emits('aiAddNode')
   closeMenu()
 }
 
@@ -116,7 +136,7 @@ const deleteNode = () => {
 }
 
 // 删除子节点
-const deleteChildren = () => { 
+const deleteChildren = () => {
   emits('deleteChildren')
   closeMenu()
 }
@@ -128,7 +148,7 @@ const startChat = () => {
 }
 
 // 生成笔记
-const startNote = () => { 
+const startNote = () => {
   emits('startNote', props.node!.id, props.node!.markId)
   closeMenu()
 }
@@ -136,16 +156,16 @@ const startNote = () => {
 
 <template>
   <div
-    class="cust-menu"
     v-if="showCustMenu === 'node'"
     v-click-outside.stop="closeMenu"
+    class="cust-menu"
     :style="positionStyle"
   >
     <template v-if="userStore.showDialog === 'quoteMindmap'">
       <div class="menu-item" @click="selectNode">选择该节点</div>
     </template>
     <template v-else>
-      <div class="menu-item" @click="AIAddNode">AI生成子节点</div>
+      <div class="menu-item" @click="aiAddNode">AI生成子节点</div>
       <div class="menu-item" @click="userAddNode">自定义子节点</div>
       <div class="br"></div>
       <div class="menu-item" @click="editNode">编辑节点</div>
@@ -158,22 +178,26 @@ const startNote = () => {
         </div>
       </div>
       <div class="br"></div>
-      <div class="menu-item" @click="startChat">{{ node!.chatId ? '继续对话' : '开始对话' }}</div>
-      <div class="menu-item" @click="startNote">{{ node!.markId ? '查看笔记' : '生成笔记' }}</div>
+      <div class="menu-item" @click="startChat">{{ node?.chatId ? '继续对话' : '开始对话' }}</div>
+      <div class="menu-item" @click="startNote">{{ node?.markId ? '查看笔记' : '生成笔记' }}</div>
       <div class="br"></div>
       <div class="menu-item" @click="saveView">保存视图</div>
-      <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
+      <div class="menu-item" @click="resetView">
+        {{ mindmapStore.isEdited ? '取消更改' : '刷新视图' }}
+      </div>
     </template>
   </div>
 
   <div
-    class="cust-menu"
     v-if="showCustMenu === 'normal'"
     v-click-outside.stop="closeMenu"
+    class="cust-menu"
     :style="positionStyle"
   >
     <div class="menu-item" @click="saveView">保存视图</div>
-    <div class="menu-item" @click="resetView">{{ mindmapStore.isEdited ? '取消更改' : '刷新视图'}}</div>
+    <div class="menu-item" @click="resetView">
+      {{ mindmapStore.isEdited ? '取消更改' : '刷新视图' }}
+    </div>
   </div>
 </template>
 
@@ -228,7 +252,9 @@ const startNote = () => {
       z-index: 101;
       visibility: hidden;
       opacity: 0;
-      transition: visibility 0.2s, opacity 0.2s;
+      transition:
+        visibility 0.2s,
+        opacity 0.2s;
     }
 
     &:hover .submenu {

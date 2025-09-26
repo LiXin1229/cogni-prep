@@ -9,7 +9,7 @@ import { faPaperPlane } from '@fortawesome/free-solid-svg-icons'
 import type { MainAreaType } from '@/stores/types/session.type'
 import { ElMessage } from 'element-plus'
 
-const emit = defineEmits(['toggleSidebar'])
+defineEmits(['toggleSidebar'])
 
 const router = useRouter()
 const chatStore = useChatStore()
@@ -44,7 +44,7 @@ const mainArea = computed(() => sessionStore.mainArea)
 // 选择领域
 const setArea = async (areaId: number) => {
   await router.push({
-    name: '每日刷题'
+    name: '每日刷题',
   })
   sessionStore.mainArea = userStore.areaList.find((item) => item.areaId === areaId) as MainAreaType
   sessionStore.surroundingPoint = ''
@@ -71,8 +71,7 @@ const handleEnter = (e: KeyboardEvent) => {
   e.preventDefault()
   if (e.ctrlKey) {
     quillRef.value?.insertText('\n', chatStore.customContent.length)
-  }
-  else if (!e.shiftKey) {
+  } else if (!e.shiftKey) {
     if (sendState.value !== 'available' || chatStore.customContent.length === 0) return
     submit()
   }
@@ -82,7 +81,7 @@ const abortStream = () => {
   chatStore.abortStream()
   ElMessage({
     message: '取消生成',
-    type: 'info'
+    type: 'info',
   })
 }
 
@@ -97,40 +96,62 @@ const setPoint = () => {
 const inputHeight = ref(52)
 const textareaHeight = ref(null)
 
-watch(() => textareaHeight.value, (newHeight, oldHeight) => {
-  if (newHeight === oldHeight) return
-  // console.log(newHeight)
+watch(
+  () => textareaHeight.value,
+  (newHeight, oldHeight) => {
+    if (newHeight === oldHeight) return
+    // console.log(newHeight)
 
-  inputHeight.value = Math.min(Math.max(newHeight, 52), userStore.isMobile ? 120 : 210)
-})
+    inputHeight.value = Math.min(Math.max(newHeight, 52), userStore.isMobile ? 120 : 210)
+  }
+)
 
 defineExpose({
   quillRef,
-  inputHeight
+  inputHeight,
 })
 </script>
 
 <template>
   <div class="input-box">
-    <div class="input-panel" :style="{height: `${inputHeight + 65}px`}">
+    <div class="input-panel" :style="{ height: `${inputHeight + 65}px` }">
       <!-- 功能按钮区 -->
       <div class="tool-btns">
         <div class="left">
           <cust-popup :position="{ bottom: '55px', left: '-15px' }">
-            <div class="main-area toggleAreaPopup" @click.stop="togglePopup" >
+            <div class="main-area toggleAreaPopup" @click.stop="togglePopup">
               {{ mainArea.name }}
-              <img src="../../assets/svgs/arrow-main-color.svg" alt="" :class="['icon', 'toggleAreaPopup', showAreaPopup && 'rotate']">
+              <img
+                src="../../assets/svgs/arrow-main-color.svg"
+                alt=""
+                :class="['icon', 'toggleAreaPopup', showAreaPopup && 'rotate']"
+              />
             </div>
 
             <template #popup>
-              <div class="area-list" v-show="showAreaPopup" v-click-outside.stop="togglePopup">
+              <div v-show="showAreaPopup" v-click-outside.stop="togglePopup" class="area-list">
                 <div class="item add-area" @click="addArea">
-                  <img src="../../assets/svgs/add.svg" alt="" style="width: 16px; height: 16px; margin: 0 5px 0 -8px;">
+                  <img
+                    src="../../assets/svgs/add.svg"
+                    alt=""
+                    style="width: 16px; height: 16px; margin: 0 5px 0 -8px"
+                  />
                   <div>添加领域</div>
                 </div>
-                <div class="item area-item" v-for="area in userStore.areaList" :key="area.areaId" @click="setArea(area.areaId)">
-                  <div style="margin-right: 10px;">{{ area.name }}</div>
-                  <img src="../../assets/svgs/gou.svg" alt="" class="icon" style="width: 16px; height: 16px;" v-if="area.areaId === mainArea.areaId">
+                <div
+                  v-for="area in userStore.areaList"
+                  :key="area.areaId"
+                  class="item area-item"
+                  @click="setArea(area.areaId)"
+                >
+                  <div style="margin-right: 10px">{{ area.name }}</div>
+                  <img
+                    v-if="area.areaId === mainArea.areaId"
+                    src="../../assets/svgs/gou.svg"
+                    alt=""
+                    class="icon"
+                    style="width: 16px; height: 16px"
+                  />
                 </div>
               </div>
             </template>
@@ -143,21 +164,29 @@ defineExpose({
         </div>
 
         <div class="right">
-          <div class="nextquestion" @click="nextQuestion" v-if="nextState">
-            <img src="../../assets/svgs/next.svg" alt="" class="icon"></img>
+          <div v-if="nextState" class="nextquestion" @click="nextQuestion">
+            <img src="../../assets/svgs/next.svg" alt="" class="icon" />
+
             <div class="text">下一题</div>
           </div>
-          <div class="nextquestion locked" v-else>
-            <img src="../../assets/svgs/next-locked.svg" alt="" class="icon"></img>
+          <div v-else class="nextquestion locked">
+            <img src="../../assets/svgs/next-locked.svg" alt="" class="icon" />
             <div class="text">下一题</div>
           </div>
-          <div :class="['send-btn', 'active']" @click.stop="submit" v-if="sendState === 'available' && chatStore.customContent.length">
+          <div
+            v-if="sendState === 'available' && chatStore.customContent.length"
+            :class="['send-btn', 'active']"
+            @click.stop="submit"
+          >
             <font-awesome-icon :icon="faPaperPlane" class="icon" />
           </div>
-          <div class="abort-btn" v-if="sendState === 'streaming'" @click.stop="abortStream">
+          <div v-if="sendState === 'streaming'" class="abort-btn" @click.stop="abortStream">
             <div class="rect"></div>
           </div>
-          <div :class="['send-btn']" v-else-if="sendState === 'loading' || chatStore.customContent.length === 0">
+          <div
+            v-else-if="sendState === 'loading' || chatStore.customContent.length === 0"
+            :class="['send-btn']"
+          >
             <font-awesome-icon :icon="faPaperPlane" class="icon" />
           </div>
         </div>
@@ -166,10 +195,10 @@ defineExpose({
       <!-- 文字输入区 -->
       <div class="text-area">
         <cust-textarea
-          class="quill"
           ref="quillRef"
           v-model="chatStore.customContent"
           v-model:height="textareaHeight"
+          class="quill"
           @keydown.enter.prevent.stop="handleEnter"
         />
       </div>

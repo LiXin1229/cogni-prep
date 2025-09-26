@@ -18,8 +18,8 @@ const sessionStore = useSessionStore()
 defineProps({
   isSidebarFolded: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['toggleSidebar'])
@@ -41,7 +41,7 @@ const funcBtn = (type: FuncStatusType, data?: ChatType) => {
     quillRef.value?.deleteText(FUNC_TYPE[chatStore.funcStatus].length)
     chatStore.customContent = chatStore.customContent.slice(FUNC_TYPE[chatStore.funcStatus].length)
   }
-  
+
   // 设置当前功能
   chatStore.funcStatus = type
 
@@ -50,7 +50,9 @@ const funcBtn = (type: FuncStatusType, data?: ChatType) => {
   chatStore.customContent = FUNC_TYPE[type] + chatStore.customContent
   quillRef.value?.focus()
 
-  data?.content && (chatStore.selectQuestion = data.content)
+  if (data?.content) {
+    chatStore.selectQuestion = data.content
+  }
 }
 
 // 复制按钮
@@ -84,7 +86,7 @@ const togglePreferState = () => {
 }
 
 // 选中对话
-const toggleChecked = (chat: ChatType) => { 
+const toggleChecked = (chat: ChatType) => {
   // console.log(chat.id)
   if (chatStore.preferList.has(chat.id)) {
     chatStore.preferList.delete(chat.id)
@@ -94,12 +96,12 @@ const toggleChecked = (chat: ChatType) => {
 }
 
 // 全选/全不选
-const checkAll = () => { 
+const checkAll = () => {
   if (chatStore.isChoseAll) {
     // 全选
     chatStore.preferList.clear()
   } else {
-    chatStore.displayChat.forEach(chat => {
+    chatStore.displayChat.forEach((chat) => {
       chatStore.preferList.set(chat.id, chat)
     })
   }
@@ -107,7 +109,7 @@ const checkAll = () => {
 
 // 自动滚动
 const isAutoToBottom = ref(true)
-const SCROLL_THRESHOLD = 60
+const SCROLL_THRESHOLD = userStore.isMobile ? 30 : 60
 
 const handleScroll = () => {
   const { scrollTop, scrollHeight, clientHeight } = scrollRef.value
@@ -117,7 +119,7 @@ const handleScroll = () => {
   // 如果向上滚动超过阈值，取消自动滚动
   if (distanceFromBottom > SCROLL_THRESHOLD) {
     isAutoToBottom.value = false
-  } 
+  }
   // 如果向下滚动到接近底部（距离小于阈值），开启自动滚动
   else if (distanceFromBottom <= SCROLL_THRESHOLD && !isAutoToBottom.value) {
     isAutoToBottom.value = true
@@ -125,24 +127,34 @@ const handleScroll = () => {
 }
 
 // 滚动到底部
-const scrollToBottom = async () => { 
+const scrollToBottom = async () => {
   await nextTick()
   if (scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight
 }
 
-const throttleToBottom = throttle(() => {
-  scrollToBottom()
-}, 100, { leading: true, trailing: false })
+const throttleToBottom = throttle(
+  () => {
+    scrollToBottom()
+  },
+  100,
+  { leading: true, trailing: false },
+)
 
-watch(() => chatStore.displayChat[chatStore.displayChat.length - 1]?.content, () => {
-  if (isAutoToBottom.value) {
+watch(
+  () => chatStore.displayChat[chatStore.displayChat.length - 1]?.content,
+  () => {
+    if (isAutoToBottom.value) {
+      throttleToBottom()
+    }
+  },
+)
+
+watch(
+  () => chatStore.sessionId,
+  () => {
     throttleToBottom()
-  }
-})
-
-watch(() => chatStore.sessionId, () => {
-  throttleToBottom()
-})
+  },
+)
 
 onMounted(async () => {
   await nextTick()
@@ -179,7 +191,7 @@ onUnmounted(() => {
 
 const title = computed(() => {
   const _title = sessionStore.currSession?.title.split('- ')[1] || ''
-  if (/^\d{1,2}\/\d{1,2}\/\d{1,2}$/.test(_title) || _title == '') return '每日刷题'
+  if (/^\d{1,2}\/\d{1,2}\/\d{1,2}$/.test(_title) || _title === '') return '每日刷题'
   return _title
 })
 </script>
@@ -188,86 +200,91 @@ const title = computed(() => {
   <div class="chat-view">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
-        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon">
+      <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
+        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon" />
       </div>
       <div>
         <div class="title">{{ title }}</div>
-        <div class="tip">内容由 <span style="font-style: italic;">DeepSeek-V3</span> 生成</div>
+        <div class="tip">
+          内容由
+          <span style="font-style: italic">DeepSeek-V3</span>
+          生成
+        </div>
       </div>
     </div>
 
     <!-- 滚动聊天记录区 -->
-    <div class="scroll-view" ref="scrollRef" :style="{height: `calc(100vh - ${userStore.isMobile ? '20px' : '40px'} - 172px - ${inputHeight}px + 65px)`}" @scroll="handleScroll">
+    <div
+      ref="scrollRef"
+      class="scroll-view"
+      :style="{
+        height: `calc(100vh - ${userStore.isMobile ? '20px' : '40px'} - 172px - ${inputHeight}px + 65px)`,
+      }"
+      @scroll="handleScroll"
+    >
       <!-- 吸底按钮 -->
-      <div class="scroll-to-bottom" v-if="!isAutoToBottom && sendState === 'streaming'" @click="scrollToBottom">
+      <div v-if="!isAutoToBottom && sendState === 'streaming'" class="scroll-to-bottom" @click="scrollToBottom">
         <!-- 原有的向下箭头 -->
         <font-awesome-icon :icon="faAngleDown" class="icon" />
       </div>
-      
+
       <!-- 旋转圆环SVG -->
-      <svg width="40" height="40" viewBox="0 0 40 40" class="rotate-ring" @click="scrollToBottom" v-if="!isAutoToBottom && sendState === 'streaming'">
+      <svg v-if="!isAutoToBottom && sendState === 'streaming'" width="40" height="40" viewBox="0 0 40 40" class="rotate-ring" @click="scrollToBottom">
         <defs>
           <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stop-color="#f5f5f5"/>
-            <stop offset="80%"  stop-color="#f5f5f5"/>
-            <stop offset="100%" stop-color="#7fabfe"/>
+            <stop offset="0%" stop-color="#f5f5f5" />
+            <stop offset="80%" stop-color="#f5f5f5" />
+            <stop offset="100%" stop-color="#7fabfe" />
           </linearGradient>
         </defs>
 
-        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#blueGradient)" stroke-width="2"/>
+        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#blueGradient)" stroke-width="2" />
       </svg>
 
-      <div class="scroll-to-bottom normal" v-else-if="!isAutoToBottom" @click="scrollToBottom">
+      <div v-else-if="!isAutoToBottom" class="scroll-to-bottom normal" @click="scrollToBottom">
         <font-awesome-icon :icon="faAngleDown" class="icon" />
       </div>
 
       <!-- 对话内容区 -->
       <div :class="['text-view', chatStore.isChosePrefer && 'chose-prefer']">
-        <div class="blank" v-if="!chatList.length && chatStore.sendState === 'available' && chatStore.sessionId < 0">
+        <div v-if="!chatList.length && chatStore.sendState === 'available' && chatStore.sessionId < 0" class="blank">
           <blank />
         </div>
 
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in chatList" :key="chat.id">
           <template v-if="chat.content">
-            <div class="left" @click="() => toggleChecked(chat)" v-if="chatStore.isChosePrefer">
+            <div v-if="chatStore.isChosePrefer" class="left" @click="() => toggleChecked(chat)">
               <div :class="['check-box', chatStore.preferList.has(chat.id) && 'checked']">
                 <font-awesome-icon :icon="faCheck" class="icon" />
               </div>
             </div>
 
             <div @click="toggleChecked(chat)">
-                <!-- 用户发言wrapper -->
-              <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
-                <div class="user" v-if="chat.messageType === 0" v-html="chat.content"></div>
+              <!-- 用户发言wrapper -->
+              <div v-if="chat.messageType === 0" class="text-wrapper user-wrapper">
+                <div v-if="chat.messageType === 0" class="user" v-html="chat.content"></div>
 
                 <!-- 功能按钮 -->
                 <div class="functionList user-right">
                   <!-- 复制按钮 -->
                   <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
-                    <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+                    <img src="../../assets/svgs/copy.svg" alt="" class="icon" />
                   </div>
                   <!-- 收藏按钮 -->
                   <div class="btn prefer prefer-btn" @click="togglePreferState">
-                    <img src="../../assets/svgs/tag.svg" alt="" class="icon">
+                    <img src="../../assets/svgs/tag.svg" alt="" class="icon" />
                   </div>
                   <!-- 其他按钮 -->
                   <el-dropdown placement="right">
                     <div class="btn other">
-                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon" />
                     </div>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="funcBtn(4, chat)">
-                          自由对话
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="deleteChat(chat)">
-                          删除对话
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="funcBtn(5)">
-                          自定义问题
-                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(4, chat)">自由对话</el-dropdown-item>
+                        <el-dropdown-item @click="deleteChat(chat)">删除对话</el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(5)">自定义问题</el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
@@ -275,61 +292,49 @@ const title = computed(() => {
               </div>
 
               <!-- 助手发言wrapper -->
-              <div class="text-wrapper assistant-wrapper" v-else>
+              <div v-else class="text-wrapper assistant-wrapper">
                 <!-- 问题 -->
                 <template v-if="chat.messageType === 1">
                   <div class="assistant-question">{{ chat.content }}</div>
                 </template>
 
                 <template v-else>
-                  <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy($event)"></div>
+                  <div class="assistant-help" @click="handleCopy($event)" v-html="parseMarkdown(chat.content)"></div>
                 </template>
 
                 <!-- 功能按钮 -->
-                <div :class="['functionList', (chat.id === chatStore.lastMessage.id && sendState === 'available') && 'visiable', sendState !== 'available' && 'hidden']" v-if="chat.content">
+                <div v-if="chat.content" :class="['functionList', chat.id === chatStore.lastMessage.id && sendState === 'available' && 'visiable', sendState !== 'available' && 'hidden']">
                   <!-- 复制按钮 -->
                   <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
-                    <img src="../../assets/svgs/copy.svg" alt="" class="icon">
+                    <img src="../../assets/svgs/copy.svg" alt="" class="icon" />
                   </div>
                   <!-- 收藏按钮 -->
                   <div class="btn prefer prefer-btn" @click="togglePreferState">
-                    <img src="../../assets/svgs/tag.svg" alt="" class="icon">
+                    <img src="../../assets/svgs/tag.svg" alt="" class="icon" />
                   </div>
                   <!-- 帮助按钮 -->
-                  <el-dropdown placement="right" v-if="chat.messageType === 1">
+                  <el-dropdown v-if="chat.messageType === 1" placement="right">
                     <div class="btn help">
-                      <img src="../../assets/svgs/help.svg" alt="" class="icon">
+                      <img src="../../assets/svgs/help.svg" alt="" class="icon" />
                     </div>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="funcBtn(1, chat)">
-                          回答思路
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="funcBtn(2, chat)">
-                          标准答案
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="funcBtn(3, chat)">
-                          思路+答案
-                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(1, chat)">回答思路</el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(2, chat)">标准答案</el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(3, chat)">思路+答案</el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
                   <!-- 其他按钮 -->
                   <el-dropdown placement="right">
                     <div class="btn other">
-                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon">
+                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon" />
                     </div>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="funcBtn(4, chat)">
-                          自由对话
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="deleteChat(chat)">
-                          删除该对话
-                        </el-dropdown-item>
-                        <el-dropdown-item @click="funcBtn(5)">
-                          自定义问题
-                        </el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(4, chat)">自由对话</el-dropdown-item>
+                        <el-dropdown-item @click="deleteChat(chat)">删除该对话</el-dropdown-item>
+                        <el-dropdown-item @click="funcBtn(5)">自定义问题</el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
@@ -340,7 +345,7 @@ const title = computed(() => {
         </template>
 
         <!-- 等待响应的图标 -->
-        <div class="loading-icon" v-show="sendState === 'loading'">
+        <div v-show="sendState === 'loading'" class="loading-icon">
           <div class="left-ball"></div>
           <div class="right-ball"></div>
         </div>
@@ -348,8 +353,8 @@ const title = computed(() => {
     </div>
 
     <!-- 输入框区 -->
-    <input-box ref="inputRef" v-if="!chatStore.isChosePrefer" />
-    <div class="prefer-bottom" v-else>
+    <input-box v-if="!chatStore.isChosePrefer" ref="inputRef" />
+    <div v-else class="prefer-bottom">
       <div class="left">
         <div class="check-all-box" @click="checkAll">
           <div :class="['check-box', chatStore.isChoseAll && 'checked']">
@@ -358,19 +363,15 @@ const title = computed(() => {
           全选
         </div>
       </div>
-      <div class="middle" @click="togglePreferState">
-        取消
-      </div>
-      <div class="right" @click="chatStore.submitPrefers">
-        收藏
-      </div>
+      <div class="middle" @click="togglePreferState">取消</div>
+      <div class="right" @click="chatStore.submitPrefers">收藏</div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/mixin.scss" as *;
-@use "@/styles/loading.scss" as *;
+@use '@/styles/mixin.scss' as *;
+@use '@/styles/loading.scss' as *;
 
 .chat-view {
   width: 100%;
@@ -422,12 +423,7 @@ const title = computed(() => {
     overflow-y: auto;
     padding-bottom: 30px;
 
-    mask-image: linear-gradient(
-      to top,
-      transparent,
-      #fff 30px,
-      #fff 100%
-    );
+    mask-image: linear-gradient(to top, transparent, #fff 30px, #fff 100%);
 
     .scroll-to-bottom {
       background-color: var(--normal-bgc);
@@ -525,7 +521,7 @@ const title = computed(() => {
         }
       }
 
-      :deep(.text-wrapper.assistant-wrapper ) {
+      :deep(.text-wrapper.assistant-wrapper) {
         .assistant-question {
           color: var(--theme-color-1);
           font-size: 20px;
@@ -600,7 +596,7 @@ const title = computed(() => {
       cursor: pointer;
     }
 
-    .middle { 
+    .middle {
       font-weight: 500;
       cursor: pointer;
     }

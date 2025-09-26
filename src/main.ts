@@ -14,7 +14,7 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.component('font-awesome-icon', FontAwesomeIcon)
+app.component('FontAwesomeIcon', FontAwesomeIcon)
 app.directive('click-outside', clickOutside) // 自定义指令
 app.directive('resizable', resizableDirective) // 自定义指令
 

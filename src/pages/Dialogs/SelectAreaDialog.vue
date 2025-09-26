@@ -8,8 +8,8 @@ const userStore = useUserInfoStore()
 const props = defineProps({
   showDialog: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const selectCategory = ref('互联网')
@@ -18,28 +18,37 @@ const selectCategoryChildren = ref('')
 const categorys = [
   {
     name: '互联网',
-    children: ['Java', 'C++', '后端开发', '前端开发', '算法工程师', '运维', '测试']
+    children: ['Java', 'C++', '后端开发', '前端开发', '算法工程师', '运维', '测试'],
   },
   {
     name: '产品',
-    children: ['产品经理', '产品设计', '游戏策划']
+    children: ['产品经理', '产品设计', '游戏策划'],
   },
   {
     name: '运营/客服',
-    children: ['客服', 'SEO/SEM', '内容运营', '新媒体运营', '业务运营', '线下运营']
+    children: ['客服', 'SEO/SEM', '内容运营', '新媒体运营', '业务运营', '线下运营'],
   },
   {
     name: '设计',
-    children: ['UI 设计', 'UX 设计', '平面设计', '视觉设计', '游戏设计']
+    children: ['UI 设计', 'UX 设计', '平面设计', '视觉设计', '游戏设计'],
   },
   {
     name: '影视/传媒',
-    children: ['影视导演', '影视制作', '影视后期', '影视剪辑', '影视特效', '影视设计']
+    children: ['影视导演', '影视制作', '影视后期', '影视剪辑', '影视特效', '影视设计'],
   },
   {
     name: '销售',
-    children: ['销售', '销售经理', '销售总监', '销售代表', '销售代理', '销售执行', '销售咨询', '销售代理']
-  }
+    children: [
+      '销售',
+      '销售经理',
+      '销售总监',
+      '销售代表',
+      '销售代理',
+      '销售执行',
+      '销售咨询',
+      '销售代理',
+    ],
+  },
 ]
 
 const selectArea = async (area: string) => {
@@ -52,22 +61,26 @@ const dialogRef = ref<any>(null)
 
 const custom = ref('')
 
-watch(() => custom.value, () => {
-  selectCategoryChildren.value = ''
-})
+watch(
+  () => custom.value,
+  () => {
+    selectCategoryChildren.value = ''
+  }
+)
 
 const confirm = async () => {
   if (!custom.value && !selectCategoryChildren.value) {
     ElMessage({
       message: '请选择领域',
-      type: 'info'
+      type: 'info',
     })
     return
-  }
-  else if (userStore.areaList.map(ele => ele.name).includes(custom.value || selectCategoryChildren.value)) {
+  } else if (
+    userStore.areaList.map((ele) => ele.name).includes(custom.value || selectCategoryChildren.value)
+  ) {
     ElMessage({
       message: '已添加过该领域',
-      type: 'info'
+      type: 'info',
     })
     return
   }
@@ -77,26 +90,34 @@ const confirm = async () => {
   dialogRef.value.closeDialog()
 }
 
-watch(() => props.showDialog, (showDialog) => {
-  if (showDialog) {
-    custom.value = ''
-    selectCategoryChildren.value = ''
+watch(
+  () => props.showDialog,
+  (showDialog) => {
+    if (showDialog) {
+      custom.value = ''
+      selectCategoryChildren.value = ''
+    }
   }
-})
+)
 </script>
 
 <template>
   <div class="select-area-dialog">
-    <cust-dialog ref="dialogRef" title="选择领域" @confirm="confirm" :visible="showDialog">
+    <cust-dialog ref="dialogRef" title="选择领域" :visible="showDialog" @confirm="confirm">
       <div class="content">
         <div class="custom">
-          <el-input v-model="custom" placeholder="自定义领域" style="--el-input-focus-border-color: var(--theme-color-1);" />
+          <el-input
+            v-model="custom"
+            placeholder="自定义领域"
+            style="--el-input-focus-border-color: var(--theme-color-1)"
+          />
         </div>
         <div class="area-category">
           <div class="category-list">
             <div
-              :class="['category-item', cate.name === selectCategory && 'selected']"
               v-for="cate in categorys"
+              :key="cate.name"
+              :class="['category-item', cate.name === selectCategory && 'selected']"
               @click="selectCategory = cate.name"
             >
               {{ cate.name }}
@@ -105,18 +126,19 @@ watch(() => props.showDialog, (showDialog) => {
           <div class="area-list">
             <div class="wrapper">
               <div
+                v-for="area in categorys.find((cate) => cate.name === selectCategory)?.children"
+                :key="area"
                 class="area-item"
-                v-for="area in categorys.find(cate => cate.name === selectCategory)?.children"
                 @click="selectArea(area)"
               >
                 <div>{{ area }}</div>
                 <img
+                  v-if="selectCategoryChildren === area"
                   src="../../assets/svgs/gou.svg"
                   alt=""
                   class="icon"
-                  style="width: 16px; height: 16px;"
-                  v-if="selectCategoryChildren === area"
-                ></img>
+                  style="width: 16px; height: 16px"
+                />
               </div>
             </div>
           </div>

@@ -9,9 +9,9 @@ defineProps({
 
 <template>
   <div class="quote-mindmap">
-    <cust-dialog title="选择图中节点" :exitBottom="false" :visible="showDialog">
+    <cust-dialog title="选择图中节点" :exit-bottom="false" :visible="showDialog">
       <div class="content">
-        <mind-map :style="{ height: '100%' }" :mouseFacter="{ x: -150, y: -40 }" />
+        <mind-map :style="{ height: '100%' }" :mouse-facter="{ x: -150, y: -40 }" />
       </div>
     </cust-dialog>
   </div>

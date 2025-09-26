@@ -59,7 +59,7 @@ watch(() => props.showDialog, (showDialog) => {
 
 <template>
   <div class="user-add-node">
-    <cust-dialog ref="dialogRef" title="添加子节点" @confirm="confirm" :visible="showDialog">
+    <cust-dialog ref="dialogRef" title="添加子节点" :visible="showDialog" @confirm="confirm">
       <div class="content">
         <el-form ref="ruleFormRef" :model="formData" :rules="rules" >
           <el-form-item label="名称" prop="name"> 

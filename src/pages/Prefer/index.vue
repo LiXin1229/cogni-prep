@@ -11,8 +11,8 @@ const preferStore = usePreferStore()
 defineProps({
   isSidebarFolded: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['toggleSidebar'])
@@ -27,35 +27,49 @@ const isDetailPage = computed(() => {
 
 const preferList = computed(() => preferStore.preferList)
 
-const navToDetail = (item: PreferItemType) => { 
+const navToDetail = (item: PreferItemType) => {
   preferStore.detailChats = []
   router.push({
     name: '收藏详情',
     params: {
-      preferId: item.id
-    }
+      preferId: item.id,
+    },
   })
 }
 </script>
 
 <template>
   <div class="prefer-view">
-    <router-view :isSidebarFolded="isSidebarFolded" @toggleSidebar="emit('toggleSidebar')" />
+    <router-view :is-sidebar-folded="isSidebarFolded" @toggle-sidebar="emit('toggleSidebar')" />
 
     <!-- 顶部区 -->
-    <div class="top" v-if="!isDetailPage">
-      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
-        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon">
+    <div v-if="!isDetailPage" class="top">
+      <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
+        <img
+          src="../../assets/svgs/hide-sidebar.svg"
+          :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }"
+          alt=""
+          class="icon"
+        />
       </div>
       <div>
         <div class="title">我的收藏</div>
-        <div class="tip">内容由 <span style="font-style: italic;">DeepSeek-V3</span> 生成</div>
+        <div class="tip">
+          内容由
+          <span style="font-style: italic">DeepSeek-V3</span>
+          生成
+        </div>
       </div>
     </div>
 
-    <div class="scroll-view" v-if="!isDetailPage">
+    <div v-if="!isDetailPage" class="scroll-view">
       <div class="prefer-list">
-        <div class="prefer-item" v-for="item in preferList" @click="() => navToDetail(item)">
+        <div
+          v-for="item in preferList"
+          :key="item.id"
+          class="prefer-item"
+          @click="() => navToDetail(item)"
+        >
           <div class="title">{{ item.title }}</div>
           <div class="content">
             <div>{{ item.content }}</div>
@@ -131,7 +145,7 @@ const navToDetail = (item: PreferItemType) => {
         transition: 0.2s all ease-in-out;
         cursor: pointer;
 
-        &:hover { 
+        &:hover {
           transform: translateY(-3px);
           box-shadow: 3px 5px 10px 1px var(--box-shadow-color);
         }

@@ -15,8 +15,8 @@ const userStore = useUserInfoStore()
 defineProps({
   isSidebarFolded: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['toggleSidebar'])
@@ -38,22 +38,25 @@ const treeRef = ref<any>(null)
 // 初始化目录
 const initTreeData = async () => {
   await noteStore.getTreeData()
-  const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
+  const node = selectKey.value.find((item) => item.areaId === noteStore.selectedAreaId)
   if (node) treeRef.value.setCurrentKey(node.nodeId)
 }
 
 // 初始化当前节点笔记
 const initNote = async () => {
-  const node = selectKey.value.find(item => item.areaId === noteStore.selectedAreaId)
+  const node = selectKey.value.find((item) => item.areaId === noteStore.selectedAreaId)
   const markId = node?.markId
   // console.log(node)
   await noteStore.getNoteData({ markId })
 }
 
-watch(() => noteStore.selectedAreaId, async () => {
-  await initTreeData()
-  await initNote()
-})
+watch(
+  () => noteStore.selectedAreaId,
+  async () => {
+    await initTreeData()
+    await initNote()
+  }
+)
 
 const treeData = computed(() => [noteStore.treeData ?? []])
 
@@ -64,7 +67,9 @@ const defaultProps = {
 
 const selectKey = computed(() => noteStore.selectKey)
 
-const currentNode = computed(() => selectKey.value.find(item => item.areaId === noteStore.selectedAreaId) || null)
+const currentNode = computed(
+  () => selectKey.value.find((item) => item.areaId === noteStore.selectedAreaId) || null
+)
 
 // 点击节点
 const handleNodeClick = async (data: PartialNode) => {
@@ -94,12 +99,16 @@ const menuScrollTop = ref(0)
 
 const togglePopup = (e?: MouseEvent, data?: TreeNode) => {
   menuScrollTop.value = menuScrollRef.value.scrollTop
-  if (!e?.target) return showNodePopup.value = ''
+  if (!e?.target) return (showNodePopup.value = '')
 
   const svgs = ['svg', 'path', 'g', 'circle', 'rect']
   if (svgs.includes((e?.target as HTMLElement).tagName)) return
   if ((e?.target as HTMLElement).className?.includes('toggleNodePopup')) {
-    showNodePopup.value === data!.id ? showNodePopup.value = '' : showNodePopup.value = data!.id
+    if (showNodePopup.value === data!.id) {
+      showNodePopup.value = ''
+    } else {
+      showNodePopup.value = data!.id
+    }
   } else {
     showNodePopup.value = ''
   }
@@ -115,8 +124,8 @@ const toggleMenu = () => {
 }
 
 const openSelectedNode = () => {
-  if (!selectKey.value.map(node => node.nodeId)?.[0]) return
-  treeRef.value.setCurrentKey(selectKey.value.map(node => node.nodeId)[0], true)
+  if (!selectKey.value.map((node) => node.nodeId)?.[0]) return
+  treeRef.value.setCurrentKey(selectKey.value.map((node) => node.nodeId)[0], true)
 }
 
 // 生成笔记
@@ -152,7 +161,7 @@ const handleClick = (e: MouseEvent) => {
 
 const isMarkdownMode = computed({
   get: () => noteStore.isMarkdownMode,
-  set: value => noteStore.isMarkdownMode = value
+  set: (value) => (noteStore.isMarkdownMode = value),
 })
 
 const isModified = ref(false)
@@ -181,7 +190,7 @@ onMounted(async () => {
   await initNote()
 
   if (!editorRef.value) return
-  
+
   quillInstance = new Quill(editorRef.value, {
     theme: 'bubble',
     modules: {
@@ -189,25 +198,29 @@ onMounted(async () => {
       clipboard: {
         matchVisual: false, // 禁用视觉粘贴
         matchers: [
-          [Node.ELEMENT_NODE, (_: any, delta: any) => {
-            // 提取纯文本
-            const text = delta.reduce((acc: any, op: any) => {
-              if (typeof op.insert === 'string') {
-                acc += op.insert
-              }
-              return acc
-            }, '')
+          [
+            Node.ELEMENT_NODE,
+            (_: any, delta: any) => {
+              // 提取纯文本
+              const text = delta.reduce((acc: any, op: any) => {
+                if (typeof op.insert === 'string') {
+                  acc += op.insert
+                }
+                return acc
+              }, '')
 
-            // 返回纯文本Delta
-            return new Delta().insert(text)
-          }]
-        ]
-      }
-    }
+              // 返回纯文本Delta
+              return new Delta().insert(text)
+            },
+          ],
+        ],
+      },
+    },
   })
 
   quillInstance.on('text-change', (_: any, __: any, source: string) => {
-    if (source === 'user') { // 仅处理用户操作导致的变化
+    if (source === 'user') {
+      // 仅处理用户操作导致的变化
       isModified.value = true
     }
   })
@@ -252,52 +265,74 @@ onUnmounted(() => {
   <div class="note">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
-        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon">
+      <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
+        <img
+          src="../../assets/svgs/hide-sidebar.svg"
+          :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }"
+          alt=""
+          class="icon"
+        />
       </div>
 
       <div class="area-list">
         <div
-          :class="['area-item', area.areaId === noteStore.selectedAreaId && 'selected-area']"
           v-for="area in noteStore.areaList"
           :key="area.areaId"
+          :class="['area-item', area.areaId === noteStore.selectedAreaId && 'selected-area']"
           @click="selectArea(area.areaId)"
         >
           {{ area.name }}
         </div>
-        <div class="toggle-menu" v-if="userStore.isMobile" @click="toggleMenu">
-          <img src="../../assets/svgs/menu.svg" alt="" class="icon">
+        <div v-if="userStore.isMobile" class="toggle-menu" @click="toggleMenu">
+          <img src="../../assets/svgs/menu.svg" alt="" class="icon" />
         </div>
-        <div class="tip" v-else>
-          点击菜单&nbsp;&nbsp;<img src="../../assets/svgs/ellipsis.svg" style="width:16px;vertical-align:middle;">&nbsp;&nbsp;生成笔记
+        <div v-else class="tip">
+          点击菜单&nbsp;&nbsp;
+          <img src="../../assets/svgs/ellipsis.svg" style="width: 16px; vertical-align: middle" />
+          &nbsp;&nbsp;生成笔记
         </div>
       </div>
     </div>
 
     <div class="main-content">
-      <div :class="['resize-menu', (userStore.isMobile && showMenu) && 'show-menu']">
+      <div :class="['resize-menu', userStore.isMobile && showMenu && 'show-menu']">
         <!-- 目录区 -->
-        <div class="sider-menu" ref="menuScrollRef">
+        <div ref="menuScrollRef" class="sider-menu">
           <div class="warpper">
             <el-tree
               ref="treeRef"
               node-key="id"
               :data="treeData"
               :props="defaultProps"
-              @node-click="handleNodeClick"
               highlight-current
               :expand-on-click-node="false"
+              @node-click="handleNodeClick"
             >
               <template #default="{ node, data }">
                 <div class="custom-tree-node">
                   <div :class="['text', data.markId && 'has-note']">{{ node.label }}</div>
-                  <cust-popup :position="{ top: `${ 20 - menuScrollTop }px`, left: '-75px' }">
-                    <div :class="['func-btn', 'toggleNodePopup', data.id === currentNode?.nodeId && 'visible']" @click.stop="(e) => togglePopup(e, data)" >
-                      <img src="../../assets/svgs/ellipsis-bold.svg" alt="" class="icon toggleNodePopup">
+                  <cust-popup :position="{ top: `${20 - menuScrollTop}px`, left: '-75px' }">
+                    <div
+                      :class="[
+                        'func-btn',
+                        'toggleNodePopup',
+                        data.id === currentNode?.nodeId && 'visible',
+                      ]"
+                      @click.stop="(e) => togglePopup(e, data)"
+                    >
+                      <img
+                        src="../../assets/svgs/ellipsis-bold.svg"
+                        alt=""
+                        class="icon toggleNodePopup"
+                      />
                     </div>
 
                     <template #popup>
-                      <div class="popup-menu" v-show="showNodePopup === data.id" v-click-outside.stop="(e: MouseEvent) => togglePopup(e, data)">
+                      <div
+                        v-show="showNodePopup === data.id"
+                        v-click-outside.stop="(e: MouseEvent) => togglePopup(e, data)"
+                        class="popup-menu"
+                      >
                         <div class="menu-item" @click="createNote(data)">生成笔记</div>
                         <div class="menu-item" @click.stop="addNode(data)">添加子节点</div>
                       </div>
@@ -308,28 +343,33 @@ onUnmounted(() => {
             </el-tree>
           </div>
         </div>
-        <div class="resize-handle" v-resizable></div>
+        <div v-resizable class="resize-handle"></div>
       </div>
 
       <!-- 笔记内容区 -->
-      <div class="mark-content" ref="scrollRef">
+      <div ref="scrollRef" class="mark-content">
         <div class="button-container">
           <!-- 左上角按钮 -->
-          <el-button @click="toggleMode" class="mode-toggle">
+          <el-button class="mode-toggle" @click="toggleMode">
             {{ isMarkdownMode ? '切换到编辑' : '切换到查看' }}
           </el-button>
           <!-- 右上角按钮 -->
-          <el-button @click="saveNote" class="save-btn" :disabled="!isModified">保存</el-button>
+          <el-button class="save-btn" :disabled="!isModified" @click="saveNote">保存</el-button>
         </div>
 
         <!-- 观察view -->
-        <div class="text-view" v-html="parseMarkdown(noteStore.note)" @click="handleClick" v-show="isMarkdownMode"></div>
+        <div
+          v-show="isMarkdownMode"
+          class="text-view"
+          @click="handleClick"
+          v-html="parseMarkdown(noteStore.note)"
+        ></div>
         <!-- 编辑view -->
         <div class="editor-view">
-          <div class="editor" ref="editorRef" v-show="!isMarkdownMode"></div>
+          <div v-show="!isMarkdownMode" ref="editorRef" class="editor"></div>
         </div>
 
-        <div class="text-view" v-show="noteStore.sendState === 'loading'">
+        <div v-show="noteStore.sendState === 'loading'" class="text-view">
           <!-- 等待响应的图标 -->
           <div class="loading-icon">
             <div class="left-ball"></div>
@@ -342,8 +382,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/mixin.scss" as *;
-@use "@/styles/loading.scss" as *;
+@use '@/styles/mixin.scss' as *;
+@use '@/styles/loading.scss' as *;
 
 .note {
   width: 100%;
@@ -527,7 +567,7 @@ onUnmounted(() => {
     &::-webkit-scrollbar {
       display: none;
     }
-    
+
     &:hover::-webkit-scrollbar {
       width: 5px;
       display: block;
@@ -554,7 +594,8 @@ onUnmounted(() => {
       justify-content: space-between;
     }
 
-    .text-view, .editor-view {
+    .text-view,
+    .editor-view {
       width: calc(70vw - 300px);
       margin: 0 auto;
       padding-bottom: 30px;
@@ -633,7 +674,8 @@ onUnmounted(() => {
 
     .mark-content {
       padding: 0 5px;
-      .text-view, .editor-view {
+      .text-view,
+      .editor-view {
         width: 100%;
       }
     }

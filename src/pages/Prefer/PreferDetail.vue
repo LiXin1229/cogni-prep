@@ -49,7 +49,7 @@ const handleCopy = (e: MouseEvent, data?: ChatType) => {
   <div class="prefer-detail">
     <!-- 顶部区 -->
     <div class="top">
-      <div class="toggle-sidebar" @click="emit('toggleSidebar')" v-show="isSidebarFolded">
+      <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
         <img src="../../assets/svgs/hide-sidebar.svg" alt="" class="icon">
       </div>
       <div class="right">
@@ -64,26 +64,26 @@ const handleCopy = (e: MouseEvent, data?: ChatType) => {
     </div>
 
     <!-- 滚动聊天记录区 -->
-    <div class="scroll-view" ref="scrollRef">
+    <div ref="scrollRef" class="scroll-view">
       <!-- 对话内容区 -->
       <div :class="['text-view']">
         <!-- 每条聊天记录包裹层 -->
         <template v-for="chat in preferStore.detailChats" :key="chat.id">
           <div>
               <!-- 用户发言wrapper -->
-            <div class="text-wrapper user-wrapper" v-if="chat.messageType === 0">
-              <div class="user" v-if="chat.messageType === 0">{{ chat.content }}</div>
+            <div v-if="chat.messageType === 0" class="text-wrapper user-wrapper">
+              <div v-if="chat.messageType === 0" class="user">{{ chat.content }}</div>
             </div>
 
             <!-- 助手发言wrapper -->
-            <div class="text-wrapper assistant-wrapper" v-else>
+            <div v-else class="text-wrapper assistant-wrapper">
               <!-- 问题 -->
               <template v-if="chat.messageType === 1">
                 <div class="assistant-question">{{ chat.content }}</div>
               </template>
 
               <template v-else>
-                <div class="assistant-help" v-html="parseMarkdown(chat.content)" @click="handleCopy"></div>
+                <div class="assistant-help" @click="handleCopy" v-html="parseMarkdown(chat.content)"></div>
               </template>
             </div>
           </div>

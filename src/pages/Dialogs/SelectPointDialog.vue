@@ -68,7 +68,7 @@ watch(() => props.showDialog, (showDialog) => {
 
 <template>
   <div class="select-area-dialog">
-    <cust-dialog ref="dialogRef" title="限定问题范围" @confirm="confirm" :visible="showDialog">
+    <cust-dialog ref="dialogRef" title="限定问题范围" :visible="showDialog" @confirm="confirm">
       <div class="content">
         <div class="custom">
           <el-input v-model="custom" placeholder="自定义知识点" style="--el-input-focus-border-color: var(--theme-color-1);" />

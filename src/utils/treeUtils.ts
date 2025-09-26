@@ -29,7 +29,7 @@ export const toggleFoldedNodes = (treeData: NodeType, node: NodeType) => {
     
     // 递归查找子节点
     if (node.children && node.children.length > 0) {
-      for (let child of node.children) {
+      for (const child of node.children) {
         if (findAndUpdate(child)) {
           return true
         }

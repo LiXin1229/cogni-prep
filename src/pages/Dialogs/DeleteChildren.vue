@@ -7,15 +7,15 @@ const mindmapStore = useMindmapStore()
 const props = defineProps({
   showDialog: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const dialogRef = ref<any>(null)
 const ruleFormRef = ref<any>(null)
 
 const formData = ref({
-  name: ''
+  name: '',
 })
 
 const confirm = async () => {
@@ -23,21 +23,29 @@ const confirm = async () => {
   dialogRef.value.closeDialog()
 }
 
-watch(() => props.showDialog, (showDialog) => {
-  if (showDialog) {
-    formData.value = {
-      name: mindmapStore.selectedNode!.name
+watch(
+  () => props.showDialog,
+  (showDialog) => {
+    if (showDialog) {
+      formData.value = {
+        name: mindmapStore.selectedNode!.name,
+      }
     }
   }
-})
+)
 </script>
 
 <template>
   <div class="user-add-node">
-    <cust-dialog ref="dialogRef" title="确认删除该节点的子节点吗" @confirm="confirm" :visible="showDialog">
+    <cust-dialog
+      ref="dialogRef"
+      title="确认删除该节点的子节点吗"
+      :visible="showDialog"
+      @confirm="confirm"
+    >
       <div class="content">
-        <el-form ref="ruleFormRef" :model="formData" >
-          <el-form-item label="名称" prop="name"> 
+        <el-form ref="ruleFormRef" :model="formData">
+          <el-form-item label="名称" prop="name">
             <div class="custom">
               <el-input v-model="formData.name" disabled />
             </div>
