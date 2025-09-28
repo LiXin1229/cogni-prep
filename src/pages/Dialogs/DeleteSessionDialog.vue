@@ -5,12 +5,10 @@ import type { SessionType } from '@/stores/types/session.type'
 
 const sessionStore = useSessionStore()
 
-const props = withDefaults(defineProps<{
-  showDialog: boolean,
+const props = defineProps<{
+  showDialog: boolean
   selectSession: SessionType | null
-}>(), {
-  showDialog: false
-})
+}>()
 
 const dialogRef = ref<any>(null)
 
@@ -23,9 +21,7 @@ const confirm = async () => {
 <template>
   <div class="user-add-node">
     <cust-dialog ref="dialogRef" title="是否删除该会话" :visible="showDialog" @confirm="confirm">
-      <div class="content">
-        删除后，聊天记录不可恢复。
-      </div>
+      <div class="content">删除后，聊天记录不可恢复。</div>
     </cust-dialog>
   </div>
 </template>

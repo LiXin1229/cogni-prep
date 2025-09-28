@@ -8,7 +8,17 @@ import request from '@/utils/request'
 import { v4 as uuidv4 } from 'uuid'
 import rfdc from 'rfdc'
 import { MSG_TYPE } from './types/chat.type'
-import type { ChatType, ChatMapValueTpye, SendStateType, ChatStatusType, FuncStatusType, StreamRequestConfigType, ChatInitRespType, TemTextType, CallbackMap } from './types/chat.type'
+import type {
+  ChatType,
+  ChatMapValueTpye,
+  SendStateType,
+  ChatStatusType,
+  FuncStatusType,
+  StreamRequestConfigType,
+  ChatInitRespType,
+  TemTextType,
+  CallbackMap,
+} from './types/chat.type'
 import { ElMessage } from 'element-plus'
 
 export const useChatStore = defineStore('chat', () => {
@@ -75,8 +85,8 @@ export const useChatStore = defineStore('chat', () => {
           url: API.getChatData,
           method: 'GET',
           params: {
-            sessionId: currentSessionId
-          }
+            sessionId: currentSessionId,
+          },
         })
 
         pushChatQueue(currentSessionId, {
@@ -84,7 +94,7 @@ export const useChatStore = defineStore('chat', () => {
           backupChatList: clone(res.data.chatList),
           sendState: 'available',
           nextState: true,
-          controller: null
+          controller: null,
         })
       } catch (error) {
         // 获取聊天失败的处理
@@ -93,10 +103,14 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  watch(() => sessionId.value, (sessionId) => {
-    initDisplayChat(sessionId)
-    // console.log('map', chatMap)
-  }, { immediate: true, flush: 'sync' })
+  watch(
+    () => sessionId.value,
+    (sessionId) => {
+      initDisplayChat(sessionId)
+      // console.log('map', chatMap)
+    },
+    { immediate: true, flush: 'sync' }
+  )
 
   // 上一条消息
   const lastMessage = computed(() => {
@@ -105,7 +119,7 @@ export const useChatStore = defineStore('chat', () => {
   })
 
   const lastQuestion = computed(() => {
-    const lastMsg = displayChat.value.findLast(item => item.messageType === MSG_TYPE['question'])
+    const lastMsg = displayChat.value.findLast((item) => item.messageType === MSG_TYPE['question'])
     return lastMsg?.content || ''
   })
 
@@ -114,7 +128,8 @@ export const useChatStore = defineStore('chat', () => {
 
   // 当前的发言状态
   const chatStatus = computed<ChatStatusType>(() => {
-    if (lastMessage.value.messageType !== MSG_TYPE['user']) return MSG_TYPE['user'] as ChatStatusType
+    if (lastMessage.value.messageType !== MSG_TYPE['user'])
+      return MSG_TYPE['user'] as ChatStatusType
 
     return MSG_TYPE['question'] as ChatStatusType
   })
@@ -155,7 +170,7 @@ export const useChatStore = defineStore('chat', () => {
     if (sessionStore.mainArea.areaId === null) {
       ElMessage({
         message: '请选择领域',
-        type: 'info'
+        type: 'info',
       })
       userStore.showDialog = 'selectArea'
       return false
@@ -178,13 +193,18 @@ export const useChatStore = defineStore('chat', () => {
       const res = await initChat(MSG_TYPE['question'] as ChatStatusType, currentSessionId)
 
       if (res.success) {
-        await getStreamResponse(API.interviewStart, {
-          sessionId: res.data.sessionId,
-          mainArea: res.data.mainArea,
-          surroundingPoint: res.data.surroundingPoint,
-          customContent: content,
-          areaId: sessionStore.mainArea.areaId as number
-        }, res.data.chatId, MSG_TYPE['question'] as ChatStatusType)
+        await getStreamResponse(
+          API.interviewStart,
+          {
+            sessionId: res.data.sessionId,
+            mainArea: res.data.mainArea,
+            surroundingPoint: res.data.surroundingPoint,
+            customContent: content,
+            areaId: sessionStore.mainArea.areaId as number,
+          },
+          res.data.chatId,
+          MSG_TYPE['question'] as ChatStatusType
+        )
       } else {
         throw new Error('初始化会话失败')
       }
@@ -195,13 +215,18 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  const getStreamResponse = async (url: string, data: StreamRequestConfigType, chatId: number, msgType: ChatStatusType) => {
+  const getStreamResponse = async (
+    url: string,
+    data: StreamRequestConfigType,
+    chatId: number,
+    msgType: ChatStatusType
+  ) => {
     // console.log('getStreamResponse', data)
     const chatMapValue = chatMap.get(data.sessionId)
     if (chatMapValue) chatMapValue.controller = new AbortController()
 
     // 保存信号，用于外部中断
-    const abortSignal: AbortSignal | undefined  = chatMapValue?.controller?.signal
+    const abortSignal: AbortSignal | undefined = chatMapValue?.controller?.signal
 
     const newText = reactive({
       content: '',
@@ -213,7 +238,7 @@ export const useChatStore = defineStore('chat', () => {
     try {
       const baseUrl = import.meta.env.VITE_BASE_URL + url
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       }
       if (userStore.token) {
         headers['Authorization'] = `Bearer ${userStore.token}`
@@ -223,7 +248,7 @@ export const useChatStore = defineStore('chat', () => {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
-        signal: abortSignal // 关联中断信号
+        signal: abortSignal, // 关联中断信号
       })
 
       if (!response.ok) {
@@ -260,7 +285,7 @@ export const useChatStore = defineStore('chat', () => {
         const chunk = decoder.decode(value)
         const lines = chunk.split('\n\n') // 按SSE分隔符分割
 
-        lines.forEach(line => {
+        lines.forEach((line) => {
           if (line.startsWith('data: ')) {
             const data = line.slice(6) // 去掉'data: '前缀
             if (data === '[DONE]') return // 结束标记
@@ -296,43 +321,55 @@ export const useChatStore = defineStore('chat', () => {
         url: API.initChat,
         data: {
           sessionId: currentSessionId,
-          msgType: msgType
-        }
+          msgType: msgType,
+        },
       })
       // console.log(res)
-      return res 
+      return res
     } catch (error: any) {
       throw new Error(error)
     }
   }
 
-  const saveUserWords = async (msgType: ChatStatusType, content: string, currentSessionId: number) => {
+  const saveUserWords = async (
+    msgType: ChatStatusType,
+    content: string,
+    currentSessionId: number
+  ) => {
     try {
-      const res = await request<{ chatId:number }>({
+      const res = await request<{ chatId: number }>({
         url: API.saveUserWords,
         data: {
           sessionId: currentSessionId,
           msgType: msgType,
-          customContent: content
-        }
+          customContent: content,
+        },
       })
 
       const chatMapValue = chatMap.get(currentSessionId)
-      if (chatMapValue) chatMapValue.backupChatList.push({
-        id: res.data.chatId,
-        content,
-        messageType: msgType,
-        sessionId: currentSessionId
-      })
+      if (chatMapValue)
+        chatMapValue.backupChatList.push({
+          id: res.data.chatId,
+          content,
+          messageType: msgType,
+          sessionId: currentSessionId,
+        })
 
       return res
-    } catch (error) {
+    } catch (error: any) {
+      console.log(error)
       const chatMapValue = chatMap.get(currentSessionId)
       if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
-  const saveChat = async (chatId: number, currentSessionId: number, content: string, data: StreamRequestConfigType, msgType: ChatStatusType) => {
+  const saveChat = async (
+    chatId: number,
+    currentSessionId: number,
+    content: string,
+    data: StreamRequestConfigType,
+    msgType: ChatStatusType
+  ) => {
     // displayChat.value.find(item => item.id === chatId).content = content
     try {
       await request({
@@ -341,19 +378,20 @@ export const useChatStore = defineStore('chat', () => {
           chatId,
           content,
           surroundingPoint: data.surroundingPoint,
-          areaId: data.areaId || null
-        }
+          areaId: data.areaId || null,
+        },
       })
       setNextState(true, currentSessionId)
       // console.log('保存记录', res)
 
       const chatMapValue = chatMap.get(currentSessionId)
-      if (chatMapValue) chatMapValue.backupChatList.push({
-        id: chatId,
-        content,
-        messageType: msgType,
-        sessionId: currentSessionId
-      })
+      if (chatMapValue)
+        chatMapValue.backupChatList.push({
+          id: chatId,
+          content,
+          messageType: msgType,
+          sessionId: currentSessionId,
+        })
     } catch (error) {
       console.log(error)
       const chatMapValue = chatMap.get(currentSessionId)
@@ -368,13 +406,17 @@ export const useChatStore = defineStore('chat', () => {
       id: uuidv4(),
       content: customContent.value,
       sessionId: currentSessionId,
-      messageType: MSG_TYPE['user'] as ChatStatusType
+      messageType: MSG_TYPE['user'] as ChatStatusType,
     })
 
     triggerComponent('scrollToBottom')
 
     try {
-      const userRes = await saveUserWords(MSG_TYPE['user'] as ChatStatusType, content, currentSessionId)
+      const userRes = await saveUserWords(
+        MSG_TYPE['user'] as ChatStatusType,
+        content,
+        currentSessionId
+      )
       if (!userRes?.success) return
       // console.log('userRes', userRes)
 
@@ -383,14 +425,19 @@ export const useChatStore = defineStore('chat', () => {
       const res = await initChat(MSG_TYPE['evaluation'] as ChatStatusType, currentSessionId)
 
       if (res.success) {
-        await getStreamResponse(API.interviewAnswer, {
-          sessionId: res.data.sessionId,
-          mainArea: res.data.mainArea,
-          surroundingPoint: res.data.surroundingPoint,
-          answer: content,
-          question: lastQuestion.value
-        }, res.data.chatId, MSG_TYPE['evaluation'] as ChatStatusType)
-      } 
+        await getStreamResponse(
+          API.interviewAnswer,
+          {
+            sessionId: res.data.sessionId,
+            mainArea: res.data.mainArea,
+            surroundingPoint: res.data.surroundingPoint,
+            answer: content,
+            question: lastQuestion.value,
+          },
+          res.data.chatId,
+          MSG_TYPE['evaluation'] as ChatStatusType
+        )
+      }
     } catch (error) {
       console.log(error)
     }
@@ -407,12 +454,16 @@ export const useChatStore = defineStore('chat', () => {
       id: uuidv4(),
       content: customContent.value,
       sessionId: currentSessionId,
-      messageType: MSG_TYPE['user'] as ChatStatusType
+      messageType: MSG_TYPE['user'] as ChatStatusType,
     })
 
     triggerComponent('scrollToBottom')
 
-    const userRes = await saveUserWords(MSG_TYPE['user'] as ChatStatusType, content, currentSessionId)
+    const userRes = await saveUserWords(
+      MSG_TYPE['user'] as ChatStatusType,
+      content,
+      currentSessionId
+    )
     if (!userRes?.success) return
 
     pushUserText(currentSessionId, { id: userRes.data.chatId }, true)
@@ -420,29 +471,35 @@ export const useChatStore = defineStore('chat', () => {
     const res = await initChat(MSG_TYPE['help'] as ChatStatusType, currentSessionId)
 
     if (res.success) {
-      await getStreamResponse(API.interviewHelp, {
-        sessionId: res.data.sessionId,
-        mainArea: res.data.mainArea,
-        surroundingPoint: res.data.surroundingPoint,
-        customContent: content,
-        funcType: status,
-        question: selectQuestion.value
-      }, res.data.chatId, MSG_TYPE['help'] as ChatStatusType)
+      await getStreamResponse(
+        API.interviewHelp,
+        {
+          sessionId: res.data.sessionId,
+          mainArea: res.data.mainArea,
+          surroundingPoint: res.data.surroundingPoint,
+          customContent: content,
+          funcType: status,
+          question: selectQuestion.value,
+        },
+        res.data.chatId,
+        MSG_TYPE['help'] as ChatStatusType
+      )
     }
   }
 
   // 自定义问题
   const custQustion = async (content: string, currentSessionId: number) => {
-    if (!content) return ElMessage({
-      message: '请输入问题',
-      type: 'info'
-    })
+    if (!content)
+      return ElMessage({
+        message: '请输入问题',
+        type: 'info',
+      })
 
     pushUserText(currentSessionId, {
       id: uuidv4(),
       content,
       sessionId: currentSessionId,
-      messageType: MSG_TYPE['question'] as ChatStatusType
+      messageType: MSG_TYPE['question'] as ChatStatusType,
     })
 
     triggerComponent('scrollToBottom')
@@ -453,19 +510,20 @@ export const useChatStore = defineStore('chat', () => {
         data: {
           sessionId: sessionId.value,
           content: content,
-          messageType: MSG_TYPE['question']
-        }
+          messageType: MSG_TYPE['question'],
+        },
       })
 
       pushUserText(currentSessionId, { id: res.data.chatId }, true)
 
       const chatMapValue = chatMap.get(currentSessionId)
-      if (chatMapValue) chatMapValue.backupChatList.push({
-        id: res.data.chatId,
-        content,
-        messageType: MSG_TYPE['question'] as ChatStatusType,
-        sessionId: currentSessionId
-      })
+      if (chatMapValue)
+        chatMapValue.backupChatList.push({
+          id: res.data.chatId,
+          content,
+          messageType: MSG_TYPE['question'] as ChatStatusType,
+          sessionId: currentSessionId,
+        })
     } catch (error) {
       console.log(error)
       const chatMapValue = chatMap.get(currentSessionId)
@@ -497,14 +555,14 @@ export const useChatStore = defineStore('chat', () => {
       await request({
         url: API.deleteChat,
         data: {
-          chatId: selectedChat.id
-        }
+          chatId: selectedChat.id,
+        },
       })
       // console.log(res)
 
       const chatMapValue = chatMap.get(currentSessionId)
       if (chatMapValue) {
-        chatMapValue.chatList = displayChat.value.filter(item => item.id !== selectedChat.id)
+        chatMapValue.chatList = displayChat.value.filter((item) => item.id !== selectedChat.id)
         chatMapValue.backupChatList = clone(chatMapValue.chatList)
       }
     } catch (error) {
@@ -526,7 +584,7 @@ export const useChatStore = defineStore('chat', () => {
     if (preferList.value.size === 0) {
       ElMessage({
         message: '请选择对话',
-        type: 'info'
+        type: 'info',
       })
       return
     }
@@ -534,8 +592,9 @@ export const useChatStore = defineStore('chat', () => {
     isChosePrefer.value = false
 
     try {
-      const sortChats = Array.from(preferList.value, chat => chat[1]).sort((a, b) => a.id - b.id)
-      const content: string = sortChats[0].content + sortChats?.[1]?.content || '' + sortChats?.[2]?.content || ''
+      const sortChats = Array.from(preferList.value, (chat) => chat[1]).sort((a, b) => a.id - b.id)
+      const content: string =
+        sortChats[0].content + sortChats?.[1]?.content || '' + sortChats?.[2]?.content || ''
 
       const res = await request<{ perferId: number }>({
         url: API.initPrefer,
@@ -543,8 +602,8 @@ export const useChatStore = defineStore('chat', () => {
           userId: userStore.userInfo.userId,
           title: sessionStore.currSession?.title,
           content: content,
-          chatIds: sortChats.map(chat => chat.id)
-        }
+          chatIds: sortChats.map((chat) => chat.id),
+        },
       })
 
       if (res.success) {
@@ -552,7 +611,7 @@ export const useChatStore = defineStore('chat', () => {
         ElMessage({
           dangerouslyUseHTMLString: true,
           message: `收藏成功，<span style="text-decoration: underline; cursor: pointer;" id="go-prefer-${id}">去看看</span>`,
-          type: 'success'
+          type: 'success',
         })
 
         nextTick(() => {
@@ -608,6 +667,6 @@ export const useChatStore = defineStore('chat', () => {
     isChoseAll,
     preferList,
     submitPrefers,
-    registerCallback
+    registerCallback,
   }
 })

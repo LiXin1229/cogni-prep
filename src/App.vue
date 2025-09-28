@@ -11,5 +11,4 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
   </el-config-provider>
 </template>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

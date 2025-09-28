@@ -40,8 +40,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
         url: API.getMindmapData,
         method: 'GET',
         params: {
-          areaId: selectedAreaId.value
-        }
+          areaId: selectedAreaId.value,
+        },
       })
 
       backupData = clone(res.data.mindmap)
@@ -63,13 +63,14 @@ export const useMindmapStore = defineStore('mindmap', () => {
         method: 'POST',
         data: {
           areaId: selectedAreaId.value,
-          mindmap: data
-        }
+          mindmap: data,
+        },
       })
 
       noteStore.treeData = data
       backupData = clone(data)
-    } catch (error) {
+    } catch (error: any) {
+      console.log(error)
       treeData.value = backupData
       triggerComponent('renderChart')
     }
@@ -102,20 +103,20 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
     try {
       sendState.value = true
-      const res = await request<{ pointList: { name: string, frequency: number }[] }>({
+      const res = await request<{ pointList: { name: string; frequency: number }[] }>({
         url: API.getSubcategory,
         method: 'POST',
         data: {
-          mainArea: areaList.value.find(item => item.areaId === selectedAreaId.value)?.name,
+          mainArea: areaList.value.find((item) => item.areaId === selectedAreaId.value)?.name,
           surroundingPoint,
           childrenPoints,
           number: formData.number,
-          auto: formData.auto
-        }
+          auto: formData.auto,
+        },
       })
 
       sendState.value = false
-      return res 
+      return res
     } catch (error: any) {
       sendState.value = false
       throw new Error(error)
@@ -161,6 +162,6 @@ export const useMindmapStore = defineStore('mindmap', () => {
     triggerComponent,
     getSubcategory,
     modifyNodeProp,
-    sendState
+    sendState,
   }
 })

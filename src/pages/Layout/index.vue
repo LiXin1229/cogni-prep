@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { onMounted, reactive, ref, computed, defineAsyncComponent, watch } from 'vue'
+import { onMounted, reactive, ref, computed, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'

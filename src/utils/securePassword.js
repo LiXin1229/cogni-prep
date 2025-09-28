@@ -54,23 +54,23 @@ const generateSaltFromString = async (inputString) => {
   }
 }
 
-const calculateOptimalIterations = async () => {
-  const baseIterations = 100000 // 基础迭代次数
-  try {
-    // 简单的性能测试
-    const start = performance.now()
-    await crypto.subtle.digest('SHA-384', new Uint8Array(1024))
-    const duration = performance.now() - start
+// const calculateOptimalIterations = async () => {
+//   const baseIterations = 100000 // 基础迭代次数
+//   try {
+//     // 简单的性能测试
+//     const start = performance.now()
+//     await crypto.subtle.digest('SHA-384', new Uint8Array(1024))
+//     const duration = performance.now() - start
     
-    // 根据设备性能调整迭代次数
-    return Math.max(
-      100000, // 最低10万次
-      Math.min(
-        Math.round(baseIterations * (10 / duration)),
-        1000000 // 最高100万次
-      )
-    )
-  } catch {
-    return baseIterations
-  }
-}
+//     // 根据设备性能调整迭代次数
+//     return Math.max(
+//       100000, // 最低10万次
+//       Math.min(
+//         Math.round(baseIterations * (10 / duration)),
+//         1000000 // 最高100万次
+//       )
+//     )
+//   } catch {
+//     return baseIterations
+//   }
+// }

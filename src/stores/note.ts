@@ -8,7 +8,14 @@ import { isEmptyObj } from '@/utils/verifyEmpty'
 import request from '@/utils/request'
 import API from '@/utils/API.js'
 import { v4 as uuidv4 } from 'uuid'
-import type { CallbackMap, KeyNodeType, PartialNode, SendStateType, StreamRequestConfigType, TreeNode } from './types/note.type'
+import type {
+  CallbackMap,
+  KeyNodeType,
+  PartialNode,
+  SendStateType,
+  StreamRequestConfigType,
+  TreeNode,
+} from './types/note.type'
 
 export const useNoteStore = defineStore('note', () => {
   const userStore = useUserInfoStore()
@@ -18,7 +25,7 @@ export const useNoteStore = defineStore('note', () => {
 
   const selectedAreaId = computed({
     get: () => mindmapStore.selectedAreaId,
-    set: (value) => mindmapStore.selectedAreaId = value
+    set: (value) => (mindmapStore.selectedAreaId = value),
   })
 
   const getSelectedAreaId = async () => {
@@ -39,8 +46,8 @@ export const useNoteStore = defineStore('note', () => {
       url: API.getMindmapData,
       method: 'GET',
       params: {
-        areaId: selectedAreaId.value
-      }
+        areaId: selectedAreaId.value,
+      },
     })
     // console.log('getMindmapData', res)
     treeData.value = res.data.mindmap
@@ -52,7 +59,7 @@ export const useNoteStore = defineStore('note', () => {
   // 更新当前选中的树节点
   const updateSelectKey = (data: PartialNode) => {
     if (!data) return
-    const node = selectKey.value.find(item => item.areaId === selectedAreaId.value)
+    const node = selectKey.value.find((item) => item.areaId === selectedAreaId.value)
 
     if (node) {
       node.nodeId = data.id
@@ -61,7 +68,7 @@ export const useNoteStore = defineStore('note', () => {
       selectKey.value.push({
         areaId: selectedAreaId.value,
         nodeId: data.id,
-        markId: data.markId
+        markId: data.markId,
       })
     }
     // console.log(selectKey.value)
@@ -83,7 +90,7 @@ export const useNoteStore = defineStore('note', () => {
     try {
       const res = await request<{ noteId: number }>({
         url: API.initNote,
-        method: 'POST'
+        method: 'POST',
       })
       console.log(res)
 
@@ -102,8 +109,8 @@ export const useNoteStore = defineStore('note', () => {
       method: 'POST',
       data: {
         noteId,
-        content
-      }
+        content,
+      },
     })
 
     console.log('保存记录', res)
@@ -115,7 +122,7 @@ export const useNoteStore = defineStore('note', () => {
     let point = ''
     if (treeData.value === null) return
     const { parent, grandparent } = findAncestorsById(treeData.value, node.id)
-    
+
     if (parent && grandparent) {
       point = `“${grandparent.name}”中的“${parent.name}”下的“${node.name}”`
     } else if (parent) {
@@ -125,7 +132,7 @@ export const useNoteStore = defineStore('note', () => {
     }
     // console.log('point', point)
 
-    const area = areaList.value.find(item => item.areaId === selectedAreaId.value)
+    const area = areaList.value.find((item) => item.areaId === selectedAreaId.value)
     const mainArea = area?.name || '该领域'
 
     try {
@@ -134,12 +141,18 @@ export const useNoteStore = defineStore('note', () => {
       if (res?.success) {
         modifyNodeProp(node.id, 'markId', res.data.noteId)
 
-        await getStreamResponse(API.getNote, {
-          mainArea,
-          point
-        }, res.data.noteId, node)
+        await getStreamResponse(
+          API.getNote,
+          {
+            mainArea,
+            point,
+          },
+          res.data.noteId,
+          node
+        )
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.log(error)
       sendState.value = 'available'
     }
   }
@@ -153,7 +166,12 @@ export const useNoteStore = defineStore('note', () => {
   // 中断信号
   let controller: AbortController | null = null
 
-  const getStreamResponse = async (url: string, data: StreamRequestConfigType, noteId: number, node: TreeNode) => {
+  const getStreamResponse = async (
+    url: string,
+    data: StreamRequestConfigType,
+    noteId: number,
+    node: TreeNode
+  ) => {
     controller = new AbortController()
     // 保存信号，用于外部中断
     const abortSignal = controller.signal
@@ -161,7 +179,7 @@ export const useNoteStore = defineStore('note', () => {
     try {
       const baseUrl = import.meta.env.VITE_BASE_URL + url
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       }
       if (userStore.token) {
         headers['Authorization'] = `Bearer ${userStore.token}`
@@ -171,7 +189,7 @@ export const useNoteStore = defineStore('note', () => {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
-        signal: abortSignal
+        signal: abortSignal,
       })
 
       if (!response.ok) {
@@ -204,7 +222,7 @@ export const useNoteStore = defineStore('note', () => {
         const chunk = decoder.decode(value)
         const lines = chunk.split('\n\n') // 按SSE分隔符分割
 
-        lines.forEach(line => {
+        lines.forEach((line) => {
           if (line.startsWith('data: ')) {
             const data = line.slice(6) // 去掉'data: '前缀
             if (data === '[DONE]') return // 结束标记
@@ -229,19 +247,19 @@ export const useNoteStore = defineStore('note', () => {
   // 获取节点笔记
   const getNoteData = async (node: Partial<TreeNode>) => {
     if (!node.markId) {
-      return note.value = '### 暂无笔记' 
+      return (note.value = '### 暂无笔记')
     }
     try {
       const res = await request<{ content: string }>({
         url: API.getNoteData,
         method: 'GET',
         params: {
-          markId: node.markId
-        }
+          markId: node.markId,
+        },
       })
       // console.log('获取节点笔记', res)
 
-      note.value = res.data.content || '### 暂无笔记' 
+      note.value = res.data.content || '### 暂无笔记'
     } catch (error) {
       console.log(error)
     }
@@ -257,8 +275,8 @@ export const useNoteStore = defineStore('note', () => {
       method: 'POST',
       data: {
         noteId: markId,
-        content: note.value
-      }
+        content: note.value,
+      },
     })
     console.log('修改节点笔记', res)
 
@@ -279,15 +297,23 @@ export const useNoteStore = defineStore('note', () => {
 
   const selectedNode = ref<TreeNode | null>(null)
 
-  const addNode = (data: { name: string, frequency: number }) => {
+  const addNode = (data: { name: string; frequency: number }) => {
     // console.log(selectedNode.value)
-    const newNode = { id: uuidv4(), name: data.name, children: [], isFolded: 0, frequency: data.frequency, markId: null, chatId: null }
+    const newNode = {
+      id: uuidv4(),
+      name: data.name,
+      children: [],
+      isFolded: 0,
+      frequency: data.frequency,
+      markId: null,
+      chatId: null,
+    }
     if (treeData.value === null) return
     treeData.value = addChildrenById(treeData.value, selectedNode.value!.id, newNode)
 
     try {
       if (treeData.value === null) return
-      mindmapStore.saveMindmapData(treeData.value) 
+      mindmapStore.saveMindmapData(treeData.value)
     } catch (err) {
       console.log(err)
     }
@@ -302,8 +328,8 @@ export const useNoteStore = defineStore('note', () => {
       method: 'POST',
       data: {
         areaId: selectedAreaId.value,
-        mindmap: data
-      }
+        mindmap: data,
+      },
     })
   }
 
@@ -342,6 +368,6 @@ export const useNoteStore = defineStore('note', () => {
     updateSelectKey,
     updateNoteData,
     registerCallback,
-    triggerComponent
+    triggerComponent,
   }
 })
