@@ -214,7 +214,10 @@ const handleScroll = async () => {
                 <template #popup>
                   <div
                     v-show="showSessionPopup === session.sessionId"
-                    v-click-outside.stop="(e: MouseEvent) => togglePopup(e, session)"
+                    v-click-outside.stop="
+                      // @ts-ignore
+                      (e) => togglePopup(e, session)
+                    "
                     class="popup-menu"
                   >
                     <div class="menu-item" @click.stop="() => deleteSession(session)">删除会话</div>

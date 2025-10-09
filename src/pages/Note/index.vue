@@ -330,7 +330,10 @@ onUnmounted(() => {
                     <template #popup>
                       <div
                         v-show="showNodePopup === data.id"
-                        v-click-outside.stop="(e: MouseEvent) => togglePopup(e, data)"
+                        v-click-outside.stop="
+                          // @ts-ignore
+                          (e) => togglePopup(e, data)
+                        "
                         class="popup-menu"
                       >
                         <div class="menu-item" @click="createNote(data)">生成笔记</div>

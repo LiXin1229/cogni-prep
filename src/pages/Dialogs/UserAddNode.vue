@@ -11,8 +11,8 @@ const noteStore = useNoteStore()
 const props = defineProps({
   showDialog: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const dialogRef = ref<any>(null)
@@ -20,7 +20,7 @@ const ruleFormRef = ref<any>(null)
 
 const formData = ref({
   name: '',
-  frequency: 0
+  frequency: 0,
 })
 
 const verifyName = (_: any, value: string, callback: any) => {
@@ -29,14 +29,12 @@ const verifyName = (_: any, value: string, callback: any) => {
 }
 
 const rules = reactive({
-  name: [
-    { validator: verifyName, trigger: 'blur' }
-  ]
+  name: [{ validator: verifyName, trigger: 'blur' }],
 })
 
 const confirm = async () => {
   const isValid = await ruleFormRef.value.validate()
-  
+
   if (isValid) {
     if (route.name === '思维导图') {
       mindmapStore.triggerComponent('addNodes', [formData.value])
@@ -47,29 +45,36 @@ const confirm = async () => {
   }
 }
 
-watch(() => props.showDialog, (showDialog) => {
-  if (showDialog) {
-    formData.value = {
-      name: '',
-      frequency: 0
+watch(
+  () => props.showDialog,
+  (showDialog) => {
+    if (showDialog) {
+      formData.value = {
+        name: '',
+        frequency: 0,
+      }
     }
   }
-})
+)
 </script>
 
 <template>
   <div class="user-add-node">
     <cust-dialog ref="dialogRef" title="添加子节点" :visible="showDialog" @confirm="confirm">
       <div class="content">
-        <el-form ref="ruleFormRef" :model="formData" :rules="rules" >
-          <el-form-item label="名称" prop="name"> 
+        <el-form ref="ruleFormRef" :model="formData" :rules="rules">
+          <el-form-item label="名称" prop="name">
             <div class="custom">
-              <el-input v-model="formData.name" placeholder="自定义节点" style="--el-input-focus-border-color: var(--theme-color-1);" />
+              <el-input
+                v-model="formData.name"
+                placeholder="自定义节点"
+                style="--el-input-focus-border-color: var(--theme-color-1)"
+              />
             </div>
           </el-form-item>
 
           <el-form-item label="重要性">
-            <el-rate v-model="formData.frequency" size="large" :max="3" clearable  />
+            <el-rate v-model="formData.frequency" size="large" :max="3" clearable />
           </el-form-item>
         </el-form>
       </div>
