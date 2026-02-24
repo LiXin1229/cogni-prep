@@ -8,14 +8,14 @@ const instance: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   timeout: 60000,
   headers: {
-    'X-Requested-With': 'XMLHttpRequest'
-  }
+    'X-Requested-With': 'XMLHttpRequest',
+  },
 })
 
 const customConfig: CustomConfigType = {
   showLoading: false,
   showMessage: false,
-  loading: null
+  loading: null,
 }
 
 let isTokenExpiredShown: boolean = false
@@ -30,7 +30,7 @@ instance.interceptors.request.use(
     if (customConfig.showLoading) {
       customConfig.loading = ElLoading.service({
         lock: true,
-        background: 'rgba(0, 0, 0, 0.3)'
+        background: 'rgba(0, 0, 0, 0.3)',
       })
     }
 
@@ -52,7 +52,7 @@ instance.interceptors.response.use(
     if (!data.success) {
       ElMessage({
         message: data.data.message,
-        type: 'info'
+        type: 'info',
       })
       return Promise.reject(data.data.message)
     }
@@ -61,7 +61,7 @@ instance.interceptors.response.use(
       ElMessage({
         message: response.data.data.message,
         type: 'success',
-        duration: 2000
+        duration: 2000,
       })
     }
 
@@ -76,7 +76,7 @@ instance.interceptors.response.use(
       if (!isTokenExpiredShown) {
         ElMessage({
           message: 'token失效，请重新登录',
-          type: 'info'
+          type: 'info',
         })
 
         isTokenExpiredShown = true
@@ -94,15 +94,15 @@ instance.interceptors.response.use(
 )
 
 // 请求函数
-const request = <T = any> ({
-    url,
-    params = {},
-    showLoading = false,
-    showMessage = false,
-    method = 'post',
-    data = {},
-    responseType = 'json'
-  }: RequestOptions): Promise<ApiResponse<T>> => {
+const request = <T = any>({
+  url,
+  params = {},
+  showLoading = false,
+  showMessage = false,
+  method = 'post',
+  data = {},
+  responseType = 'json',
+}: RequestOptions): Promise<ApiResponse<T>> => {
   customConfig.showLoading = showLoading
   customConfig.showMessage = showMessage
 
@@ -111,14 +111,14 @@ const request = <T = any> ({
     method,
     params,
     data,
-    responseType
+    responseType,
   }
 
   return instance(config)
-    .then(res => {
+    .then((res) => {
       return res.data
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(`请求失败 ${err}`)
     })
 }

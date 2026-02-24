@@ -88,6 +88,7 @@ export const useChatStore = defineStore('chat', () => {
             sessionId: currentSessionId,
           },
         })
+        console.log('getChatData: ', res)
 
         pushChatQueue(currentSessionId, {
           chatList: res.data.chatList,

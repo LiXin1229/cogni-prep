@@ -9,6 +9,7 @@ import type { SessionType } from '@/stores/types/session.type'
 import canlendar from '@/assets/svgs/canlendar.svg'
 import siweidaotu from '@/assets/svgs/siweidaotu.svg'
 import penToSquare from '@/assets/svgs/pen-to-square.svg'
+import notebookAndPen from '@/assets/svgs/notebook-and-pen.svg'
 import star from '@/assets/svgs/star.svg'
 import logoutIcon from '@/assets/svgs/logout.svg'
 import hideSidebarIcon from '@/assets/svgs/hide-sidebar.svg'
@@ -39,7 +40,8 @@ const navberList = reactive<NavType[]>([
   { id: 1, title: '每日刷题', icon: canlendar, path: 'chat' },
   { id: 2, title: '思维导图', icon: siweidaotu, path: 'mindmap' },
   { id: 3, title: '笔记', icon: penToSquare, path: 'note' },
-  { id: 4, title: '收藏', icon: star, path: 'prefer' },
+  { id: 4, title: '编辑器', icon: notebookAndPen, path: 'editor' },
+  { id: 5, title: '收藏', icon: star, path: 'prefer' },
 ])
 
 const navToPage = (nav: NavType) => {

@@ -102,11 +102,23 @@ watch(
 
 <template>
   <div class="add-node-dialog">
-    <cust-dialog ref="dialogRef" title="AI生成子节点" :visible="showDialog" @confirm="confirm" @close-dialog="closeDialog">
+    <cust-dialog
+      ref="dialogRef"
+      title="AI生成子节点"
+      :visible="showDialog"
+      @confirm="confirm"
+      @close-dialog="closeDialog"
+    >
       <div class="content">
         <el-form :model="formData">
           <el-form-item label="添加个数" prop="number" class="form">
-            <el-input-number v-model="formData.number" :min="1" :max="30" class="number-input" @click="() => (formData.auto = false)" />
+            <el-input-number
+              v-model="formData.number"
+              :min="1"
+              :max="30"
+              class="number-input"
+              @click="() => (formData.auto = false)"
+            />
 
             <span>
               <el-radio-group v-model="formData.auto" class="radio-btn">

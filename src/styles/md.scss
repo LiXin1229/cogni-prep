@@ -1,0 +1,100 @@
+.edit-container {
+  width: 100%;
+  height: 100%;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+}
+
+pre {
+  white-space: pre-wrap; /* 保留空白符，但允许自动换行 */
+  word-wrap: break-word; /* 兼容旧浏览器（可选） */
+  overflow-wrap: break-word; /* 现代标准，允许在长单词内断行 */
+}
+
+p {
+  max-width: 100%;
+}
+
+em {
+  font-style: italic;
+}
+
+strong {
+  font-weight: bold;
+}
+
+blockquote {
+  border-left: 4px solid #cccc;
+  padding-left: 12px;
+}
+
+code {
+  background-color: #f5f5f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 85%;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.md-block-code-container {
+  padding: 10px;
+  background-color: #f8f8f8;
+  border: 1px solid #cccc;
+}
+
+.md-block-code {
+  font-family: 'Fira Code', Consolas, 'Courier New', monospace !important;
+  font-size: 85%;
+  line-height: 1.8;
+}
+
+ul,
+ol {
+  padding-left: 1.5em;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+ul {
+  list-style-type: disc;
+}
+ol {
+  list-style-type: decimal;
+}
+
+/* 光标图层 */
+.cursor-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* 不阻挡点击 */
+  z-index: 10;
+}
+
+.cursor {
+  position: absolute;
+  width: 1px;
+  height: 16px;
+  background: black;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.ime-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent; /* 隐藏光标 */
+  resize: none;
+  z-index: -1; /* 确保不可见但可聚焦 */
+}

@@ -137,7 +137,7 @@ const throttleToBottom = throttle(
     scrollToBottom()
   },
   100,
-  { leading: true, trailing: false },
+  { leading: true, trailing: false }
 )
 
 watch(
@@ -146,14 +146,14 @@ watch(
     if (isAutoToBottom.value) {
       throttleToBottom()
     }
-  },
+  }
 )
 
 watch(
   () => chatStore.sessionId,
   () => {
     throttleToBottom()
-  },
+  }
 )
 
 onMounted(async () => {
@@ -201,7 +201,12 @@ const title = computed(() => {
     <!-- 顶部区 -->
     <div class="top">
       <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
-        <img src="../../assets/svgs/hide-sidebar.svg" :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }" alt="" class="icon" />
+        <img
+          src="../../assets/svgs/hide-sidebar.svg"
+          :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }"
+          alt=""
+          class="icon"
+        />
       </div>
       <div>
         <div class="title">{{ title }}</div>
@@ -223,13 +228,24 @@ const title = computed(() => {
       @scroll="handleScroll"
     >
       <!-- 吸底按钮 -->
-      <div v-if="!isAutoToBottom && sendState === 'streaming'" class="scroll-to-bottom" @click="scrollToBottom">
+      <div
+        v-if="!isAutoToBottom && sendState === 'streaming'"
+        class="scroll-to-bottom"
+        @click="scrollToBottom"
+      >
         <!-- 原有的向下箭头 -->
         <font-awesome-icon :icon="faAngleDown" class="icon" />
       </div>
 
       <!-- 旋转圆环SVG -->
-      <svg v-if="!isAutoToBottom && sendState === 'streaming'" width="40" height="40" viewBox="0 0 40 40" class="rotate-ring" @click="scrollToBottom">
+      <svg
+        v-if="!isAutoToBottom && sendState === 'streaming'"
+        width="40"
+        height="40"
+        viewBox="0 0 40 40"
+        class="rotate-ring"
+        @click="scrollToBottom"
+      >
         <defs>
           <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#f5f5f5" />
@@ -247,7 +263,10 @@ const title = computed(() => {
 
       <!-- 对话内容区 -->
       <div :class="['text-view', chatStore.isChosePrefer && 'chose-prefer']">
-        <div v-if="!chatList.length && chatStore.sendState === 'available' && chatStore.sessionId < 0" class="blank">
+        <div
+          v-if="!chatList.length && chatStore.sendState === 'available' && chatStore.sessionId < 0"
+          class="blank"
+        >
           <blank />
         </div>
 
@@ -299,11 +318,22 @@ const title = computed(() => {
                 </template>
 
                 <template v-else>
-                  <div class="assistant-help" @click="handleCopy($event)" v-html="parseMarkdown(chat.content)"></div>
+                  <div
+                    class="assistant-help"
+                    @click="handleCopy($event)"
+                    v-html="parseMarkdown(chat.content)"
+                  ></div>
                 </template>
 
                 <!-- 功能按钮 -->
-                <div v-if="chat.content" :class="['functionList', chat.id === chatStore.lastMessage.id && sendState === 'available' && 'visiable', sendState !== 'available' && 'hidden']">
+                <div
+                  v-if="chat.content"
+                  :class="[
+                    'functionList',
+                    chat.id === chatStore.lastMessage.id && sendState === 'available' && 'visiable',
+                    sendState !== 'available' && 'hidden',
+                  ]"
+                >
                   <!-- 复制按钮 -->
                   <div class="btn copy copy-btn" @click="(e) => handleCopy(e, chat)">
                     <img src="../../assets/svgs/copy.svg" alt="" class="icon" />
