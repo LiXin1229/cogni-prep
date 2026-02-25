@@ -96,9 +96,9 @@ export function createSelector(
 
     unEditingBlockCode()
 
-    console.log(
-      `select[${position.startOffset}, ${position.endOffset}] cursor[${cursorOffset.value}]`
-    )
+    // console.log(
+    //   `select[${position.startOffset}, ${position.endOffset}] cursor[${cursorOffset.value}]`
+    // )
     // console.log('endNode: ', endNode)
     return position
   }

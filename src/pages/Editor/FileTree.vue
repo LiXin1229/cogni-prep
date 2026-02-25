@@ -58,10 +58,8 @@ const renderTree = (node: FileNode): VNode => {
 
 <template>
   <div class="resize-menu">
-    <div class="file-tree">
-      <div v-if="fileTree">
-        <component :is="renderTree(fileTree)" />
-      </div>
+    <div v-if="fileTree" class="file-tree no-select">
+      <component :is="renderTree(fileTree)" />
     </div>
 
     <div v-resizable class="resize-handle"></div>
@@ -112,6 +110,13 @@ const renderTree = (node: FileNode): VNode => {
     .selected-file {
       background-color: var(--tree-active-color);
     }
+  }
+
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 }
 </style>

@@ -3,6 +3,8 @@ import type { Selector } from './select'
 import type { BlockCodePosInfo, KeyPositionMaps } from '.'
 import { setupHistoryStack } from './history'
 
+export type KeyCharTypes = 'strong' | 'emphasis' | 'blockCode' | 'inlineCode'
+
 export type Editor = {
   source: Ref<string>
   handleKeydown: (e: KeyboardEvent) => void
@@ -11,6 +13,7 @@ export type Editor = {
   handleDelete: () => void
   handleCompositionUpdate: (startOffset: number, composingText: string) => void
   record: () => void
+  handleInsertKeyChars: (type: KeyCharTypes) => void
 }
 
 export function createEditor(
@@ -35,6 +38,9 @@ export function createEditor(
           break
         case 'y':
           historyStack.redo()
+          break
+        case 'i':
+          handleInsertKeyChars('blockCode')
           break
       }
       return
@@ -77,6 +83,53 @@ export function createEditor(
         break
       default:
         handleInsert(e.key)
+    }
+  }
+
+  const handleInsertKeyChars = (type: KeyCharTypes) => {
+    const { startOffset, endOffset } = selector.position
+
+    switch (type) {
+      case 'blockCode':
+        // handleInsert('\n```\n \n```\n')
+        // insert(' \n```\n')
+        insertBlockCode()
+        break
+      case 'strong':
+        insert('**')
+        break
+      case 'emphasis':
+        insert('*')
+        break
+      case 'inlineCode':
+        insert('`')
+        break
+    }
+
+    function insert(key: string) {
+      const before = source.value.slice(0, startOffset)
+      const selected = source.value.slice(startOffset, endOffset)
+      const after = source.value.slice(endOffset)
+      source.value = before + key + selected + key + after
+
+      const newOffset = endOffset + key.length * 2
+      selector.setPosition(newOffset, newOffset)
+      selector.setCursorOffset(newOffset)
+
+      record() // 记录状态
+    }
+
+    function insertBlockCode() {
+      const before = source.value.slice(0, startOffset)
+      const selected = source.value.slice(startOffset, endOffset)
+      const after = source.value.slice(endOffset)
+      source.value = before + '\n```\n' + (selected || ' ') + '\n```\n' + after
+
+      const newOffset = startOffset + 5
+      selector.setPosition(newOffset, newOffset)
+      selector.setCursorOffset(newOffset)
+
+      record() // 记录状态
     }
   }
 
@@ -209,7 +262,7 @@ export function createEditor(
       position: { startOffset, endOffset },
       cursorOffset,
     } = selector
-    console.log(`handleInsert[${startOffset}, ${endOffset}]`)
+    // console.log(`handleInsert[${startOffset}, ${endOffset}]`)
 
     // 如果有有效选区（包括光标位置）
     if (startOffset !== -1 && endOffset !== -1) {
@@ -504,5 +557,6 @@ export function createEditor(
     handleDelete,
     handleCompositionUpdate,
     record,
+    handleInsertKeyChars,
   }
 }

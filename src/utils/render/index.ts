@@ -1,12 +1,23 @@
-import { computed, h, ref, type Ref } from 'vue'
+import { computed, h, ref, type Ref, type VNode } from 'vue'
 import { remark } from 'remark'
 import { createSelector, type Position } from './select'
-import { createEditor } from './edit'
+import { createEditor, type Editor } from './edit'
 import { isHTMLElement } from './utils/general'
 import { createRenderer, preprocessAst } from './renderer'
 import type { Node } from './ast'
-import { setupIme } from './ime'
+import { setupIme, type Ime } from './ime'
+export * from './select'
+export * from './edit'
+export * from './ime'
+export * from './renderer'
 
+export type MarkDown = {
+  root: () => VNode
+  source: Ref<string>
+  editor: Editor
+  ime: Ime
+  cleanup: () => void
+}
 export type EditorRef = Ref<HTMLElement | undefined>
 export type DomToNode = WeakMap<HTMLElement, Node>
 export type EditingNodeMap = Ref<Map<number, boolean>>
@@ -16,7 +27,7 @@ export type KeyPositionMaps = {
   blockCode: Map<number, BlockCodePosInfo>
 }
 
-export function createMarkdown(input: string, editorRef: EditorRef) {
+export function createMarkdown(input: string, editorRef: EditorRef): MarkDown {
   const domToNode: DomToNode = new WeakMap()
   const editingNodeMap: EditingNodeMap = ref(new Map()) // 代码块 AST 节点 -> 是否正在编辑 (用于触发响应式更新)
   const editingBlockCodeDomMap: EditingBlockCodeDomMap = new Map() // AST 节点 -> 代码块 DOM (用于清除正在编辑的代码块的 HTML)
@@ -27,9 +38,9 @@ export function createMarkdown(input: string, editorRef: EditorRef) {
 
   // 处理键盘输入
   const editor = createEditor(input, selector, keyPositionMaps)
-  const { source } = editor
+  const source = editor.source
 
-  const { getImeTextArea, cleanupImeListener } = setupIme(editorRef, editor, selector)
+  const ime = setupIme(editorRef, editor, selector)
 
   const { renderNode } = createRenderer(
     source,
@@ -44,7 +55,7 @@ export function createMarkdown(input: string, editorRef: EditorRef) {
   const preprocessedAst = computed(() => preprocessAst(ast.value, source.value, keyPositionMaps))
 
   const root = () => {
-    console.log('render root: ', preprocessedAst.value)
+    // console.log('render root: ', preprocessedAst.value)
 
     selector.cursorRendered = false
 
@@ -73,10 +84,7 @@ export function createMarkdown(input: string, editorRef: EditorRef) {
             }
           }
 
-          const textArea = getImeTextArea()
-          if (textArea) {
-            textArea.focus({ preventScroll: true }) // 阻止聚焦时的自动滚动
-          }
+          ime.focusImeTextArea()
         },
       },
       preprocessedAst.value.children.map((node) => renderNode(node))
@@ -84,13 +92,14 @@ export function createMarkdown(input: string, editorRef: EditorRef) {
   }
 
   const cleanup = () => {
-    cleanupImeListener()
+    ime.cleanupImeListener()
   }
 
   return {
     root,
-    source,
+    source, // 保留原始 Ref 身份
     editor,
+    ime,
     cleanup,
   }
 }

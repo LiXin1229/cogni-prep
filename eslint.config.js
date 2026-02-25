@@ -33,6 +33,7 @@ export default [
       'array-bracket-spacing': ['error', 'never'], // 方括号中不使用空格
       'eqeqeq': ['error', 'always'], // 必须使用 === 和 !==
       'no-var': 'error', // 不允许使用 var 声明变量
+      'prefer-const': 'off', // 可不使用 const 声明变量
 
       // ts 规则
       '@typescript-eslint/no-unused-vars': 'warn', // 未使用变量

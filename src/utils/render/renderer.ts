@@ -73,7 +73,7 @@ export function createRenderer(
           )
         }
 
-      case 'code': { // console.log('!!!', node.nodeId, node.children[0].nodeId)
+      case 'code': {
         const nodeId = node.children[0].nodeId
         const isEditing = editingNodeMap.value.get(nodeId) || false
         return h(
@@ -84,7 +84,7 @@ export function createRenderer(
           !isEditing && node.html !== undefined
             ? // 高亮
               h('pre', {
-                class: 'md-block-code',
+                class: 'md-block-code md-block-code-highlight',
                 ref: (el) => {
                   if (isHTMLElement(el) && node.html !== undefined) {
                     el.innerHTML = node.html
@@ -111,7 +111,10 @@ export function createRenderer(
               h(
                 'pre',
                 {
-                  class: 'md-block-code',
+                  class: {
+                    'md-block-code': true,
+                    'md-block-code-highlight-font': node.html !== undefined,
+                  },
                 },
                 node.children.map((c) => renderNode(c))
               )
@@ -178,8 +181,8 @@ export function createRenderer(
         }
 
       default:
-        // return renderPlainText(node, sliceTextFromSource(node), domToNode)
-        return h('span', '?')
+        return renderPlainText(node, sliceTextFromSource(node), domToNode)
+      // return h('span', '?')
     }
   }
 
@@ -191,6 +194,7 @@ export function createRenderer(
     return h(
       'span',
       {
+        class: 'md-text',
         ref: (el) => {
           if (isHTMLElement(el)) {
             domToNode.set(el, node)

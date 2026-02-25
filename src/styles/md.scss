@@ -1,15 +1,53 @@
 .edit-container {
   width: 100%;
   height: 100%;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 16px;
+}
+
+.md-text {
+  font-family:
+    'Open Sans', 'Clear Sans', 'Helvetica Neue', Helvetica, Arial, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  // font-family:
+  //   'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', 'Helvetica Neue',
+  //   Helvetica, Arial, sans-serif;
+  // font-family:
+  //   -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  // font-family:
+  //   -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif,
+  //   'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
 pre {
   white-space: pre-wrap; /* 保留空白符，但允许自动换行 */
   word-wrap: break-word; /* 兼容旧浏览器（可选） */
   overflow-wrap: break-word; /* 现代标准，允许在长单词内断行 */
+}
+
+h1 {
+  font-size: 24px;
+  border-bottom: 1px solid #cccc;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+h4 {
+  font-size: 18px;
+}
+
+h5 {
+  font-size: 16px;
+}
+
+h6 {
+  font-size: 16px;
+  color: #666;
 }
 
 p {
@@ -44,9 +82,15 @@ code {
 }
 
 .md-block-code {
-  font-family: 'Fira Code', Consolas, 'Courier New', monospace !important;
   font-size: 85%;
   line-height: 1.8;
+  font-family: 'Fira Code', Consolas, 'Courier New', monospace;
+}
+
+.md-block-code-highlight-font {
+  span {
+    font-family: 'Fira Code', Consolas, 'Courier New', monospace;
+  }
 }
 
 ul,
@@ -62,12 +106,12 @@ ol {
   list-style-type: decimal;
 }
 
-/* 光标图层 */
+// 光标图层
 .cursor-layer {
   position: absolute;
   top: 0;
   left: 0;
-  pointer-events: none; /* 不阻挡点击 */
+  pointer-events: none;
   z-index: 10;
 }
 
@@ -85,6 +129,7 @@ ol {
   }
 }
 
+// 输入法 textarea
 .ime-textarea {
   position: absolute;
   top: 0;
@@ -94,7 +139,7 @@ ol {
   outline: none;
   background: transparent;
   color: transparent;
-  caret-color: transparent; /* 隐藏光标 */
+  caret-color: transparent;
   resize: none;
-  z-index: -1; /* 确保不可见但可聚焦 */
+  z-index: -1;
 }

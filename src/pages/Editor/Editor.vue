@@ -1,27 +1,33 @@
 <script setup lang="ts">
-import { createMarkdown } from '@/utils/render'
-import { ref, watch } from 'vue'
+import { createMarkdown, type MarkDown } from '@/utils/render'
+import { onUnmounted, ref, watch } from 'vue'
 import '@/styles/md.scss'
 
 const editorRef = ref<HTMLElement>()
 
-const props = defineProps({
-  fileContent: {
-    type: String,
-    default: '',
-  },
-})
+const props = defineProps<{
+  fileSource: string
+}>()
 
-const md = ref()
+const md = ref<MarkDown>()
 
 watch(
-  () => props.fileContent,
-  (newContent) => {
-    if (newContent) {
-      md.value = createMarkdown(newContent, editorRef)
+  () => props.fileSource,
+  (source) => {
+    if (source) {
+      md.value = createMarkdown(source, editorRef)
+      // console.log('createMarkdown: ', md.value)
     }
   }
 )
+
+defineExpose({
+  md,
+})
+
+onUnmounted(() => {
+  md.value?.cleanup()
+})
 </script>
 
 <template>

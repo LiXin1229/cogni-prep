@@ -3,6 +3,11 @@ import type { EditorRef } from '.'
 import type { Editor } from './edit'
 import type { Selector } from './select'
 
+export type Ime = {
+  focusImeTextArea: () => void
+  cleanupImeListener: () => void
+}
+
 export function setupIme(editorRef: EditorRef, editor: Editor, selector: Selector) {
   let isComposing = false
   let compositionStartOffset: number | null = null
@@ -11,6 +16,13 @@ export function setupIme(editorRef: EditorRef, editor: Editor, selector: Selecto
   nextTick(() => {
     initImeListeners()
   })
+
+  const focusImeTextArea = () => {
+    const textArea = getImeTextArea()
+    if (textArea) {
+      textArea.focus({ preventScroll: true }) // 阻止聚焦时的自动滚动
+    }
+  }
 
   const getImeTextArea = () => {
     if (!editorRef.value) return null
@@ -104,7 +116,7 @@ export function setupIme(editorRef: EditorRef, editor: Editor, selector: Selecto
   }
 
   return {
-    getImeTextArea,
+    focusImeTextArea,
     cleanupImeListener,
   }
 }

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import type { FileNode } from './type'
 import FileTree from './FileTree.vue'
 import Editor from './Editor.vue'
+import type { Editor as EditorType, KeyCharTypes } from '@/utils/render'
+import type { Ime } from '@/utils/render'
 
 defineProps<{
   isSidebarFolded: boolean
@@ -103,19 +105,31 @@ const buildFileTree = (files: File[]) => {
 }
 
 const selectedFile = ref<FileNode | null>(null)
-const fileContent = ref<string>('')
+const originalSourceMap = ref<Map<FileNode, string>>(new Map())
+const fileSourceMap = ref<Map<FileNode, string>>(new Map())
+// const fileSource = computed(() => {
+//   return selectedFile.value ? (fileSourceMap.value.get(selectedFile.value) ?? '') : ''
+// })
+const fileSource = ref('')
 
 const handleFileClick = async (fileNode: FileNode) => {
   if (fileNode.isFile && fileNode.file) {
-    console.log('点击文件: ', fileNode)
+    updateFileSource()
+
+    // console.log('点击文件: ', fileNode, fileContentMap.value)
     selectedFile.value = fileNode
 
-    try {
-      const content = await readFileContent(fileNode.file)
-      fileContent.value = typeof content === 'string' ? content : '[二进制文件]'
-    } catch (err) {
-      console.log('读取文件失败: ', err)
+    if (!fileSourceMap.value.has(fileNode)) {
+      try {
+        const content = await readFileContent(fileNode.file)
+        const source = typeof content === 'string' ? content : '[二进制文件]'
+        fileSourceMap.value.set(fileNode, source)
+        originalSourceMap.value.set(fileNode, source)
+      } catch (err) {
+        console.log('读取文件失败: ', err)
+      }
     }
+    fileSource.value = fileSourceMap.value.get(fileNode) ?? ''
   }
 }
 
@@ -127,30 +141,104 @@ const readFileContent = (file: File): Promise<string | ArrayBuffer> => {
     reader.readAsText(file)
   })
 }
+
+export type EditorInstance = {
+  md: { source: string; editor: EditorType; ime: Ime }
+}
+
+const editorRef = ref<EditorInstance>()
+// const editorRef = ref<{ value: EditorInstance }>()
+// const editorRef = ref<InstanceType<typeof Editor>>()
+// const editorRef = ref<EditorInstance>()
+
+// 同步文件内容
+const updateFileSource = () => {
+  if (selectedFile.value && editorRef.value?.md.source) {
+    fileSourceMap.value.set(selectedFile.value, editorRef.value.md.source)
+    fileSource.value = editorRef.value.md.source
+  }
+}
+
+// 重置文件内容
+const resetFileSource = () => {
+  updateFileSource()
+  nextTick(() => {
+    if (selectedFile.value) {
+      const originalSource = originalSourceMap.value.get(selectedFile.value)
+      if (originalSource) {
+        fileSourceMap.value.set(selectedFile.value, originalSource)
+        fileSource.value = originalSource
+      }
+    }
+  })
+}
+
+// 下载 Markdown 文件
+const downloadMarkdown = () => {
+  if (selectedFile.value && editorRef.value?.md) {
+    const content = editorRef.value.md.source
+    const filename = selectedFile.value.name
+
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${filename}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+}
+
+const handleSetStyle = (type: KeyCharTypes) => {
+  if (editorRef.value) {
+    const md = editorRef.value.md
+    md.editor.handleInsertKeyChars(type)
+    md.ime.focusImeTextArea()
+  }
+}
 </script>
 
 <template>
   <div class="editor">
     <!-- 顶部区 -->
     <div class="top">
-      <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
-        <img
-          src="../../assets/svgs/hide-sidebar.svg"
-          :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }"
-          alt=""
-          class="icon"
-        />
+      <div class="top-left">
+        <div v-show="isSidebarFolded" class="toggle-sidebar" @click="emit('toggleSidebar')">
+          <img
+            src="../../assets/svgs/hide-sidebar.svg"
+            :style="{ transform: isSidebarFolded ? 'rotate(180deg)' : 'none' }"
+            alt=""
+            class="icon"
+          />
+        </div>
+
+        <div class="select-file">
+          <div class="select-file-btn">选择文件</div>
+          <input
+            type="file"
+            webkitdirectory
+            multiple
+            class="select-file-input"
+            @change="selectDirectory"
+          />
+        </div>
       </div>
 
-      <div class="select-file">
-        <div class="select-file-btn">选择文件</div>
-        <input
-          type="file"
-          webkitdirectory
-          multiple
-          class="select-file-input"
-          @change="selectDirectory"
-        />
+      <div v-if="selectedFile" class="top-middle">
+        <div @click="handleSetStyle('strong')">加粗</div>
+        <div @click="handleSetStyle('emphasis')">斜体</div>
+        <div @click="handleSetStyle('inlineCode')">行内代码</div>
+        <div @click="handleSetStyle('blockCode')">代码块</div>
+      </div>
+
+      <div class="top-right">
+        <!-- <button @click="resetFileSource">重置</button>
+        <button @click="downloadMarkdown">下载</button> -->
+
+        <el-button :disabled="!selectedFile" @click="resetFileSource">重置</el-button>
+        <el-button :disabled="!selectedFile" @click="downloadMarkdown">下载</el-button>
       </div>
     </div>
 
@@ -162,7 +250,7 @@ const readFileContent = (file: File): Promise<string | ArrayBuffer> => {
       />
 
       <div class="file-content">
-        <Editor :file-content="fileContent" />
+        <Editor ref="editorRef" :file-source="fileSource" />
       </div>
     </div>
   </div>
@@ -178,11 +266,25 @@ const readFileContent = (file: File): Promise<string | ArrayBuffer> => {
     width: 100%;
     height: 50px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     border-bottom: 1px solid var(--light-border-color-1);
     overflow-x: auto;
     overflow-y: hidden;
+
+    .top-left {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .top-middle {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+    }
 
     ::-webkit-scrollbar {
       display: none;
