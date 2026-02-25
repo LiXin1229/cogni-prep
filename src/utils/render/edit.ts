@@ -1,7 +1,7 @@
 import { ref, type Ref } from 'vue'
 import type { Selector } from './select'
 import type { BlockCodePosInfo, KeyPositionMaps } from '.'
-import { setupHistoryStack } from './history'
+import { setupHistoryStack, type History } from './history'
 
 export type KeyCharTypes = 'strong' | 'emphasis' | 'blockCode' | 'inlineCode'
 
@@ -13,6 +13,7 @@ export type Editor = {
   handleDelete: () => void
   handleCompositionUpdate: (startOffset: number, composingText: string) => void
   record: () => void
+  history: History
   handleInsertKeyChars: (type: KeyCharTypes) => void
 }
 
@@ -23,8 +24,8 @@ export function createEditor(
 ): Editor {
   const source = ref(input)
 
-  const historyStack = setupHistoryStack(source, selector)
-  const record = historyStack.record
+  const history = setupHistoryStack(source, selector)
+  const record = history.record
 
   const handleKeydown = (e: KeyboardEvent) => {
     // console.log('handleKeydown: ', e)
@@ -34,10 +35,10 @@ export function createEditor(
           handleCopy()
           break
         case 'z':
-          historyStack.undo()
+          history.undo()
           break
         case 'y':
-          historyStack.redo()
+          history.redo()
           break
         case 'i':
           handleInsertKeyChars('blockCode')
@@ -557,6 +558,7 @@ export function createEditor(
     handleDelete,
     handleCompositionUpdate,
     record,
+    history,
     handleInsertKeyChars,
   }
 }

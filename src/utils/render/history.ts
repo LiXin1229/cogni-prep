@@ -7,7 +7,14 @@ export type HistoryEntry = {
   cursorOffset: number
 }
 
-export function setupHistoryStack(source: Ref<string>, selector: Selector) {
+export type History = {
+  record: () => void
+  reset: (source?: string) => void
+  undo: () => void
+  redo: () => void
+}
+
+export function setupHistoryStack(source: Ref<string>, selector: Selector): History {
   const history: HistoryEntry[] = []
   let currIndex = 0
 
@@ -55,8 +62,27 @@ export function setupHistoryStack(source: Ref<string>, selector: Selector) {
     }
   }
 
+  // 回退到初始状态
+  const reset = (source?: string) => {
+    if (source) {
+      history.push({
+        source,
+        position: {
+          startOffset: -1,
+          endOffset: -1,
+        },
+        cursorOffset: -1,
+      })
+    } else {
+      history.push(history[0])
+    }
+    currIndex++
+    recover()
+  }
+
   return {
     record,
+    reset,
     undo,
     redo,
   }

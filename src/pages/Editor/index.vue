@@ -159,18 +159,12 @@ const updateFileSource = () => {
   }
 }
 
-// 重置文件内容
+// 重置文件初始内容
 const resetFileSource = () => {
-  updateFileSource()
-  nextTick(() => {
-    if (selectedFile.value) {
-      const originalSource = originalSourceMap.value.get(selectedFile.value)
-      if (originalSource) {
-        fileSourceMap.value.set(selectedFile.value, originalSource)
-        fileSource.value = originalSource
-      }
-    }
-  })
+  if (selectedFile.value) {
+    const originalSource = originalSourceMap.value.get(selectedFile.value)
+    editorRef.value?.md.editor.history.reset(originalSource)
+  }
 }
 
 // 下载 Markdown 文件
@@ -284,6 +278,7 @@ const handleSetStyle = (type: KeyCharTypes) => {
       justify-content: flex-start;
       align-items: center;
       gap: 10px;
+      cursor: pointer;
     }
 
     ::-webkit-scrollbar {
