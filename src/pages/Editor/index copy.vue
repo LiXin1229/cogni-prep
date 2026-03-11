@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import type { FileNode } from './type'
 import FileTree from './FileTree.vue'
 import Editor from './Editor.vue'
@@ -32,7 +32,6 @@ const buildFileTree = (files: File[]) => {
     isFile: false,
     isOpen: true,
     children: [],
-    parent: null,
     depth: 0,
   }
 
@@ -55,7 +54,6 @@ const buildFileTree = (files: File[]) => {
           isFile: false,
           isOpen: true,
           children: [],
-          parent: parentNode,
           depth: i + 1,
         }
         pathMap.set(currentPath, node)
@@ -74,7 +72,6 @@ const buildFileTree = (files: File[]) => {
       isFile: true,
       file: file,
       depth: parts.length,
-      parent: parentNode,
       children: [],
     })
   }
@@ -108,62 +105,70 @@ const buildFileTree = (files: File[]) => {
 
 type SourceInfo = {
   type: 'text' | 'img'
+  isRevoked?: boolean
   content: string
 }
 
 const selectedFile = ref<FileNode | null>(null)
-const originalSourceMap = ref<Map<FileNode, string>>(new Map())
+const originalSourceMap = ref<Map<FileNode, SourceInfo>>(new Map())
 const sourceMap = ref<Map<FileNode, SourceInfo>>(new Map())
-const currSource = computed<SourceInfo | null>(() => {
-  const curr = selectedFile.value ? (sourceMap.value.get(selectedFile.value) ?? null) : null
-  // console.log('currSource: ', curr)
-  return curr
+const currSource = ref<SourceInfo>({
+  type: 'text',
+  content: '',
 })
+
+const setCurrentFileSource = (fileNode: FileNode) => {
+  const source = sourceMap.value.get(fileNode)
+  if (source && source.type === 'text') {
+    currSource.value = source
+  } else if (source && source.type === 'img') {
+    if (source.isRevoked) {
+      source.content = URL.createObjectURL(fileNode.file as Blob)
+    }
+    currSource.value = source
+  }
+}
 
 const handleFileClick = async (fileNode: FileNode) => {
   if (fileNode.isFile && fileNode.file) {
-    if (currSource.value?.type === 'text') {
-      // 跳转到其他文件时同步当前文本类型文件到 sourceMap
-      updateTextFileSource()
-    }
+    updateFileSource()
+    cleanupFileUrl()
 
-    if (currSource.value?.type === 'img') {
-      cleanupFileUrl()
-    }
-
-    onCleanup()
-
-    // console.log('点击文件: ', fileNode)
+    // console.log('点击文件: ', fileNode, fileContentMap.value)
     selectedFile.value = fileNode
 
     if (!sourceMap.value.has(fileNode)) {
       try {
+        // console.log('file: ', fileNode.file)
         let source: SourceInfo
         if (fileNode.file.type.startsWith('image/')) {
           // 判断是否是图片文件
           const dataUrl = URL.createObjectURL(fileNode.file)
           source = {
             type: 'img',
+            isRevoked: false,
             content: dataUrl,
           }
         } else {
           const content = await readFileContent(fileNode.file)
-          const text = typeof content === 'string' ? content : '[二进制文件]'
           source = {
             type: 'text',
-            content: text,
+            content: typeof content === 'string' ? content : '[二进制文件]',
           }
-          originalSourceMap.value.set(fileNode, text)
         }
 
         sourceMap.value.set(fileNode, source)
+        originalSourceMap.value.set(fileNode, source)
       } catch (err) {
         console.log('读取文件失败: ', err)
       }
     }
+
+    setCurrentFileSource(fileNode)
   }
 }
 
+// 将文件读取为 string
 const readFileContent = (file: File): Promise<string | ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -173,60 +178,64 @@ const readFileContent = (file: File): Promise<string | ArrayBuffer> => {
   })
 }
 
-type EditorInstance = {
-  md: { source: string; editor: EditorType; ime: Ime; cleanup: () => void } | undefined
-}
-const editorRef = ref<EditorInstance>()
-
-// 同步文件内容
-const updateTextFileSource = () => {
-  if (selectedFile.value && editorRef.value?.md?.source) {
-    const fs = sourceMap.value.get(selectedFile.value)
-    if (fs) fs.content = editorRef.value.md.source
-  }
-}
-
-// 清理文件 URL
 const cleanupFileUrl = () => {
   if (selectedFile.value) {
     const prevSource = sourceMap.value.get(selectedFile.value)
     if (prevSource && prevSource.type === 'img') {
+      prevSource.isRevoked = true
       URL.revokeObjectURL(prevSource.content)
-      sourceMap.value.delete(selectedFile.value)
     }
+  }
+}
+
+export type EditorInstance = {
+  md: { source: string; editor: EditorType; ime: Ime }
+}
+
+const editorRef = ref<EditorInstance>()
+// const editorRef = ref<{ value: EditorInstance }>()
+// const editorRef = ref<InstanceType<typeof Editor>>()
+// const editorRef = ref<EditorInstance>()
+
+// 同步文件内容
+const updateFileSource = () => {
+  // console.log(selectedFile.value)
+  if (selectedFile.value && editorRef.value?.md.source) {
+    const fs = sourceMap.value.get(selectedFile.value)
+    console.log('fs: ', fs)
+    if (fs) {
+      fs.content = editorRef.value.md.source
+      currSource.value = {
+        type: 'text',
+        content: editorRef.value.md.source,
+      }
+    }
+    // sourceMap.value.set(selectedFile.value, editorRef.value.md.source)
   }
 }
 
 // 重置文件初始内容
 const resetFileSource = () => {
-  if (selectedFile.value) {
-    const originalText = originalSourceMap.value.get(selectedFile.value)
-    if (originalText && editorRef.value) {
+  if (selectedFile.value && currSource.value.type === 'text') {
+    const originalSource = originalSourceMap.value.get(selectedFile.value)
+    if (editorRef.value && originalSource) {
       const md = editorRef.value.md
-      md?.editor.history.reset(originalText)
+      md.editor.history.reset(originalSource.content)
     }
   }
 }
 
-// 下载文件
-const downloadFile = () => {
-  const fileNode = selectedFile.value
-  if (fileNode && fileNode.file && currSource.value) {
-    let blob: Blob
-    if (currSource.value.type === 'text') {
-      const content = editorRef.value?.md?.source ?? ''
-      const type = fileNode.file.type || 'text/markdown'
-      blob = new Blob([content], { type })
-    } else if (currSource.value.type === 'img') {
-      blob = fileNode.file
-    } else {
-      blob = fileNode.file
-    }
+// 下载 Markdown 文件
+const downloadMarkdown = () => {
+  if (selectedFile.value && editorRef.value?.md) {
+    const content = editorRef.value.md.source
+    const filename = selectedFile.value.name
 
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = fileNode.name
+    link.download = `${filename}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -237,16 +246,8 @@ const downloadFile = () => {
 const handleSetStyle = (type: KeyCharTypes) => {
   if (editorRef.value) {
     const md = editorRef.value.md
-    md?.editor.handleInsertKeyChars(type)
-    md?.ime.focusImeTextArea()
-  }
-}
-
-// 编辑器的清理周期
-const onCleanup = () => {
-  if (editorRef.value) {
-    const md = editorRef.value.md
-    md?.cleanup()
+    md.editor.handleInsertKeyChars(type)
+    md.ime.focusImeTextArea()
   }
 }
 </script>
@@ -277,7 +278,7 @@ const onCleanup = () => {
         </div>
       </div>
 
-      <div v-if="selectedFile && currSource && currSource.type === 'text'" class="top-middle">
+      <div v-if="selectedFile" class="top-middle">
         <div @click="handleSetStyle('strong')">加粗</div>
         <div @click="handleSetStyle('emphasis')">斜体</div>
         <div @click="handleSetStyle('inlineCode')">行内代码</div>
@@ -285,14 +286,11 @@ const onCleanup = () => {
       </div>
 
       <div class="top-right">
-        <el-button
-          v-if="currSource && currSource.type === 'text'"
-          :disabled="!selectedFile"
-          @click="resetFileSource"
-        >
-          重置
-        </el-button>
-        <el-button :disabled="!selectedFile" @click="downloadFile">下载</el-button>
+        <!-- <button @click="resetFileSource">重置</button>
+        <button @click="downloadMarkdown">下载</button> -->
+
+        <el-button :disabled="!selectedFile" @click="resetFileSource">重置</el-button>
+        <el-button :disabled="!selectedFile" @click="downloadMarkdown">下载</el-button>
       </div>
     </div>
 
@@ -304,14 +302,10 @@ const onCleanup = () => {
       />
 
       <div class="file-content">
-        <div v-show="currSource && currSource.type === 'text'">
-          <Editor
-            ref="editorRef"
-            :text="currSource ? currSource.content : ''"
-            :curr-node="selectedFile"
-          />
-        </div>
-        <div v-if="currSource && currSource.type === 'img'" class="image-wapper">
+        <template v-if="currSource.type === 'text'">
+          <Editor ref="editorRef" :text="currSource.content" />
+        </template>
+        <div v-else class="image-wapper">
           <img :src="currSource.content" alt="image" />
         </div>
       </div>
@@ -413,11 +407,9 @@ const onCleanup = () => {
 
       .image-wapper {
         width: 100%;
-        display: flex;
-        justify-content: center;
 
         img {
-          width: 1000px;
+          width: 50%;
           // height: 100%;
         }
       }

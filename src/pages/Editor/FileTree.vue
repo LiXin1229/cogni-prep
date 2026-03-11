@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, watch, type VNode } from 'vue'
+import { h, type VNode } from 'vue'
 import type { FileNode } from './type'
 
 const props = defineProps<{
@@ -7,13 +7,6 @@ const props = defineProps<{
   selectedFile: FileNode | null
   handleFileClick: (file: FileNode) => void
 }>()
-
-watch(
-  () => props.fileTree,
-  (newVal) => {
-    console.log(newVal)
-  }
-)
 
 const renderTree = (node: FileNode): VNode => {
   const itemVNode = node.isFile

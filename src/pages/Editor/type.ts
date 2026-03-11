@@ -4,6 +4,7 @@ export interface FileNode {
   isFile: boolean
   isOpen?: boolean
   children: FileNode[]
+  parent: FileNode | null
   depth: number
   file?: File
 }

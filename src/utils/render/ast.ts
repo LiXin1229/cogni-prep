@@ -1,7 +1,12 @@
 import type { Position } from './select'
 import type { RootContent } from 'mdast'
 
-export type Node = RootContent & { position: Position; el?: HTMLElement; nodeId: number }
+export type Node = RootContent & {
+  position: Position
+  el?: HTMLElement
+  nodeId: number
+  src?: string
+}
 
 export interface EmptyLine {
   type: 'emptyLine'

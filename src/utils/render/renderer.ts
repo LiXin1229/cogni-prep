@@ -11,6 +11,7 @@ import type {
 } from './index'
 import type { EmptyLine, Node } from './ast'
 import hljs from 'highlight.js'
+import type { BlobUrlManager } from './blobUrlManager'
 
 export function createRenderer(
   source: Ref<string>,
@@ -136,13 +137,18 @@ export function createRenderer(
         }
       }
 
-      // return h(
-      //   tag,
-      //   {
-      //     ...(tag === 'ol' && node.start !== 1 ? { start: node.start } : {}),
-      //   },
-      //   node.children.map((c) => renderNode(c))
-      // )
+      case 'image': {
+        return node.src
+          ? h(
+              'div',
+              { class: 'md-img' },
+              h('img', {
+                src: node.src,
+                alt: node.alt,
+              })
+            )
+          : h('div', node.url)
+      }
 
       case 'listItem':
         return h(
@@ -273,7 +279,12 @@ export function createRenderer(
   }
 }
 
-export function preprocessAst(ast: Root, source: string, keyPositionMaps: KeyPositionMaps) {
+export function preprocessAst(
+  ast: Root,
+  source: string,
+  keyPositionMaps: KeyPositionMaps,
+  { parseUrlToBlob, blobUrlSet }: BlobUrlManager
+) {
   const newChildren: RootContent[] = []
   let lastNode: { endLine: number; endOffset: number } | null = null
   let nodeId = 0
@@ -371,7 +382,7 @@ export function preprocessAst(ast: Root, source: string, keyPositionMaps: KeyPos
     children: newChildren,
   }
 
-  // 预处理 AST (1. 添加节点唯一标签 nodeId; 2. 给 inlineCode 多包一层文本; 3. 给 Code 多包一层文本)
+  // 预处理 AST (1. 添加节点唯一标签 nodeId; 2. 给 inlineCode 多包一层文本; 3. 给 Code 多包一层文本); 4. 处理图片 URL
   function processNode(node: Node) {
     if (node.type === 'inlineCode') {
       const textNode: Text & { nodeId: number } = {
@@ -426,6 +437,10 @@ export function preprocessAst(ast: Root, source: string, keyPositionMaps: KeyPos
         head: headPosition,
         tail: tailPosition,
       })
+    } else if (node.type === 'image' && parseUrlToBlob) {
+      node.src = parseUrlToBlob(node.url)
+      blobUrlSet?.add(node.src)
+      node.nodeId = nodeId++
     } else {
       if (hasChildren(node)) {
         for (const child of node.children) {

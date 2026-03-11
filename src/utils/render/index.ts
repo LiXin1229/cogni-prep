@@ -6,6 +6,7 @@ import { isHTMLElement } from './utils/general'
 import { createRenderer, preprocessAst } from './renderer'
 import type { Node } from './ast'
 import { setupIme, type Ime } from './ime'
+import { createBlobUrlManager, type ParseUrlToBlob } from './blobUrlManager'
 export * from './select'
 export * from './edit'
 export * from './ime'
@@ -26,12 +27,22 @@ export type BlockCodePosInfo = { content: Position; head: Position; tail: Positi
 export type KeyPositionMaps = {
   blockCode: Map<number, BlockCodePosInfo>
 }
+export type UseOptions = {
+  parseUrlToBlob: ParseUrlToBlob
+}
 
-export function createMarkdown(input: string, editorRef: EditorRef): MarkDown {
+export function createMarkdown(
+  input: string,
+  editorRef: EditorRef,
+  options?: UseOptions
+): MarkDown {
   const domToNode: DomToNode = new WeakMap()
   const editingNodeMap: EditingNodeMap = ref(new Map()) // 代码块 AST 节点 -> 是否正在编辑 (用于触发响应式更新)
   const editingBlockCodeDomMap: EditingBlockCodeDomMap = new Map() // AST 节点 -> 代码块 DOM (用于清除正在编辑的代码块的 HTML)
   const keyPositionMaps: KeyPositionMaps = { blockCode: new Map() }
+
+  // 处理图片 URL
+  const blobUrlManager = createBlobUrlManager(options)
 
   // 处理光标选区
   const selector = createSelector(editingNodeMap, keyPositionMaps)
@@ -52,11 +63,12 @@ export function createMarkdown(input: string, editorRef: EditorRef): MarkDown {
   )
 
   const ast = computed(() => remark().parse(source.value))
-  const preprocessedAst = computed(() => preprocessAst(ast.value, source.value, keyPositionMaps))
+  const preprocessedAst = computed(() =>
+    preprocessAst(ast.value, source.value, keyPositionMaps, blobUrlManager)
+  )
 
   const root = () => {
     // console.log('render root: ', preprocessedAst.value)
-
     selector.cursorRendered = false
 
     return h(
@@ -93,6 +105,7 @@ export function createMarkdown(input: string, editorRef: EditorRef): MarkDown {
 
   const cleanup = () => {
     ime.cleanupImeListener()
+    blobUrlManager.cleanup()
   }
 
   return {

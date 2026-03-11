@@ -2,21 +2,25 @@
 import { createMarkdown, type MarkDown } from '@/utils/render'
 import { onUnmounted, ref, watch } from 'vue'
 import '@/styles/md.scss'
+import type { FileNode } from './type'
+import { parseUrlToBlob } from './utils/parseUrlToBlob'
 
 const editorRef = ref<HTMLElement>()
 
 const props = defineProps<{
-  fileSource: string
+  text: string
+  currNode: FileNode | null
 }>()
 
 const md = ref<MarkDown>()
 
 watch(
-  () => props.fileSource,
+  () => props.text,
   (source) => {
     if (source) {
-      md.value = createMarkdown(source, editorRef)
-      // console.log('createMarkdown: ', md.value)
+      md.value = createMarkdown(source, editorRef, {
+        parseUrlToBlob: (url: string) => parseUrlToBlob(url, props.currNode),
+      })
     }
   }
 )
@@ -44,6 +48,6 @@ onUnmounted(() => {
 .editor-wapper {
   position: relative;
   width: 100%;
-  height: 100%;
+  // height: 100%;
 }
 </style>
