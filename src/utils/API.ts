@@ -28,6 +28,9 @@ const API = {
   getPreferList: '/perfer/perfer/getPreferList',
   getdetailChats: '/perfer/perfer/getdetailChats',
   deletePrefer: '/perfer/perfer/deletePrefer',
+  fileTree: '/file/file/fileTree',
+  getContentbyFilePath: '/file/file/getContentbyFilePath',
+  uploadFile: '/file/file/upload',
 }
 
 export default API

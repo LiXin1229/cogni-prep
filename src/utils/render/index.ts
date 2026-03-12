@@ -28,6 +28,7 @@ export type KeyPositionMaps = {
   blockCode: Map<number, BlockCodePosInfo>
 }
 export type UseOptions = {
+  isReadonly: boolean
   parseUrlToBlob: ParseUrlToBlob
 }
 
@@ -40,6 +41,7 @@ export function createMarkdown(
   const editingNodeMap: EditingNodeMap = ref(new Map()) // 代码块 AST 节点 -> 是否正在编辑 (用于触发响应式更新)
   const editingBlockCodeDomMap: EditingBlockCodeDomMap = new Map() // AST 节点 -> 代码块 DOM (用于清除正在编辑的代码块的 HTML)
   const keyPositionMaps: KeyPositionMaps = { blockCode: new Map() }
+  const isReadonly = options?.isReadonly || false
 
   // 处理图片 URL
   const blobUrlManager = createBlobUrlManager(options)
@@ -63,6 +65,12 @@ export function createMarkdown(
   )
 
   const ast = computed(() => remark().parse(source.value))
+  // const ast = computed(() => {
+  //   console.time('remark-parse')
+  //   const result = remark().parse(source.value)
+  //   console.timeEnd('remark-parse')
+  //   return result
+  // })
   const preprocessedAst = computed(() =>
     preprocessAst(ast.value, source.value, keyPositionMaps, blobUrlManager)
   )
@@ -73,35 +81,45 @@ export function createMarkdown(
 
     return h(
       'pre',
-      {
-        onMousedown: (e: MouseEvent) => {
-          // 找到最近的 span（文本节点容器）
-          const targetEl = (e.target as Element).closest('span')
-          if (isHTMLElement(targetEl)) {
-            // 从 WeakMap 获取对应的 TemplateNode
-            const node = domToNode.get(targetEl)
-            if (node) {
-              selector.setStartNode(node)
-            }
-          }
-        },
-        onMouseup: (e: MouseEvent) => {
-          const targetEl = (e.target as Element).closest('span')
-          // console.log('targetEl: ', targetEl)
-          if (isHTMLElement(targetEl)) {
-            const node = domToNode.get(targetEl) // 获取 AST 节点才能通过 loc 逆推点击位置
-            // console.log('targetEl: ', node)
-            if (node) {
-              selector.setEndNode(node)
-            }
-          }
+      !isReadonly
+        ? {
+            onMousedown: (e: MouseEvent) => {
+              // 找到最近的 span（文本节点容器）
+              const targetEl = (e.target as Element).closest('span')
+              if (isHTMLElement(targetEl)) {
+                // 从 WeakMap 获取对应的 TemplateNode
+                const node = domToNode.get(targetEl)
+                if (node) {
+                  selector.setStartNode(node)
+                }
+              }
+            },
+            onMouseup: (e: MouseEvent) => {
+              const targetEl = (e.target as Element).closest('span')
+              // console.log('targetEl: ', targetEl)
+              if (isHTMLElement(targetEl)) {
+                const node = domToNode.get(targetEl) // 获取 AST 节点才能通过 loc 逆推点击位置
+                // console.log('targetEl: ', node)
+                if (node) {
+                  selector.setEndNode(node)
+                }
+              }
 
-          ime.focusImeTextArea()
-        },
-      },
+              ime.focusImeTextArea()
+            },
+          }
+        : {},
       preprocessedAst.value.children.map((node) => renderNode(node))
+      // renderChildrenWithLog()
     )
   }
+
+  // const renderChildrenWithLog = () => {
+  //   console.time('render-node')
+  //   const children = preprocessedAst.value.children.map((node) => renderNode(node))
+  //   console.timeEnd('render-node')
+  //   return children
+  // }
 
   const cleanup = () => {
     ime.cleanupImeListener()

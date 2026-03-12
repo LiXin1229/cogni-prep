@@ -8,6 +8,7 @@ import { useLocalStorage } from '@/utils/useStorage'
 import request from '@/utils/request'
 import API from '@/utils/API'
 import type { UserInfoType, AreaType, AreaListType } from './types/user.type'
+import { isMobileDevice } from '@/utils/device'
 
 export const useUserInfoStore = defineStore('user', () => {
   const router = useRouter()
@@ -15,8 +16,8 @@ export const useUserInfoStore = defineStore('user', () => {
   const noteStore = useNoteStore()
   const sessionStore = useSessionStore()
 
-  const isMobile = ref(window.innerWidth / window.innerHeight < 1 ? true : false)
-
+  // const isMobile = ref(window.innerWidth / window.innerHeight < 1 ? true : false)
+  const isMobile = ref(isMobileDevice())
   const isSidebarFolded = ref(isMobile.value ? true : false)
 
   const showDialog = ref('')
@@ -35,9 +36,9 @@ export const useUserInfoStore = defineStore('user', () => {
     mindmapStore.treeData = null
     sessionStore.sessionList = []
     sessionStore.sessionNumber = 20
-    sessionStore.mainArea = { areaId: null,name: '未选择领域' }
-    
-    await new Promise(resolve => setTimeout(resolve, 0))
+    sessionStore.mainArea = { areaId: null, name: '未选择领域' }
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
 
     router.push('/login')
   }
@@ -52,8 +53,8 @@ export const useUserInfoStore = defineStore('user', () => {
       url: API.getUserInfo,
       method: 'GET',
       params: {
-        id: userInfo.value.userId
-      }
+        id: userInfo.value.userId,
+      },
     })
 
     areaList.value = res.data.areaList
@@ -65,7 +66,7 @@ export const useUserInfoStore = defineStore('user', () => {
   }
 
   // 领域列表
-  const { value: areaList } = useLocalStorage<AreaType[]>('cogni_area_list', []) 
+  const { value: areaList } = useLocalStorage<AreaType[]>('cogni_area_list', [])
 
   // 新增领域
   const updateArea = async (area: string) => {
@@ -76,18 +77,18 @@ export const useUserInfoStore = defineStore('user', () => {
         data: {
           id: userInfo.value.userId,
           newArea: area,
-          areaList: areaList.value
+          areaList: areaList.value,
         },
-        showLoading: true
+        showLoading: true,
       })
 
       await router.push({
-        name: '每日刷题'
+        name: '每日刷题',
       })
       areaList.value.push(res.data.newArea)
       mindmapStore.selectedAreaId = res.data.newArea.areaId
       sessionStore.mainArea = res.data.newArea
-      sessionStore.surroundingPoint = '' 
+      sessionStore.surroundingPoint = ''
     } catch (error) {
       console.log(error)
     }
@@ -104,7 +105,7 @@ export const useUserInfoStore = defineStore('user', () => {
           areaList: areaList.value,
           areaId: mindmapStore.selectedAreaId,
         },
-        showLoading: true
+        showLoading: true,
       })
 
       // console.log(res)
@@ -137,6 +138,6 @@ export const useUserInfoStore = defineStore('user', () => {
     areaList,
     updateArea,
     deleteArea,
-    logout
+    logout,
   }
 })

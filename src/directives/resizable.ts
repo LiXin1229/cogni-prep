@@ -1,9 +1,12 @@
-import type { CustHTMLElement } from './directive.type'
+interface CustHTMLElement extends HTMLElement {
+  clickOutsideEvent: (event: MouseEvent) => void
+  _resizableHandler: (event: MouseEvent) => void
+}
 
 export const resizableDirective = {
   mounted(el: CustHTMLElement) {
     let init: number
-    let initWidth : number
+    let initWidth: number
     const parent: HTMLElement | null = el.parentElement
 
     if (!parent) return
@@ -35,5 +38,5 @@ export const resizableDirective = {
   },
   unmounted(el: CustHTMLElement) {
     if (el._resizableHandler) el.removeEventListener('mousedown', el._resizableHandler)
-  }
+  },
 }

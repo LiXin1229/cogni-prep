@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { FileNode } from './type'
+import { buildFileTree, type FileNode } from './type'
 import FileTree from './FileTree.vue'
 import Editor from './Editor.vue'
+import Directory from './Directory.vue'
+import FloatingToolbar from './FloatingToolbar.vue'
 import type { Editor as EditorType, KeyCharTypes } from '@/utils/render'
 import type { Ime } from '@/utils/render'
+
+import { useUserInfoStore } from '@/stores/user'
+import request from '@/utils/request'
+import API from '@/utils/API'
+import { ElMessageBox } from 'element-plus'
+
+const userStore = useUserInfoStore()
 
 defineProps<{
   isSidebarFolded: boolean
@@ -16,6 +25,7 @@ const emit = defineEmits<{
 
 const fileTree = ref<FileNode | null>(null)
 
+// 选择本地目录
 const selectDirectory = (e: Event) => {
   const target = e.target as HTMLInputElement
   const files = Array.from(target.files || [])
@@ -23,90 +33,10 @@ const selectDirectory = (e: Event) => {
     fileTree.value = buildFileTree(files)
     // console.log('🌳 文件树: ', fileTree.value)
   }
+  setEditMode()
 }
 
-const buildFileTree = (files: File[]) => {
-  const root: FileNode = {
-    name: '目录',
-    path: '',
-    isFile: false,
-    isOpen: true,
-    children: [],
-    parent: null,
-    depth: 0,
-  }
-
-  const pathMap = new Map<string, FileNode>()
-  pathMap.set('', root)
-
-  for (const file of files) {
-    const parts = (file.webkitRelativePath || file.name).split('/')
-    let currentPath = ''
-    let parentNode = root
-
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i]
-      currentPath = currentPath ? `${currentPath}/${part}` : part
-
-      if (!pathMap.has(currentPath)) {
-        const node: FileNode = {
-          name: part,
-          path: currentPath,
-          isFile: false,
-          isOpen: true,
-          children: [],
-          parent: parentNode,
-          depth: i + 1,
-        }
-        pathMap.set(currentPath, node)
-        parentNode.children.push(node)
-      }
-
-      parentNode = pathMap.get(currentPath)!
-    }
-
-    const fileName = parts[parts.length - 1]
-    const filePath = parts.join('/')
-
-    parentNode.children.push({
-      name: fileName,
-      path: filePath,
-      isFile: true,
-      file: file,
-      depth: parts.length,
-      parent: parentNode,
-      children: [],
-    })
-  }
-
-  const sortNodeChildren = (node: FileNode) => {
-    if (!node.children || node.children.length === 0) return
-
-    // 先递归排序子节点的子节点 (深度优先)
-    node.children.forEach((child) => {
-      if (!child.isFile) {
-        sortNodeChildren(child)
-      }
-    })
-
-    // 再对当前层的 children 进行排序
-    node.children.sort((a, b) => {
-      // 文件夹优先于文件
-      if (a.isFile !== b.isFile) {
-        return a.isFile ? 1 : -1
-      }
-
-      // 同类型下，按名称自然排序 (localeCompare 支持数字智能排序)
-      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-    })
-  }
-
-  sortNodeChildren(root)
-
-  return root
-}
-
-type SourceInfo = {
+export type SourceInfo = {
   type: 'text' | 'img'
   content: string
 }
@@ -114,11 +44,9 @@ type SourceInfo = {
 const selectedFile = ref<FileNode | null>(null)
 const originalSourceMap = ref<Map<FileNode, string>>(new Map())
 const sourceMap = ref<Map<FileNode, SourceInfo>>(new Map())
-const currSource = computed<SourceInfo | null>(() => {
-  const curr = selectedFile.value ? (sourceMap.value.get(selectedFile.value) ?? null) : null
-  // console.log('currSource: ', curr)
-  return curr
-})
+const currSource = computed<SourceInfo | null>(() =>
+  selectedFile.value ? (sourceMap.value.get(selectedFile.value) ?? null) : null
+)
 
 const handleFileClick = async (fileNode: FileNode) => {
   if (fileNode.isFile && fileNode.file) {
@@ -249,6 +177,127 @@ const onCleanup = () => {
     md?.cleanup()
   }
 }
+
+const directoryRef = ref<{ getDirectory?: () => void }>()
+
+// 上传目录
+const uploadDirectory = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const files = Array.from(target.files || [])
+  if (files.length) {
+    // console.log('📁 上传的文件: ', files)
+
+    try {
+      const promptResult = await ElMessageBox.prompt('', '设置文件夹名称', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /^.{1,20}$/, // 至少1个字符，最多20个字符（包括中文、字母、数字、符号等）
+        inputErrorMessage: '名称长度必须为1-20个字符',
+      })
+      console.log('用户输入的文件夹名称:', promptResult)
+      const name = promptResult.value
+      const tree = buildFileTree(files, false)
+      try {
+        const userId = userStore.userInfo.userId
+        if (userId === undefined) {
+          throw new Error('用户未登录')
+        }
+
+        const res = await request({
+          url: API.fileTree,
+          method: 'POST',
+          data: {
+            fileTree: tree,
+            userId: userId,
+            name: name,
+          },
+        })
+        if (res.success) {
+          // console.log('上传成功:', res.data)
+          // fileTree.value = tree
+          directoryRef.value?.getDirectory?.()
+        }
+      } catch (error) {
+        console.log('上传失败:', error)
+      }
+
+      const formData = new FormData()
+      files.forEach((file) => {
+        formData.append('files', file, file.webkitRelativePath || file.name)
+        formData.append('path', file.webkitRelativePath)
+      })
+
+      try {
+        const res = await request({
+          url: API.uploadFile,
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        console.log('上传成功:', res.data)
+      } catch (error) {
+        console.log('上传失败:', error)
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
+      /* empty */
+    }
+  }
+}
+
+// 只读模式
+const readonlyMode = ref<boolean>(false)
+
+const setReadonlyMode = (tree: FileNode) => {
+  if (userStore.isMobile) {
+    showMenu.value = true
+  }
+  readonlyMode.value = true
+  fileTree.value = tree
+  selectedFile.value = null
+}
+
+const setEditMode = () => {
+  readonlyMode.value = false
+  selectedFile.value = null
+}
+
+const handleFileClickReadonly = async (fileNode: FileNode) => {
+  if (userStore.isMobile) {
+    showMenu.value = false
+  }
+
+  // console.log('点击了:', fileNode.name)
+  try {
+    const res = await request<{ content: string }>({
+      url: API.getContentbyFilePath,
+      method: 'GET',
+      params: {
+        filePath: fileNode.path,
+      },
+    })
+    if (res.success) {
+      selectedFile.value = fileNode
+      const content = res.data.content
+      sourceMap.value.set(fileNode, {
+        type: 'text',
+        content: content,
+      })
+    }
+  } catch (error) {
+    console.log('fileNode: ', error)
+  }
+}
+
+const showMenu = ref(false)
+
+// 移动端打开目录
+const toggleMenu = () => {
+  if (!userStore.isMobile) return
+
+  showMenu.value = !showMenu.value
+}
 </script>
 
 <template>
@@ -265,8 +314,9 @@ const onCleanup = () => {
           />
         </div>
 
-        <div class="select-file">
-          <div class="select-file-btn">选择文件</div>
+        <div v-mobile-hidden class="select-file">
+          <div class="select-file-btn">本地文件</div>
+          <!-- <el-button class="select-file-btn">打开本地文件</el-button> -->
           <input
             type="file"
             webkitdirectory
@@ -275,24 +325,54 @@ const onCleanup = () => {
             @change="selectDirectory"
           />
         </div>
+
+        <div v-mobile-hidden class="select-file">
+          <div class="select-file-btn">上传文件</div>
+          <input
+            type="file"
+            webkitdirectory
+            multiple
+            class="select-file-input"
+            @change="uploadDirectory"
+          />
+        </div>
       </div>
 
-      <div v-if="selectedFile && currSource && currSource.type === 'text'" class="top-middle">
+      <!-- <div
+        v-if="selectedFile && currSource && currSource.type === 'text' && !readonlyMode"
+        class="top-middle"
+      >
         <div @click="handleSetStyle('strong')">加粗</div>
         <div @click="handleSetStyle('emphasis')">斜体</div>
         <div @click="handleSetStyle('inlineCode')">行内代码</div>
         <div @click="handleSetStyle('blockCode')">代码块</div>
+      </div> -->
+
+      <div class="top-middle">
+        <Directory
+          ref="directoryRef"
+          :readonly-mode="readonlyMode"
+          :set-readonly-mode="setReadonlyMode"
+        />
       </div>
 
       <div class="top-right">
-        <el-button
-          v-if="currSource && currSource.type === 'text'"
-          :disabled="!selectedFile"
-          @click="resetFileSource"
-        >
-          重置
-        </el-button>
-        <el-button :disabled="!selectedFile" @click="downloadFile">下载</el-button>
+        <template v-if="!readonlyMode">
+          <el-button
+            v-if="currSource && currSource.type === 'text'"
+            :disabled="!selectedFile"
+            @click="resetFileSource"
+          >
+            重置
+          </el-button>
+          <el-button v-if="currSource" :disabled="!selectedFile" @click="downloadFile">
+            下载
+          </el-button>
+        </template>
+      </div>
+
+      <div v-if="userStore.isMobile" class="toggle-menu" @click="toggleMenu">
+        <img src="../../assets/svgs/menu.svg" alt="" class="icon" />
       </div>
     </div>
 
@@ -300,7 +380,8 @@ const onCleanup = () => {
       <FileTree
         :file-tree="fileTree"
         :selected-file="selectedFile"
-        :handle-file-click="handleFileClick"
+        :handle-file-click="readonlyMode ? handleFileClickReadonly : handleFileClick"
+        :show-menu="showMenu"
       />
 
       <div class="file-content">
@@ -308,12 +389,20 @@ const onCleanup = () => {
           <Editor
             ref="editorRef"
             :text="currSource ? currSource.content : ''"
+            :readonly="readonlyMode"
             :curr-node="selectedFile"
           />
         </div>
         <div v-if="currSource && currSource.type === 'img'" class="image-wapper">
           <img :src="currSource.content" alt="image" />
         </div>
+
+        <FloatingToolbar
+          :selected-file="selectedFile"
+          :curr-source="currSource"
+          :readonly-mode="readonlyMode"
+          :handle-set-style="handleSetStyle"
+        />
       </div>
     </div>
   </div>
@@ -340,14 +429,7 @@ const onCleanup = () => {
       display: flex;
       justify-content: flex-start;
       align-items: center;
-    }
-
-    .top-middle {
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
       gap: 10px;
-      cursor: pointer;
     }
 
     ::-webkit-scrollbar {
@@ -378,11 +460,11 @@ const onCleanup = () => {
       position: relative;
 
       .select-file-btn {
+        position: relative;
         padding: 6px 12px;
         border-radius: 10px;
         font-weight: bold;
         font-size: 15px;
-        position: relative;
         cursor: pointer;
         background-color: var(--theme-color-1);
         color: var(--normal-bgc);
@@ -407,9 +489,11 @@ const onCleanup = () => {
     // 文件内容区
     .file-content {
       padding: 20px;
+      padding-bottom: 80px;
       overflow: auto;
       width: 100%;
       height: calc(100vh - 60px);
+      position: relative;
 
       .image-wapper {
         width: 100%;
@@ -418,8 +502,26 @@ const onCleanup = () => {
 
         img {
           width: 1000px;
-          // height: 100%;
         }
+      }
+    }
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .toggle-menu {
+      border: 1px solid var(--light-border-color-3);
+      border-radius: 5px;
+      padding: 4px;
+      background-color: var(--normal-bgc);
+      position: absolute;
+      right: 10px;
+
+      .icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 20px;
+        height: 20px;
       }
     }
   }

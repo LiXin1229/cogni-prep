@@ -6,6 +6,7 @@ const props = defineProps<{
   fileTree: FileNode | null
   selectedFile: FileNode | null
   handleFileClick: (file: FileNode) => void
+  showMenu: boolean
 }>()
 
 const renderTree = (node: FileNode): VNode => {
@@ -50,7 +51,7 @@ const renderTree = (node: FileNode): VNode => {
 </script>
 
 <template>
-  <div class="resize-menu">
+  <div :class="['resize-menu', showMenu && 'show-menu']">
     <div v-if="fileTree" class="file-tree no-select">
       <component :is="renderTree(fileTree)" />
     </div>
@@ -66,6 +67,7 @@ const renderTree = (node: FileNode): VNode => {
   width: 270px;
   min-width: 180px;
   max-width: 440px;
+  background-color: var(--primary-bgc);
 
   .resize-handle {
     width: 5px;
@@ -110,6 +112,30 @@ const renderTree = (node: FileNode): VNode => {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .resize-menu {
+    width: 75%;
+    position: absolute;
+    left: 0;
+    top: 50px;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+
+    .resize-handle {
+      display: none;
+    }
+  }
+
+  .resize-menu.show-menu {
+    transform: translateX(0);
+  }
+
+  .warpper {
+    width: 100% !important;
   }
 }
 </style>

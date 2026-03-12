@@ -51,6 +51,13 @@ h6 {
   color: #666;
 }
 
+hr {
+  border: 0;
+  height: 2px;
+  background-color: #cccc;
+  border-radius: 1px;
+}
+
 p {
   max-width: 100%;
 }
@@ -67,6 +74,7 @@ strong {
 blockquote {
   border-left: 4px solid #cccc;
   padding-left: 12px;
+  // border-radius: 4px;
 }
 
 code {
@@ -74,7 +82,10 @@ code {
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-size: 85%;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  // font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas,
+    monospace;
 }
 
 .md-block-code-container {
@@ -86,12 +97,18 @@ code {
 .md-block-code {
   font-size: 85%;
   line-height: 1.8;
-  font-family: 'Fira Code', Consolas, 'Courier New', monospace;
+  // font-family: 'Fira Code', Consolas, 'Courier New', monospace !important;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas,
+    monospace;
 }
 
 .md-block-code-highlight-font {
   span {
-    font-family: 'Fira Code', Consolas, 'Courier New', monospace;
+    // font-family: 'Fira Code', Consolas, 'Courier New', monospace !important;
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo,
+      Consolas, monospace;
   }
 }
 
@@ -154,4 +171,23 @@ ol {
   caret-color: transparent;
   resize: none;
   z-index: -1;
+}
+
+// 移动端样式
+@media (max-aspect-ratio: 1/1) {
+  .md-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .md-block-code-container {
+    overflow-x: auto;
+  }
+
+  .md-block-code {
+    font-size: 0.6rem;
+    line-height: 1.5;
+    white-space: pre;
+    letter-spacing: -0.5px;
+  }
 }

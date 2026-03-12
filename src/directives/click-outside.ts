@@ -1,5 +1,9 @@
-import type { CustHTMLElement } from './directive.type'
 import type { Directive } from 'vue'
+
+interface CustHTMLElement extends HTMLElement {
+  clickOutsideEvent: (event: MouseEvent) => void
+  _resizableHandler: (event: MouseEvent) => void
+}
 
 export const clickOutside: Directive<CustHTMLElement, (e: MouseEvent) => void> = {
   beforeMount(el, binding) {
@@ -12,5 +16,5 @@ export const clickOutside: Directive<CustHTMLElement, (e: MouseEvent) => void> =
   },
   unmounted(el) {
     document.removeEventListener('click', el.clickOutsideEvent as EventListener)
-  }
+  },
 }

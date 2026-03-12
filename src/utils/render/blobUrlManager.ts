@@ -1,23 +1,23 @@
 import type { UseOptions } from './index'
 
 export type ParseUrlToBlob = ((url: string) => string) | undefined
-export type BlobUrlSet = Set<string> | undefined
+export type BlobUrlMap = Map<string, string> | undefined
 export type BlobUrlManager = {
   parseUrlToBlob: ParseUrlToBlob
-  blobUrlSet: BlobUrlSet
+  blobUrlMap: BlobUrlMap
   cleanup: () => void
 }
 
 export function createBlobUrlManager(options?: UseOptions): BlobUrlManager {
   const parseUrlToBlob: ParseUrlToBlob = options?.parseUrlToBlob
-  const blobUrlSet: BlobUrlSet = options?.parseUrlToBlob && new Set()
+  const blobUrlMap: BlobUrlMap = options?.parseUrlToBlob && new Map()
   const cleanup = () => {
-    if (blobUrlSet) {
-      for (const url of blobUrlSet) {
+    if (blobUrlMap) {
+      for (const url of blobUrlMap.values()) {
         URL.revokeObjectURL(url)
       }
-      blobUrlSet.clear()
+      blobUrlMap.clear()
     }
   }
-  return { parseUrlToBlob, blobUrlSet, cleanup }
+  return { parseUrlToBlob, blobUrlMap, cleanup }
 }

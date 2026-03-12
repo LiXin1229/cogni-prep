@@ -16,6 +16,8 @@ export interface RequestOptions {
   showLoading?: boolean
   // 是否显示提示信息
   showMessage?: boolean
+  // 请求头
+  headers?: AxiosRequestConfig['headers']
 }
 
 export interface CustomConfigType {

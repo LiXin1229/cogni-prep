@@ -10,6 +10,7 @@ const editorRef = ref<HTMLElement>()
 const props = defineProps<{
   text: string
   currNode: FileNode | null
+  readonly: boolean
 }>()
 
 const md = ref<MarkDown>()
@@ -17,11 +18,10 @@ const md = ref<MarkDown>()
 watch(
   () => props.text,
   (source) => {
-    if (source) {
-      md.value = createMarkdown(source, editorRef, {
-        parseUrlToBlob: (url: string) => parseUrlToBlob(url, props.currNode),
-      })
-    }
+    md.value = createMarkdown(source, editorRef, {
+      isReadonly: props.readonly,
+      parseUrlToBlob: (url: string) => parseUrlToBlob(url, props.currNode),
+    })
   }
 )
 

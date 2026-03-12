@@ -283,7 +283,7 @@ export function preprocessAst(
   ast: Root,
   source: string,
   keyPositionMaps: KeyPositionMaps,
-  { parseUrlToBlob, blobUrlSet }: BlobUrlManager
+  { parseUrlToBlob, blobUrlMap }: BlobUrlManager
 ) {
   const newChildren: RootContent[] = []
   let lastNode: { endLine: number; endOffset: number } | null = null
@@ -437,9 +437,14 @@ export function preprocessAst(
         head: headPosition,
         tail: tailPosition,
       })
-    } else if (node.type === 'image' && parseUrlToBlob) {
-      node.src = parseUrlToBlob(node.url)
-      blobUrlSet?.add(node.src)
+    } else if (node.type === 'image' && parseUrlToBlob && blobUrlMap) {
+      const existingSrc = blobUrlMap.get(node.url)
+      if (existingSrc === undefined) {
+        node.src = parseUrlToBlob(node.url)
+        blobUrlMap.set(node.url, node.src)
+      } else {
+        node.src = existingSrc
+      }
       node.nodeId = nodeId++
     } else {
       if (hasChildren(node)) {
