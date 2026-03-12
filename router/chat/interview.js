@@ -73,7 +73,7 @@ router.post('/start', async (req, res) => {
         break
       }
 
-      const chunk = decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true })
       const lines = chunk.split('\n').filter(line => line.trim() !== '')
       
       for (const line of lines) {
@@ -147,7 +147,7 @@ router.post('/answer', async (req, res) => {
         break
       }
 
-      const chunk = decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true })
       const lines = chunk.split('\n').filter(line => line.trim() !== '')
       
       for (const line of lines) {
@@ -221,7 +221,7 @@ router.post('/help', async (req, res) => {
         break
       }
 
-      const chunk = decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true })
       const lines = chunk.split('\n').filter(line => line.trim() !== '')
       
       for (const line of lines) {

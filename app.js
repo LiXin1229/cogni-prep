@@ -9,6 +9,7 @@ const chatRouter = require('./router/chat/index.js')
 const mindmapRouter = require('./router/mindmap/index.js')
 const noteRouter = require('./router/note/index.js')
 const perferRouter = require('./router/perfer/index.js')
+const fileRouter = require('./router/file/index.js')
 
 app.use(cors({ 
   origin: 'http://47.108.61.196',
@@ -32,8 +33,9 @@ app.use('/chat', chatRouter)
 app.use('/mindmap', mindmapRouter)
 app.use('/note', noteRouter)
 app.use('/perfer', perferRouter)
+app.use('/file', fileRouter)
 
-const port = 8000
+const port = 9000
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
