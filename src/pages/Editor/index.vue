@@ -30,7 +30,7 @@ const selectDirectory = (e: Event) => {
   const target = e.target as HTMLInputElement
   const files = Array.from(target.files || [])
   if (files.length) {
-    fileTree.value = buildFileTree(files)
+    fileTree.value = buildFileTree(files, '本地目录')
     // console.log('🌳 文件树: ', fileTree.value)
   }
   setEditMode()
@@ -196,7 +196,7 @@ const uploadDirectory = async (e: Event) => {
       })
       console.log('用户输入的文件夹名称:', promptResult)
       const name = promptResult.value
-      const tree = buildFileTree(files, false)
+      const tree = buildFileTree(files, name, false)
       try {
         const userId = userStore.userInfo.userId
         if (userId === undefined) {

@@ -69,18 +69,24 @@ export const useSessionStore = defineStore('session', () => {
       return
     }
 
-    const res = await request<{ sessionList: SessionType[] }>({
-      url: API.getSessionList,
-      method: 'GET',
-      params: {
-        id: userStore.userInfo.userId,
-        number: sessionNumber.value,
-      },
-    })
-    // console.log(res)
+    try {
+      const res = await request<{ sessionList: SessionType[] }>({
+        url: API.getSessionList,
+        method: 'GET',
+        params: {
+          id: userStore.userInfo.userId,
+          number: sessionNumber.value,
+        },
+      })
+      // console.log(res)
 
-    sessionList.value = [...sessionList.value, ...res.data.sessionList]
-    return res.data.sessionList.length < 20
+      if (res.success) {
+        sessionList.value = [...sessionList.value, ...res.data.sessionList]
+        return res.data.sessionList.length < 20
+      }
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   // 标记是否有节点需要挂载sessionId

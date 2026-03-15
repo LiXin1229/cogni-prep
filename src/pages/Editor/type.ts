@@ -11,11 +11,12 @@ export interface FileNode {
 
 export const buildFileTree = (
   files: File[],
+  rootName: string,
   referenceParent = true,
   ignoreDirs: Set<string> = new Set(['node_modules', '.git', '.vscode'])
 ) => {
   const root: FileNode = {
-    name: '目录',
+    name: rootName,
     path: '',
     isFile: false,
     isOpen: true,
