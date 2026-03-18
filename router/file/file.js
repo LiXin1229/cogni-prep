@@ -4,6 +4,7 @@ const pool = require('../../db')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs').promises
+const { v4: uuidv4 } = require('uuid')
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -14,7 +15,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // 保留原始文件名（或加时间戳防重名）
-    cb(null, file.originalname)
+    cb(null, file.originalname +'_' + uuidv4().slice(0, 8))
   },
 })
 
@@ -30,12 +31,12 @@ router.post('/upload', upload.array('files'), async (req, res) => {
       return res.status(400).json({ code: 400, success: false, message: '未上传任何文件' })
     }
 
-    console.log('接收到的文件数量:', files.length)
+    // console.log('接收到的文件数量:', files.length)
     files.forEach(async (file, index) => {
-      // console.log('📄 文件:', file.originalname, '路径:', path[index])
+      // console.log('📄 文件:', file.filename, '路径:', path[index])
       await pool.query(
-        'INSERT IGNORE INTO files (file_path, file_name) VALUES (?, ?)',
-        [path[index], file.originalname]
+        'INSERT INTO files (file_path, file_name) VALUES (?, ?) ON DUPLICATE KEY UPDATE file_name = VALUES(file_name)',
+        [path[index], file.filename]
       )
     })
 
