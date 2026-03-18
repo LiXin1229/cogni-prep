@@ -186,6 +186,7 @@ const uploadDirectory = async (e: Event) => {
   const files = Array.from(target.files || [])
   if (files.length) {
     // console.log('📁 上传的文件: ', files)
+    target.value = ''
 
     try {
       const promptResult = await ElMessageBox.prompt('', '设置文件夹名称', {
