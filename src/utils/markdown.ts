@@ -1,18 +1,21 @@
 import { purifyText } from './purifyText'
 import { marked } from 'marked'
-import { markedHighlight } from "marked-highlight"
-import hljs from 'highlight.js'
+import { markedHighlight } from 'marked-highlight'
 import 'highlight.js/styles/atom-one-light.css'
 import copySvg from '@/assets/svgs/copy.svg'
+import hljs from '@/utils/hljs'
+// import hljs from 'highlight.js'
 
 // 配置 marked 使用 highlight.js 高亮代码
-marked.use(markedHighlight({
-  langPrefix: 'hljs language-',
-  highlight(code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : 'shell'
-    return hljs.highlight(code, { language }).value
-  }
-}))
+marked.use(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'shell'
+      return hljs.highlight(code, { language }).value
+    },
+  })
+)
 
 // 处理代码块，添加头部标题
 export const parseMarkdown = (content: string) => {
@@ -28,10 +31,10 @@ export const parseMarkdown = (content: string) => {
   // 创建临时DOM元素处理HTML
   const tempDiv = document.createElement('div')
   tempDiv.innerHTML = sanitizedHtml
-  
+
   // 找到所有代码块
   const codeBlocks = tempDiv.querySelectorAll('pre')
-  
+
   codeBlocks.forEach((block) => {
     // 获取语言信息（从code标签的class中提取）
     const codeElement = block.querySelector('code')
@@ -39,7 +42,7 @@ export const parseMarkdown = (content: string) => {
 
     if (codeElement) {
       const classList = codeElement.className.split(' ')
-      classList.forEach(cls => {
+      classList.forEach((cls) => {
         if (cls.startsWith('language-')) {
           // 提取并验证语言名称
           const lang = cls.substring(9).toLowerCase()

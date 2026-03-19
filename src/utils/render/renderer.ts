@@ -10,8 +10,8 @@ import type {
   KeyPositionMaps,
 } from './index'
 import type { EmptyLine, Node } from './ast'
-import hljs from 'highlight.js'
 import type { BlobUrlManager } from './blobUrlManager'
+import hljs from '@/utils/hljs'
 
 export function createRenderer(
   source: Ref<string>,
@@ -85,7 +85,7 @@ export function createRenderer(
           !isEditing && node.html !== undefined
             ? // 高亮
               h('pre', {
-                class: 'md-block-code md-block-code-highlight',
+                class: 'md-block-code',
                 ref: (el) => {
                   if (isHTMLElement(el) && node.html !== undefined) {
                     el.innerHTML = node.html
@@ -112,10 +112,7 @@ export function createRenderer(
               h(
                 'pre',
                 {
-                  class: {
-                    'md-block-code': true,
-                    'md-block-code-highlight-font': node.html !== undefined,
-                  },
+                  class: 'md-block-code md-block-code-plain',
                 },
                 node.children.map((c) => renderNode(c))
               )

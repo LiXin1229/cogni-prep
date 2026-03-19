@@ -8,6 +8,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 import viteCompression from 'vite-plugin-compression'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -23,6 +24,13 @@ export default defineConfig({
       algorithm: 'gzip', // 也可 brotli
       ext: '.gz',
       threshold: 10240, // 大于10k才压缩
+    }),
+    visualizer({
+      emitFile: false, // 不将分析文件输出到dist目录，直接在项目根目录生成
+      filename: 'bundle-analysis.html', // 分析报告文件名
+      open: true, // 打包完成后自动打开报告页面
+      gzipSize: true, // 显示gzip压缩后的体积（重点！B端项目建议开启gzip）
+      brotliSize: true, // 显示brotli压缩后的体积
     })
   ],
   resolve: {
