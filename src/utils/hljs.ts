@@ -11,6 +11,7 @@ import python from 'highlight.js/lib/languages/python'
 import json from 'highlight.js/lib/languages/json'
 import xml from 'highlight.js/lib/languages/xml'
 import bash from 'highlight.js/lib/languages/bash'
+import shell from 'highlight.js/lib/languages/shell'
 
 // 注册用到的语言
 hljs.registerLanguage('javascript', javascript)
@@ -22,5 +23,6 @@ hljs.registerLanguage('python', python)
 hljs.registerLanguage('json', json)
 hljs.registerLanguage('xml', xml)
 hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('shell', shell)
 
 export default hljs

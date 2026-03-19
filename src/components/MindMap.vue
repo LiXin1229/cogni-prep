@@ -62,7 +62,8 @@ onMounted(async () => {
   await updateData()
   renderChart()
 
-  const handleResize = throttle(() => adjustChartSize(), 500)
+  const handleResize = throttle(() => adjustChartSize(), 100)
+  // const handleResize = () => adjustChartSize()
 
   // 监听页面尺寸
   resizeObserver.value = new ResizeObserver(() => {

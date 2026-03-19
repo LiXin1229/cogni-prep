@@ -31,6 +31,7 @@ export default defineConfig({
       open: true, // 打包完成后自动打开报告页面
       gzipSize: true, // 显示gzip压缩后的体积（重点！B端项目建议开启gzip）
       brotliSize: true, // 显示brotli压缩后的体积
+      template: 'list',
     })
   ],
   resolve: {

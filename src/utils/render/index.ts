@@ -61,7 +61,8 @@ export function createMarkdown(
     selector,
     editorRef,
     editingNodeMap,
-    editingBlockCodeDomMap
+    editingBlockCodeDomMap,
+    isReadonly
   )
 
   const ast = computed(() => remark().parse(source.value))

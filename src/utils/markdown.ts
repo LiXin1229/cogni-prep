@@ -11,8 +11,13 @@ marked.use(
   markedHighlight({
     langPrefix: 'hljs language-',
     highlight(code, lang) {
-      const language = hljs.getLanguage(lang) ? lang : 'shell'
-      return hljs.highlight(code, { language }).value
+      try {
+        const language = hljs.getLanguage(lang) ? lang : 'shell'
+        return hljs.highlight(code, { language }).value
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        return code
+      }
     },
   })
 )

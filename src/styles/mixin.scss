@@ -12,7 +12,7 @@
     border-radius: 6px;
     margin: 16px 0;
     overflow-x: auto;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   }
 
   /* 代码块内文本样式 */
@@ -30,7 +30,7 @@
     padding: 0.2em 0.4em;
     border-radius: 3px;
     font-size: 85%;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   }
 
   // 文本样式
@@ -50,7 +50,7 @@
   }
 
   ul li::before {
-    content: "";
+    content: '';
     display: inline-block;
     width: 6px; /* 固定宽度，确保对齐 */
     height: 6px;
@@ -96,6 +96,10 @@
         background-color: var(--light-border-color-2);
       }
     }
+  }
+
+  .hljs {
+    padding: 16px;
   }
 
   @media (max-aspect-ratio: 1/1) {

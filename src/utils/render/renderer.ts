@@ -19,7 +19,8 @@ export function createRenderer(
   selector: Selector,
   editorRef: EditorRef,
   editingNodeMap: EditingNodeMap,
-  editingBlockCodeDomMap: EditingBlockCodeDomMap
+  editingBlockCodeDomMap: EditingBlockCodeDomMap,
+  isReadonly: boolean
 ) {
   const { cursorOffset } = selector
 
@@ -92,21 +93,23 @@ export function createRenderer(
                     editingBlockCodeDomMap.set(nodeId, el)
                   }
                 },
-                onClick: () => {
-                  const selection = window.getSelection()
-                  if (selection && selection.toString().trim() !== '') {
-                    // 有文本被选中 → 忽略这次 click
-                    return
-                  }
-                  for (const nodeId of editingNodeMap.value.keys()) {
-                    editingNodeMap.value.set(nodeId, false)
-                  }
-                  editingNodeMap.value.set(nodeId, true)
-                  const el = editingBlockCodeDomMap.get(nodeId)
-                  if (el) {
-                    el.innerHTML = ''
-                  }
-                },
+                onClick: !isReadonly
+                  ? () => {
+                      const selection = window.getSelection()
+                      if (selection && selection.toString().trim() !== '') {
+                        // 有文本被选中 → 忽略这次 click
+                        return
+                      }
+                      for (const nodeId of editingNodeMap.value.keys()) {
+                        editingNodeMap.value.set(nodeId, false)
+                      }
+                      editingNodeMap.value.set(nodeId, true)
+                      const el = editingBlockCodeDomMap.get(nodeId)
+                      if (el) {
+                        el.innerHTML = ''
+                      }
+                    }
+                  : undefined,
               })
             : // 普通文本
               h(
