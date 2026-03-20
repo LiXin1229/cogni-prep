@@ -248,11 +248,11 @@ export function createRenderer(
             const boundingClientRect = editContainer.getBoundingClientRect()
             const top = rect.top - boundingClientRect.top
             const left = rect.left - boundingClientRect.left
-            const height = rect.height - boundingClientRect.height
+            const height = rect.height
             // console.log(top, left, height)
 
             // 设置光标 html
-            cursorLayer.innerHTML = `<div class="cursor" style="top:${top}px;left:${left}px;height:${height}px"></div>`
+            cursorLayer.innerHTML = `<div class="cursor" style="top:${top}px;left:${left}px;height:${height}px;width:0.5px;transform:scaleX(2);"></div>`
 
             if (imeTextarea) {
               imeTextarea.style.top = `${top}px`
@@ -377,7 +377,7 @@ export function preprocessAst(
         // 这里暂不处理（CommonMark 会 trim）
         currentOffset++
       } else {
-        console.warn('Unexpected trailing non-whitespace after AST')
+        // console.warn('Unexpected trailing non-whitespace after AST')
         break
       }
     }

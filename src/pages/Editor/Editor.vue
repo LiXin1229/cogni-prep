@@ -36,7 +36,7 @@ onUnmounted(() => {
 
 <template>
   <div ref="editorRef" class="editor-wapper">
-    <div v-if="md" class="edit-container" style="outline: none" :contenteditable="!readonly">
+    <div v-if="md" class="edit-container" :contenteditable="!readonly">
       <component :is="md.root" />
     </div>
     <textarea ref="imeTextarea" class="ime-textarea" spellcheck="false"></textarea>
@@ -49,5 +49,10 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   // height: 100%;
+}
+
+.edit-container {
+  outline: none;
+  caret-color: transparent;
 }
 </style>
