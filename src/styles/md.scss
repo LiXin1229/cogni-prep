@@ -19,6 +19,10 @@
   //   'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
+.md-empty-line {
+  height: 18px;
+}
+
 pre {
   white-space: pre-wrap; /* 保留空白符，但允许自动换行 */
   word-wrap: break-word; /* 兼容旧浏览器（可选） */

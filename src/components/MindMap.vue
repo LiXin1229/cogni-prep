@@ -232,7 +232,7 @@ const renderChart = () => {
   // 用path绘制减号（水平直线）
   foldedNodes
     .append('path')
-    .attr('d', (_: any) => {
+    .attr('d', () => {
       const r = 12
       const lineLength = r * 1.2 // 减号长度（半径的1.2倍）
       const startX = -lineLength / 2 // 线段起点X（左）

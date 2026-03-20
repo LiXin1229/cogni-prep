@@ -30,6 +30,7 @@ const selectDirectory = (e: Event) => {
   const target = e.target as HTMLInputElement
   const files = Array.from(target.files || [])
   if (files.length) {
+    target.value = ''
     fileTree.value = buildFileTree(files, '本地目录')
     // console.log('🌳 文件树: ', fileTree.value)
   }

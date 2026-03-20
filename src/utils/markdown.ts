@@ -3,8 +3,7 @@ import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import 'highlight.js/styles/atom-one-light.css'
 import copySvg from '@/assets/svgs/copy.svg'
-import hljs from '@/utils/hljs'
-// import hljs from 'highlight.js'
+import { highlight } from './render/hljs'
 
 // 配置 marked 使用 highlight.js 高亮代码
 marked.use(
@@ -12,8 +11,12 @@ marked.use(
     langPrefix: 'hljs language-',
     highlight(code, lang) {
       try {
-        const language = hljs.getLanguage(lang) ? lang : 'shell'
-        return hljs.highlight(code, { language }).value
+        const res = highlight(code, lang)
+        if (res) {
+          return res
+        } else {
+          throw new Error('不支持 ' + lang)
+        }
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_) {
         return code

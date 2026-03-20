@@ -1,12 +1,14 @@
-import { computed, h, ref, type Ref, type VNode } from 'vue'
+import { computed, h, ref, watch, type Ref, type VNode } from 'vue'
 import { remark } from 'remark'
 import { createSelector, type Position } from './select'
 import { createEditor, type Editor } from './edit'
 import { isHTMLElement } from './utils/general'
 import { createRenderer, preprocessAst } from './renderer'
+import type { Root } from 'mdast'
 import type { Node } from './ast'
 import { setupIme, type Ime } from './ime'
 import { createBlobUrlManager, type ParseUrlToBlob } from './blobUrlManager'
+import { createHljs } from './hljs'
 export * from './select'
 export * from './edit'
 export * from './ime'
@@ -55,6 +57,9 @@ export function createMarkdown(
 
   const ime = setupIme(editorRef, editor, selector)
 
+  // 代码高亮
+  const { loadedLangs, highlight } = createHljs()
+
   const { renderNode } = createRenderer(
     source,
     domToNode,
@@ -65,16 +70,31 @@ export function createMarkdown(
     isReadonly
   )
 
-  const ast = computed(() => remark().parse(source.value))
-  // const ast = computed(() => {
-  //   console.time('remark-parse')
-  //   const result = remark().parse(source.value)
-  //   console.timeEnd('remark-parse')
+  const ast = ref<Root | null>(null)
+
+  watch(
+    [() => source.value, () => loadedLangs.value.length],
+    ([val]) => {
+      // console.time('remark-parse')
+      ast.value = remark().parse(val)
+      // console.timeEnd('remark-parse')
+    },
+    {
+      immediate: true,
+    }
+  )
+
+  const preprocessedAst = computed(() =>
+    ast.value
+      ? preprocessAst(ast.value, source.value, keyPositionMaps, blobUrlManager, highlight)
+      : null
+  )
+  // const preprocessedAst = computed(() => {
+  //   console.time('preprocess-ast')
+  //   const result = preprocessAst(ast.value as Root, source.value, keyPositionMaps, blobUrlManager, highlight)
+  //   console.timeEnd('preprocess-ast')
   //   return result
   // })
-  const preprocessedAst = computed(() =>
-    preprocessAst(ast.value, source.value, keyPositionMaps, blobUrlManager)
-  )
 
   const root = () => {
     // console.log('render root: ', preprocessedAst.value)
@@ -110,7 +130,7 @@ export function createMarkdown(
             },
           }
         : {},
-      preprocessedAst.value.children.map((node) => renderNode(node))
+      preprocessedAst.value?.children.map((node) => renderNode(node))
       // renderChildrenWithLog()
     )
   }

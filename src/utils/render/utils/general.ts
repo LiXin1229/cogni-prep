@@ -7,6 +7,8 @@ export const isString = (val: unknown): val is string => typeof val === 'string'
 export const hasPosition = (node: RootContent): node is Node => {
   return node.position !== undefined
 }
+export const hasOwn = (val: object, key: string | symbol): key is keyof typeof val =>
+  Object.prototype.hasOwnProperty.call(val, key)
 export const hasChildren = (node: RootContent) => {
   return !!('children' in node)
 }

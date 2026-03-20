@@ -11,7 +11,6 @@ import type {
 } from './index'
 import type { EmptyLine, Node } from './ast'
 import type { BlobUrlManager } from './blobUrlManager'
-import hljs from '@/utils/hljs'
 
 export function createRenderer(
   source: Ref<string>,
@@ -43,7 +42,13 @@ export function createRenderer(
 
       case 'emptyLine':
         if (checkCursorInNode(node)) {
-          return h('div', renderPlainText(node, ' ', domToNode))
+          return h(
+            'div',
+            {
+              class: 'md-empty-line',
+            },
+            renderPlainText(node, ' ', domToNode)
+          )
         } else {
           return h('div', '\n')
         }
@@ -283,7 +288,8 @@ export function preprocessAst(
   ast: Root,
   source: string,
   keyPositionMaps: KeyPositionMaps,
-  { parseUrlToBlob, blobUrlMap }: BlobUrlManager
+  { parseUrlToBlob, blobUrlMap }: BlobUrlManager,
+  highlight: (code: string, lang: string) => string | undefined
 ) {
   const newChildren: RootContent[] = []
   let lastNode: { endLine: number; endOffset: number } | null = null
@@ -409,7 +415,8 @@ export function preprocessAst(
       // 处理代码高亮
       if (lang) {
         try {
-          node.html = hljs.highlight(value, { language: lang }).value
+          // node.html = hljs.highlight(value, { language: lang }).value
+          node.html = highlight(value, lang)
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
           /* empty */
