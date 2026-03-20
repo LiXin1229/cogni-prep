@@ -310,7 +310,7 @@ export function createEditor(
   }
 
   const handleArrow = (e: string) => {
-    console.log('handleArrow: ', e)
+    // console.log('handleArrow: ', e)
     switch (e) {
       case 'ArrowLeft':
         moveCursorHorizontally(-1)

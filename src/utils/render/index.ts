@@ -72,12 +72,45 @@ export function createMarkdown(
 
   const ast = ref<Root | null>(null)
 
+  // 任务ID管理，用于取消旧任务
+  let currentTaskId = 0
+
+  // 异步解析任务
+  let parseTaskId: ReturnType<typeof setTimeout> | null = null
+
+  // 异步解析函数
+  const parseAsync = (markdown: string, taskId: number) => {
+    // 使用 setTimeout(0) 将解析任务放到事件队列末尾，避免阻塞主线程
+    parseTaskId = setTimeout(() => {
+      // 检查任务是否已过期
+      if (taskId !== currentTaskId) return
+
+      try {
+        const result = remark().parse(markdown)
+        // 再次检查任务是否仍是最新（解析期间可能有新输入）
+        if (taskId === currentTaskId) {
+          ast.value = result
+        }
+      } catch (error) {
+        console.error('Parse error:', error)
+      }
+    }, 0)
+  }
+
+  // 监听 source 变化，触发解析
   watch(
     [() => source.value, () => loadedLangs.value.length],
     ([val]) => {
-      // console.time('remark-parse')
-      ast.value = remark().parse(val)
-      // console.timeEnd('remark-parse')
+      const markdown = val as string
+
+      // 清除之前的解析任务
+      if (parseTaskId) {
+        clearTimeout(parseTaskId)
+      }
+
+      // 立即触发异步解析
+      const taskId = ++currentTaskId
+      parseAsync(markdown, taskId)
     },
     {
       immediate: true,
@@ -143,6 +176,10 @@ export function createMarkdown(
   // }
 
   const cleanup = () => {
+    // 清除解析任务
+    if (parseTaskId) {
+      clearTimeout(parseTaskId)
+    }
     ime.cleanupImeListener()
     blobUrlManager.cleanup()
   }
