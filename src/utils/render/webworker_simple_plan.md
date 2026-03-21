@@ -36,13 +36,13 @@
 let currentTaskId = 0
 
 function parse(markdown) {
-  const taskId = ++currentTaskId  // 递增任务ID
-  
+  const taskId = ++currentTaskId // 递增任务ID
+
   worker.postMessage({ id: taskId, markdown })
-  
+
   worker.onmessage = (e) => {
-    if (e.data.id !== currentTaskId) return  // 丢弃旧任务
-    ast.value = e.data.ast  // 只渲染最新结果
+    if (e.data.id !== currentTaskId) return // 丢弃旧任务
+    ast.value = e.data.ast // 只渲染最新结果
   }
 }
 ```
@@ -63,7 +63,7 @@ import type { Root } from 'mdast'
 
 self.onmessage = (event: MessageEvent<{ id: number; markdown: string }>) => {
   const { id, markdown } = event.data
-  
+
   try {
     const ast = remark().parse(markdown) as Root
     self.postMessage({ id, ast, error: null })
@@ -90,16 +90,15 @@ export function createMarkdown(
   // ... 原有初始化代码 ...
 
   const ast = ref<Root | null>(null)
-  
+
   // 单 Worker 实例
-  const worker = new Worker(
-    new URL('./workers/remark.worker.ts', import.meta.url),
-    { type: 'module' }
-  )
-  
+  const worker = new Worker(new URL('./workers/remark.worker.ts', import.meta.url), {
+    type: 'module',
+  })
+
   // 任务ID管理
   let currentTaskId = 0
-  
+
   // 防抖定时器
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
   const DEBOUNCE_MS = 50
@@ -107,10 +106,10 @@ export function createMarkdown(
   // Worker 消息处理
   worker.onmessage = (event: MessageEvent<{ id: number; ast: Root; error: string | null }>) => {
     const { id, ast: resultAst, error } = event.data
-    
+
     // 只处理最新任务的结果
     if (id !== currentTaskId) return
-    
+
     if (error) {
       console.error('Worker parse error:', error)
       // 降级：同步解析
@@ -133,12 +132,12 @@ export function createMarkdown(
     [() => source.value, () => loadedLangs.value.length],
     ([val]) => {
       const markdown = val as string
-      
+
       // 清除之前的防抖定时器
       if (debounceTimer) {
         clearTimeout(debounceTimer)
       }
-      
+
       // 防抖：延迟发送解析任务
       debounceTimer = setTimeout(() => {
         const taskId = ++currentTaskId
@@ -155,7 +154,7 @@ export function createMarkdown(
     if (debounceTimer) {
       clearTimeout(debounceTimer)
     }
-    worker.terminate()  // 终止 Worker
+    worker.terminate() // 终止 Worker
     ime.cleanupImeListener()
     blobUrlManager.cleanup()
   }
@@ -195,7 +194,7 @@ worker.postMessage({ id: taskId, markdown })
 
 // 接收结果时检查ID
 worker.onmessage = (e) => {
-  if (e.data.id !== currentTaskId) return  // 旧任务结果，丢弃
+  if (e.data.id !== currentTaskId) return // 旧任务结果，丢弃
   ast.value = e.data.ast
 }
 ```
@@ -205,24 +204,27 @@ worker.onmessage = (e) => {
 ```typescript
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-watch(() => source.value, (val) => {
-  // 清除旧定时器
-  if (debounceTimer) clearTimeout(debounceTimer)
-  
-  // 设置新定时器
-  debounceTimer = setTimeout(() => {
-    // 发送解析任务
-  }, 50)
-})
+watch(
+  () => source.value,
+  (val) => {
+    // 清除旧定时器
+    if (debounceTimer) clearTimeout(debounceTimer)
+
+    // 设置新定时器
+    debounceTimer = setTimeout(() => {
+      // 发送解析任务
+    }, 50)
+  }
+)
 ```
 
 ## 预期效果
 
-| 指标 | 优化前 | 优化后 |
-|-----|-------|-------|
-| 主线程阻塞 | 80ms | ~0ms |
-| 输入响应 | 卡顿 | 流畅 |
-| 实现复杂度 | - | 低 |
+| 指标       | 优化前 | 优化后 |
+| ---------- | ------ | ------ |
+| 主线程阻塞 | 80ms   | ~0ms   |
+| 输入响应   | 卡顿   | 流畅   |
+| 实现复杂度 | -      | 低     |
 
 ## 注意事项
 
@@ -233,14 +235,14 @@ watch(() => source.value, (val) => {
 
 ## 与完整方案对比
 
-| 特性 | 简化方案 | 完整方案(Worker池) |
-|-----|---------|------------------|
-| Worker数量 | 1个 | 多个复用 |
-| 任务队列 | 无 | 有 |
-| 取消机制 | 任务ID过滤 | AbortController |
-| 适用场景 | 单编辑器 | 多编辑器实例 |
-| 代码复杂度 | 低 | 中 |
-| 维护成本 | 低 | 中 |
+| 特性       | 简化方案   | 完整方案(Worker池) |
+| ---------- | ---------- | ------------------ |
+| Worker数量 | 1个        | 多个复用           |
+| 任务队列   | 无         | 有                 |
+| 取消机制   | 任务ID过滤 | AbortController    |
+| 适用场景   | 单编辑器   | 多编辑器实例       |
+| 代码复杂度 | 低         | 中                 |
+| 维护成本   | 低         | 中                 |
 
 **推荐**: 当前项目只有一个编辑器实例，简化方案足够且更易维护。
 
