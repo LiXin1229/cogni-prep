@@ -1,15 +1,24 @@
-// import { remark } from 'remark'
-// import axios from 'axios'
+import { remark } from 'remark'
+import type { Root } from 'mdast'
 
-self.onmessage = async (event) => {
-  const { id } = event.data
-  // console.log(event)
+type WorkerMessage = {
+  id: number
+  markdown: string
+}
+
+type WorkerResponse = {
+  id: number
+  ast: Root | null
+  error: string | null
+}
+
+self.onmessage = (event: MessageEvent<WorkerMessage>) => {
+  const { id, markdown } = event.data
 
   try {
-    // const ast = remark().parse(markdown)
-    const ast = null
-    self.postMessage({ id, ast: ast, error: null })
+    const ast = remark().parse(markdown) as Root
+    self.postMessage({ id, ast, error: null } as WorkerResponse)
   } catch (error: any) {
-    self.postMessage({ id, ast: null, error: error.message })
+    self.postMessage({ id, ast: null, error: error.message } as WorkerResponse)
   }
 }
