@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { buildFileTree, type FileNode } from './type'
 import FileTree from './FileTree.vue'
 import Editor from './Editor.vue'
@@ -9,11 +9,13 @@ import type { Editor as EditorType, KeyCharTypes } from '@/utils/render'
 import type { Ime } from '@/utils/render'
 
 import { useUserInfoStore } from '@/stores/user'
+import { readFileContent, useSearchStore } from '@/stores/search'
 import request from '@/utils/request'
 import API from '@/utils/API'
 import { ElMessageBox } from 'element-plus'
 
 const userStore = useUserInfoStore()
+const searchStore = useSearchStore()
 
 defineProps<{
   isSidebarFolded: boolean
@@ -26,6 +28,92 @@ const emit = defineEmits<{
 const fileTree = ref<FileNode | null>(null)
 
 // 选择本地目录
+watch(fileTree, (newTree) => {
+  if (!readonlyMode.value) {
+    searchStore.setLocalFileTree(newTree)
+  }
+})
+
+watch(
+  () => searchStore.selectedFileFromSearch,
+  (fileNode) => {
+    if (fileNode) {
+      if (!readonlyMode.value) {
+        handleFileClick(fileNode)
+      } else {
+        handleFileClickReadonly(fileNode)
+      }
+      searchStore.clearSelectedFile()
+    }
+  }
+)
+
+watch(
+  () => searchStore.selectedMatch,
+  async (match) => {
+    if (match) {
+      if (!readonlyMode.value) {
+        handleFileClick(match.fileNode)
+      } else {
+        handleFileClickReadonly(match.fileNode)
+      }
+      // 等待文件加载完成后执行查找
+      setTimeout(() => {
+        const keyword = searchStore.keyword
+        if (keyword) {
+          highlightAndScroll(keyword, match.matchIndex)
+        }
+        searchStore.clearSelectedMatch()
+      }, 100)
+    }
+  }
+)
+
+const highlightAndScroll = (keyword: string, targetMatchIndex: number) => {
+  const editorEl = document.querySelector('.edit-container') as HTMLElement
+  if (!editorEl) return
+
+  // 使用 TreeWalker 查找文本节点
+  const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT, null)
+
+  let node
+  let currentMatchIndex = 0
+  while ((node = walker.nextNode())) {
+    const text = node.textContent || ''
+    const lowerText = text.toLowerCase()
+    const lowerKeyword = keyword.toLowerCase()
+    let searchIndex = 0
+
+    while ((searchIndex = lowerText.indexOf(lowerKeyword, searchIndex)) !== -1) {
+      if (currentMatchIndex === targetMatchIndex) {
+        // 找到目标匹配，创建 Range
+        const range = document.createRange()
+        range.setStart(node, searchIndex)
+        range.setEnd(node, searchIndex + keyword.length)
+
+        // 滚动到位置
+        const rect = range.getBoundingClientRect()
+        const container = editorEl.closest('.file-content') as HTMLElement
+        if (container) {
+          const containerRect = container.getBoundingClientRect()
+          const scrollTop =
+            container.scrollTop + rect.top - containerRect.top - containerRect.height / 2
+          container.scrollTo({ top: scrollTop, behavior: 'smooth' })
+        }
+
+        // 高亮（使用 Selection API）
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+
+        return
+      }
+      currentMatchIndex++
+      searchIndex += keyword.length
+    }
+  }
+}
+
 const selectDirectory = (e: Event) => {
   const target = e.target as HTMLInputElement
   const files = Array.from(target.files || [])
@@ -91,15 +179,6 @@ const handleFileClick = async (fileNode: FileNode) => {
       }
     }
   }
-}
-
-const readFileContent = (file: File): Promise<string | ArrayBuffer> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = (e) => resolve(e.target?.result || '')
-    reader.onerror = () => reject(new Error('读取失败'))
-    reader.readAsText(file)
-  })
 }
 
 type EditorInstance = {

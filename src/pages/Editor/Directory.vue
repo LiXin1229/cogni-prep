@@ -2,11 +2,13 @@
 import request from '@/utils/request'
 import { onMounted, ref } from 'vue'
 import { useUserInfoStore } from '@/stores/user'
+import { useSearchStore } from '@/stores/search'
 import type { FileNode } from './type'
 
 const userStore = useUserInfoStore()
+const searchStore = useSearchStore()
 
-defineProps<{
+const props = defineProps<{
   readonlyMode: boolean
   setReadonlyMode: (tree: FileNode) => void
 }>()
@@ -63,7 +65,8 @@ onMounted(() => {
       @click="
         () => {
           selectedItem = item
-          setReadonlyMode(item.tree)
+          props.setReadonlyMode(item.tree)
+          searchStore.setOnlineFileTree(item.tree)
         }
       "
     >

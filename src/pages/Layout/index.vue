@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { onMounted, reactive, ref, computed, defineAsyncComponent } from 'vue'
+import { onMounted, reactive, ref, computed, defineAsyncComponent, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useUserInfoStore } from '@/stores/user'
+import { useSearchStore } from '@/stores/search'
 import type { SessionType } from '@/stores/types/session.type'
 
 import canlendar from '@/assets/svgs/canlendar.svg'
@@ -14,16 +15,15 @@ import star from '@/assets/svgs/star.svg'
 import logoutIcon from '@/assets/svgs/logout.svg'
 import hideSidebarIcon from '@/assets/svgs/hide-sidebar.svg'
 import ellipsisIcon from '@/assets/svgs/ellipsis.svg'
+import SearchResults from './SearchResults.vue'
 
 const router = useRouter()
 const route = useRoute()
 const sessionStore = useSessionStore()
 const userStore = useUserInfoStore()
+const searchStore = useSearchStore()
 
 const AsyncDialogs = defineAsyncComponent(() => import('@/pages/Dialogs/index.vue'))
-
-const sidebarRef = ref<any>(null)
-const mainViewRef = ref<any>(null)
 
 const isSidebarFolded = computed({
   get: () => userStore.isSidebarFolded,
@@ -115,11 +115,48 @@ const handleScroll = async () => {
     }
   }
 }
+
+const isSearchMode = ref(false)
+const searchInputRef = ref<HTMLInputElement | null>(null)
+const searchKeyword = ref('')
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const toggleSearchMode = () => {
+  isSearchMode.value = !isSearchMode.value
+  if (isSearchMode.value) {
+    setTimeout(() => {
+      searchInputRef.value?.focus()
+    }, 0)
+  } else {
+    searchKeyword.value = ''
+    searchStore.clearSearch()
+  }
+}
+
+const handleSearchInput = () => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  searchDebounceTimer = setTimeout(() => {
+    searchStore.keyword = searchKeyword.value
+  }, 300)
+}
+
+watch(
+  () => route.path,
+  () => {
+    if (isSearchMode.value && route.path.includes('editor')) {
+      isSearchMode.value = false
+      searchKeyword.value = ''
+      searchStore.clearSearch()
+    }
+  }
+)
 </script>
 
 <template>
   <div class="layout">
-    <div ref="sidebarRef" :class="['sidebar', isSidebarFolded && 'sidebar-folded']">
+    <div :class="['sidebar', isSidebarFolded && 'sidebar-folded']">
       <div class="tooltips">
         <div class="logout" @click="userStore.showDialog = 'logout'">
           <img :src="logoutIcon" alt="" class="icon" />
@@ -131,12 +168,30 @@ const handleScroll = async () => {
 
       <!-- 搜索区 -->
       <div class="search-view">
-        <div class="search-box">
+        <div
+          :class="['search-box', isSearchMode && 'search-active']"
+          @click="
+            () => {
+              isSearchMode || toggleSearchMode()
+            }
+          "
+        >
           <div class="left">
             <font-awesome-icon :icon="faMagnifyingGlass" class="icon" />
-            <div>搜索</div>
+            <input
+              v-if="isSearchMode"
+              ref="searchInputRef"
+              v-model="searchKeyword"
+              type="text"
+              class="search-input"
+              placeholder="搜索文件内容..."
+              @input="handleSearchInput"
+              @click.stop
+            />
+            <div v-else>搜索</div>
           </div>
           <svg
+            v-if="!isSearchMode"
             xmlns="http://www.w3.org/2000/svg"
             width="37"
             height="14"
@@ -171,11 +226,15 @@ const handleScroll = async () => {
               d="M28.103 10.5V3.454h.878v3.423h.079l3.085-3.423h1.104l-2.817 3.042 3.076 4.004H32.37l-2.544-3.394-.845.933V10.5z"
             ></path>
           </svg>
+          <div v-else class="close-btn" @click.stop="toggleSearchMode">×</div>
         </div>
       </div>
 
+      <!-- 搜索结果区 -->
+      <SearchResults v-if="isSearchMode" :keyword="searchKeyword" @close="toggleSearchMode" />
+
       <!-- nav列表区 -->
-      <div class="nav-list">
+      <div v-show="!isSearchMode" class="nav-list">
         <div
           v-for="navbar in navberList"
           :key="navbar.id"
@@ -188,7 +247,7 @@ const handleScroll = async () => {
       </div>
 
       <!-- 历史对话区 -->
-      <div v-show="sessionStore.sessionList.length" class="session-list">
+      <div v-show="!isSearchMode && sessionStore.sessionList.length" class="session-list">
         <div class="history-top">
           <div class="title">历史对话</div>
         </div>
@@ -233,7 +292,7 @@ const handleScroll = async () => {
     </div>
 
     <!-- 主视图区 -->
-    <div ref="mainViewRef" :class="['main-view', isSidebarFolded && 'main-folded']">
+    <div :class="['main-view', isSidebarFolded && 'main-folded']">
       <!-- <router-view @toggleSidebar="toggleSidebar" :isSidebarFolded="isSidebarFolded" /> -->
       <router-view
         v-slot="{ Component, route }"
@@ -318,6 +377,33 @@ const handleScroll = async () => {
           display: flex;
           justify-content: left;
           align-items: center;
+          flex: 1;
+        }
+
+        .search-input {
+          border: none;
+          outline: none;
+          background: transparent;
+          color: var(--text-color-3);
+          font-size: 14px;
+          width: 100%;
+
+          &::placeholder {
+            color: var(--text-color-4);
+          }
+        }
+
+        .close-btn {
+          // font-size: 18px;
+          scale: 1.5;
+          transform: translateY(-2px);
+          color: var(--text-color-4);
+          cursor: pointer;
+          padding: 0 5px;
+
+          &:hover {
+            color: var(--text-color-1);
+          }
         }
 
         .short {
