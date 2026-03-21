@@ -244,8 +244,29 @@ export function createEditor(
       position: { startOffset, endOffset },
     } = selector
     const selectedText = source.value.slice(startOffset, endOffset)
-    if (selectedText) {
+    if (!selectedText) return
+
+    if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(selectedText)
+    } else {
+      fallbackCopy(selectedText)
+    }
+  }
+
+  function fallbackCopy(text: string) {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    textarea.style.top = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.focus()
+    textarea.select()
+
+    try {
+      document.execCommand('copy')
+    } finally {
+      document.body.removeChild(textarea)
     }
   }
 

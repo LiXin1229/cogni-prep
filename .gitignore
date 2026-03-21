@@ -11,6 +11,8 @@ node_modules
 dist*
 dist-ssr
 *.local
+bundle-analysis.html
+bundle-analysis-treemap.html
 
 # Editor directories and files
 .vscode/*
