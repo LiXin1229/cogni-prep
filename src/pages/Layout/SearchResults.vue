@@ -1,19 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSearchStore } from '@/stores/search'
-import { useUserInfoStore } from '@/stores/user'
+import { highlightKeyword } from '@/utils/highlightKeywords'
 
 const searchStore = useSearchStore()
-const userStore = useUserInfoStore()
 const router = useRouter()
 
-defineProps<{
+const props = defineProps<{
   keyword: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'close'): void
 }>()
 
 const expandedPath = ref<string | null>(null)
@@ -25,9 +20,6 @@ const toggleExpand = (path: string) => {
 const navToEditorFile = (fileNode: any) => {
   router.push({ name: '编辑器' })
   searchStore.selectFileFromSearch(fileNode)
-  if (userStore.isMobile) {
-    emit('close')
-  }
 }
 
 const handleResultClick = (result: any) => {
@@ -39,10 +31,17 @@ const handleResultClick = (result: any) => {
 const handleMatchClick = (fileNode: any, matchIndex: number) => {
   router.push({ name: '编辑器' })
   searchStore.selectMatch(fileNode, matchIndex)
-  if (userStore.isMobile) {
-    emit('close')
-  }
 }
+
+// 高亮文件名
+const highlightedFileName = computed(() => (fileName: string) => {
+  return highlightKeyword(fileName, props.keyword, 'highlight-file')
+})
+
+// 高亮匹配内容
+const highlightedMatchContent = computed(() => (content: string) => {
+  return highlightKeyword(content, props.keyword, 'highlight-match')
+})
 </script>
 
 <template>
@@ -64,7 +63,7 @@ const handleMatchClick = (fileNode: any, matchIndex: number) => {
         @click="handleResultClick(result)"
       >
         <div class="file-info">
-          <div class="file-name">{{ result.fileNode.name }}</div>
+          <div class="file-name" v-html="highlightedFileName(result.fileNode.name)"></div>
           <div class="file-path">{{ result.fileNode.path }}</div>
           <div v-if="expandedPath === result.fileNode.path" class="matches">
             <div
@@ -72,9 +71,8 @@ const handleMatchClick = (fileNode: any, matchIndex: number) => {
               :key="idx"
               class="match-item"
               @click.stop="handleMatchClick(result.fileNode, idx)"
-            >
-              {{ match.context }}
-            </div>
+              v-html="highlightedMatchContent(match.context)"
+            ></div>
           </div>
         </div>
       </div>
@@ -97,6 +95,18 @@ const handleMatchClick = (fileNode: any, matchIndex: number) => {
   }
 
   .result-list {
+    // keyword 高亮样式
+    :deep() {
+      .highlight-match,
+      .highlight-file {
+        background-color: var(--search-bgc);
+        color: var(--main-color);
+        padding: 0 2px;
+        border-radius: 2px;
+        font-weight: 500;
+      }
+    }
+
     .result-item {
       display: flex;
       align-items: center;
@@ -119,6 +129,15 @@ const handleMatchClick = (fileNode: any, matchIndex: number) => {
           &:hover {
             color: var(--main-color);
           }
+
+          // 文件名高亮样式
+          // :deep(.highlight-file) {
+          //   background-color: var(--search-bgc);
+          //   color: var(--main-color);
+          //   padding: 0 2px;
+          //   border-radius: 2px;
+          //   font-weight: 500;
+          // }
         }
 
         .file-path {

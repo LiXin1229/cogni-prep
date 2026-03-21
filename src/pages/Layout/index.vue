@@ -231,7 +231,7 @@ watch(
       </div>
 
       <!-- 搜索结果区 -->
-      <SearchResults v-if="isSearchMode" :keyword="searchKeyword" @close="toggleSearchMode" />
+      <SearchResults v-if="isSearchMode" :keyword="searchKeyword" />
 
       <!-- nav列表区 -->
       <div v-show="!isSearchMode" class="nav-list">

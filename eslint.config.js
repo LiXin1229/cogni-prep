@@ -47,6 +47,7 @@ export default [
         'allowTemplateLiterals': true,
       }],
       'vue/html-quotes': ['error', 'double'], // Vue 模板中使用双引号
+      'vue/no-v-html': 'off', // 允许使用 v-html
     },
   },
 
