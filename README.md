@@ -2,7 +2,7 @@
 
 ![](./resource/example4.png)
 
-![](./resource/example6.png)
+![](./resource/example8.png)
 
 ![](./resource/example3.png)
 

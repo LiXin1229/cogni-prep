@@ -15,6 +15,7 @@ import star from '@/assets/svgs/star.svg'
 import logoutIcon from '@/assets/svgs/logout.svg'
 import hideSidebarIcon from '@/assets/svgs/hide-sidebar.svg'
 import ellipsisIcon from '@/assets/svgs/ellipsis.svg'
+import closeIcon from '@/assets/svgs/close.svg'
 import SearchResults from './SearchResults.vue'
 
 const router = useRouter()
@@ -226,7 +227,9 @@ watch(
               d="M28.103 10.5V3.454h.878v3.423h.079l3.085-3.423h1.104l-2.817 3.042 3.076 4.004H32.37l-2.544-3.394-.845.933V10.5z"
             ></path>
           </svg>
-          <div v-else class="close-btn" @click.stop="toggleSearchMode">×</div>
+          <div v-else class="close-btn" @click.stop="toggleSearchMode">
+            <img :src="closeIcon" alt="" />
+          </div>
         </div>
       </div>
 
@@ -290,6 +293,13 @@ watch(
         </div>
       </div>
     </div>
+
+    <!-- 移动端遮罩层 -->
+    <div
+      v-if="userStore.isMobile && !isSidebarFolded"
+      class="mobile-overlay"
+      @click="toggleSidebar"
+    ></div>
 
     <!-- 主视图区 -->
     <div :class="['main-view', isSidebarFolded && 'main-folded']">
@@ -394,15 +404,20 @@ watch(
         }
 
         .close-btn {
-          // font-size: 18px;
-          scale: 1.5;
-          transform: translateY(-2px);
-          color: var(--text-color-4);
-          cursor: pointer;
-          padding: 0 5px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
 
-          &:hover {
-            color: var(--text-color-1);
+          img {
+            width: 16px;
+            height: 16px;
+            opacity: 0.6;
+          }
+
+          &:hover img {
+            opacity: 1;
           }
         }
 
@@ -588,6 +603,15 @@ watch(
     margin-left: 0;
   }
 
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+
   @media (max-aspect-ratio: 1/1) {
     .sidebar {
       width: 75vw;
@@ -607,7 +631,7 @@ watch(
         right: 0;
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.4);
-        z-index: 1000;
+        z-index: 999;
         transition: opacity 0.3s ease;
       }
     }

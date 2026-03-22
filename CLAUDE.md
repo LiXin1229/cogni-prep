@@ -41,6 +41,8 @@ cogni-prep-ts/
 │   │   ├── Dialogs/      # 弹窗组件
 │   │   ├── Editor/       # 富文本编辑器
 │   │   ├── Layout/       # 布局组件
+│   │   │   ├── index.vue       # 主布局
+│   │   │   └── SearchResults.vue # 搜索结果组件
 │   │   ├── Login/        # 登录页面
 │   │   ├── MindMap/      # 思维导图页面
 │   │   ├── Note/         # 笔记页面
@@ -52,6 +54,7 @@ cogni-prep-ts/
 │   │   ├── mindmap.ts    # 思维导图状态
 │   │   ├── note.ts       # 笔记状态
 │   │   ├── prefer.ts     # 收藏状态
+│   │   ├── search.ts     # 文件搜索状态
 │   │   ├── session.ts    # 会话状态
 │   │   └── user.ts       # 用户状态
 │   ├── styles/           # 全局样式
@@ -65,6 +68,8 @@ cogni-prep-ts/
 │   │   ├── API.ts        # API接口定义
 │   │   ├── markdown.ts   # Markdown处理
 │   │   ├── request.ts    # HTTP请求封装
+│   │   ├── highlightKeywords.ts # 关键词高亮
+│   │   ├── superTask.ts  # 并发任务队列
 │   │   └── ...           # 其他工具函数
 │   ├── App.vue
 │   ├── main.ts           # 应用入口
@@ -139,33 +144,41 @@ interface TreeNode {
 - 与思维导图节点关联
 - 支持收藏功能
 
-## 状态管理 (Pinia Stores)
+### 5. 文件搜索系统 (Search)
 
-| Store        | 功能                             |
-| ------------ | -------------------------------- |
-| `chat.ts`    | 管理聊天状态、流式响应、消息历史 |
-| `mindmap.ts` | 管理思维导图数据、节点操作       |
-| `note.ts`    | 管理笔记数据                     |
-| `prefer.ts`  | 管理收藏内容                     |
-| `session.ts` | 管理会话列表                     |
-| `user.ts`    | 管理用户信息、登录状态           |
+- **搜索范围**: 支持本地文件和线上文件搜索
+- **搜索内容**: 文件名匹配 + 文件内容全文搜索
+- **并发控制**: 使用 `SuperTask` 类控制并发请求数量
+- **结果展示**: 关键词高亮、匹配上下文预览、点击跳转
 
-## 工具函数
-
-### Markdown处理 (`utils/markdown.ts`)
-
-使用 Marked + Highlight.js 渲染 Markdown，支持代码高亮和复制功能。
+核心数据结构:
 
 ```typescript
-marked.use(
-  markedHighlight({
-    langPrefix: 'hljs language-',
-    highlight(code, lang) {
-      // 代码高亮逻辑
-    },
-  })
-)
+interface SearchResult {
+  fileNode: FileNode
+  matches: MatchInfo[] // 匹配信息列表
+}
+
+interface MatchInfo {
+  context: string // 匹配上下文
+  index: number // 匹配位置
+  length: number // 匹配长度
+}
 ```
+
+## 状态管理 (Pinia Stores)
+
+| Store        | 功能                               |
+| ------------ | ---------------------------------- |
+| `chat.ts`    | 管理聊天状态、流式响应、消息历史   |
+| `mindmap.ts` | 管理思维导图数据、节点操作         |
+| `note.ts`    | 管理笔记数据                       |
+| `prefer.ts`  | 管理收藏内容                       |
+| `search.ts`  | 管理文件搜索、关键词匹配、结果高亮 |
+| `session.ts` | 管理会话列表                       |
+| `user.ts`    | 管理用户信息、登录状态             |
+
+## 工具函数
 
 ### HTTP请求 (`utils/request.ts`)
 
@@ -174,20 +187,6 @@ marked.use(
 - 请求/响应拦截器
 - 错误处理
 - Token管理
-
-### 树形工具 (`utils/treeUtils.ts`)
-
-提供树形数据操作:
-
-- `findAncestorsById`: 查找节点祖先路径
-- `modifyTreeNodeProp`: 修改节点属性
-- `dynamicTreeSize`: 动态计算树尺寸
-
-### 代码风格
-
-- **ESLint**: 使用 `@eslint/js` 和 `typescript-eslint`
-- **Prettier**: 统一代码格式化
-- **TypeScript**: 严格类型检查
 
 ### 命名规范
 
@@ -213,7 +212,7 @@ marked.use(
 
 - 尽量使用 TypeScript 类型定义，避免使用 as 类型断言
 - 保留必要注释，函数的参数和返回值不需注释
-- 凡是写md文档没指定放置位置的，都放在根目录的 `plan` 文件夹下
+- 凡是写 _md文档_ 没指定放置位置的，都放在根目录的 `plans` 文件夹下
 
 ## 注意事项
 
