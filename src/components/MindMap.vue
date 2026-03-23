@@ -5,7 +5,7 @@ import { useUserInfoStore } from '@/stores/user'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useSessionStore } from '@/stores/session'
 import { useNoteStore } from '@/stores/note'
-import { useThrottle } from '@/utils/useThrottle'
+import throttle from '@/utils/throttle'
 import { getTextWidth } from '@/utils/getTextWidth'
 import {
   toggleFoldedNodes,
@@ -25,7 +25,6 @@ const userStore = useUserInfoStore()
 const mindmapStore = useMindmapStore()
 const sessionStore = useSessionStore()
 const noteStore = useNoteStore()
-const { throttle } = useThrottle()
 
 const props = defineProps({
   style: {

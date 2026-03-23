@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { resolve } from 'node:path'
 
 import { fileURLToPath, URL } from 'node:url'
 
@@ -36,7 +37,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'decode-named-character-reference': resolve(__dirname, 'node_modules/decode-named-character-reference/index.js')
     },
   },
   server: {

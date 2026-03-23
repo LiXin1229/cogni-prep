@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons'
-import { verifyUsername, verifyPassword } from "@/utils/validate"
+import { verifyUsername, verifyPassword } from '@/utils/validate'
 // import { securePassword } from "@/utils/securePassword"
 import request from '@/utils/request'
 import API from '@/utils/API'
@@ -16,14 +16,14 @@ const sessionStore = useSessionStore()
 const loginFormRef = ref(null)
 const registerFormRef = ref(null)
 
-const ruleForm =  reactive({
+const ruleForm = reactive({
   username: '',
-  password: ''
+  password: '',
 })
 
 const rules = reactive({
-  username: [{ validator: verifyUsername, trigger: "blur" }],
-  password: [{ validator: verifyPassword, trigger: "blur" }],
+  username: [{ validator: verifyUsername, trigger: 'blur' }],
+  password: [{ validator: verifyPassword, trigger: 'blur' }],
 })
 
 const panelType = ref('login')
@@ -31,6 +31,12 @@ const panelType = ref('login')
 const switchPanel = (type: 'login' | 'register') => {
   panelType.value = type
   Object.assign(ruleForm, { username: '', password: '' })
+}
+
+const loginTestAccount = () => {
+  ruleForm.username = 'test1'
+  ruleForm.password = '123456'
+  submit(loginFormRef.value)
 }
 
 const submit = (formRef: any) => {
@@ -47,24 +53,23 @@ const submit = (formRef: any) => {
         method: 'POST',
         data: {
           username: username,
-          password: derivedKey
-        }
+          password: derivedKey,
+        },
       })
 
       if (res.success) {
         userStore.userInfo = res.data.userInfo
         userStore.token = res.data.token
-        
+
         await router.push('/')
         userStore.getUserInfo()
         sessionStore.mainArea = {
           areaId: null,
-          name: '未选择领域'
+          name: '未选择领域',
         }
       }
     })
-  }
-  else if (panelType.value === 'register') {
+  } else if (panelType.value === 'register') {
     formRef.validate(async (valid: any) => {
       if (!valid) return
 
@@ -77,19 +82,19 @@ const submit = (formRef: any) => {
         method: 'POST',
         data: {
           username: username,
-          password: derivedKey
-        }
+          password: derivedKey,
+        },
       })
 
       if (res.success) {
         userStore.userInfo = res.data.userInfo
         userStore.token = res.data.token
-        
+
         await router.push('/')
         userStore.getUserInfo()
         sessionStore.mainArea = {
           areaId: null,
-          name: '未选择领域'
+          name: '未选择领域',
         }
       }
     })
@@ -107,7 +112,7 @@ const submit = (formRef: any) => {
         <div class="switch-container" @click="switchPanel('register')">
           <div class="switch">
             前往注册
-            <font-awesome-icon :icon="faAngleRight" style="color: var(--theme-font-color2);" />
+            <font-awesome-icon :icon="faAngleRight" style="color: var(--theme-font-color2)" />
           </div>
         </div>
       </div>
@@ -123,12 +128,21 @@ const submit = (formRef: any) => {
             <el-input v-model="ruleForm.username" placeholder="输入用户名" size="large" />
           </el-form-item>
           <el-form-item prop="password" class="form-item">
-            <el-input v-model="ruleForm.password" placeholder="输入密码" type="password" show-password size="large" />
+            <el-input
+              v-model="ruleForm.password"
+              placeholder="输入密码"
+              type="password"
+              show-password
+              size="large"
+            />
           </el-form-item>
         </el-form>
 
-        <el-button type="primary" style=" width: 100%;" size="large" @click="submit(loginFormRef)">
+        <el-button type="primary" style="width: 100%" size="large" @click="submit(loginFormRef)">
           立即登录
+        </el-button>
+        <el-button style="width: 100%; margin: 20px 0" size="large" @click="loginTestAccount">
+          登录测试账号
         </el-button>
       </div>
     </div>
@@ -140,7 +154,7 @@ const submit = (formRef: any) => {
         </div>
         <div class="switch-container" @click="switchPanel('login')">
           <div class="switch">
-            <font-awesome-icon :icon="faAngleLeft" style="color: var(--theme-font-color2);" />
+            <font-awesome-icon :icon="faAngleLeft" style="color: var(--theme-font-color2)" />
             返回登录
           </div>
         </div>
@@ -157,11 +171,17 @@ const submit = (formRef: any) => {
             <el-input v-model="ruleForm.username" placeholder="输入用户名" size="large" />
           </el-form-item>
           <el-form-item prop="password" class="form-item">
-            <el-input v-model="ruleForm.password" placeholder="输入密码" type="password" show-password  size="large" />
+            <el-input
+              v-model="ruleForm.password"
+              placeholder="输入密码"
+              type="password"
+              show-password
+              size="large"
+            />
           </el-form-item>
         </el-form>
 
-        <el-button type="primary" style=" width: 100%;" size="large" @click="submit(registerFormRef)">
+        <el-button type="primary" style="width: 100%" size="large" @click="submit(registerFormRef)">
           立即注册
         </el-button>
       </div>
@@ -212,19 +232,19 @@ const submit = (formRef: any) => {
     .flex {
       display: flex;
     }
-    
+
     .justify-between {
       justify-content: space-between;
     }
-    
+
     .top {
       width: 100%;
     }
-    
+
     .title-container {
       flex: 1; // 相当于原el-col的span分配
     }
-    
+
     .switch-container {
       flex: 1; // 相当于原el-col的span分配
       text-align: right;

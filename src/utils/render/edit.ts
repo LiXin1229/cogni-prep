@@ -1,7 +1,8 @@
 import { ref, type Ref } from 'vue'
 import type { Selector } from './select'
-import type { BlockCodePosInfo, KeyPositionMaps } from '.'
+import { MAX_LENGTH, type BlockCodePosInfo, type KeyPositionMaps } from '.'
 import { setupHistoryStack, type History } from './history'
+import { throttle } from 'lodash-es'
 
 export type KeyCharTypes = 'strong' | 'emphasis' | 'blockCode' | 'inlineCode'
 
@@ -571,15 +572,39 @@ export function createEditor(
     keyPositionMaps.blockCode.delete(nodeId)
   }
 
+  // 节流
+  const delay = getThrottleDelay(input.length)
+
+  const throttleHandleInsert = throttle((key: string) => {
+    handleInsert(key)
+  }, delay)
+
+  const throttleHandleKeydown = throttle((e: KeyboardEvent) => {
+    handleKeydown(e)
+  }, delay)
+
   return {
     source,
-    handleKeydown,
+    handleKeydown: throttleHandleKeydown,
     handlePaste,
-    handleInsert,
+    handleInsert: throttleHandleInsert,
     handleDelete,
     handleCompositionUpdate,
     record,
     history,
     handleInsertKeyChars,
   }
+}
+
+function getThrottleDelay(
+  textLength: number,
+  minLength = 3 * 1000, // 最小长度，超过后开始节流
+  maxDelay = 200
+) {
+  let delay = 0
+  if (textLength >= minLength) {
+    const ratio = (textLength - minLength) / (MAX_LENGTH - minLength)
+    delay = Math.round(ratio * maxDelay)
+  }
+  return delay
 }

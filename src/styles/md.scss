@@ -194,4 +194,12 @@ ol {
     white-space: pre;
     letter-spacing: -0.5px;
   }
+
+  .md-block-code-plain {
+    white-space: inherit;
+
+    span {
+      font-size: 0.75rem;
+    }
+  }
 }

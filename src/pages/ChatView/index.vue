@@ -7,11 +7,10 @@ import { useUserInfoStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { parseMarkdown } from '@/utils/markdown'
 import { stickBlockTop } from '@/utils/stickBlockTop'
-import { useThrottle } from '@/utils/useThrottle'
+import throttle from '@/utils/throttle'
 import { writeInClipboard } from '@/utils/clipboard'
 import { FUNC_TYPE, type ChatType, type FuncStatusType } from '@/stores/types/chat.type'
 
-const { throttle } = useThrottle()
 const userStore = useUserInfoStore()
 const sessionStore = useSessionStore()
 

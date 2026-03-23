@@ -44,7 +44,11 @@ export function createMarkdown(
   const editingNodeMap: EditingNodeMap = ref(new Map())
   const editingBlockCodeDomMap: EditingBlockCodeDomMap = new Map()
   const keyPositionMaps: KeyPositionMaps = { blockCode: new Map() }
-  const isReadonly = options?.isReadonly || false
+
+  let isReadonly = options?.isReadonly || false
+  if (isOverLength(input.length)) {
+    isReadonly = true
+  }
 
   const blobUrlManager = createBlobUrlManager(options)
 
@@ -69,35 +73,44 @@ export function createMarkdown(
 
   const ast = ref<Root | null>(null)
 
+  // 创建 Worker 实例
+  const worker = new Worker(new URL('./workers/remark.worker.ts', import.meta.url), {
+    type: 'module',
+  })
+
+  // 任务ID管理
   let currentTaskId = 0
-  let parseTaskId: ReturnType<typeof setTimeout> | null = null
 
-  const parseAsync = (markdown: string, taskId: number) => {
-    parseTaskId = setTimeout(() => {
-      if (taskId !== currentTaskId) return
+  // Worker 消息处理
+  worker.onmessage = (event: MessageEvent<{ id: number; ast: Root; error: string | null }>) => {
+    const { id, ast: resultAst, error } = event.data
 
+    // 只处理最新任务的结果
+    if (id < currentTaskId) return
+
+    if (error) {
+      console.log('Worker parse error:', error)
       try {
-        const result = remark().parse(markdown)
-        if (taskId === currentTaskId) {
-          ast.value = result
-        }
-      } catch (error) {
-        console.error('Parse error:', error)
+        ast.value = remark().parse(source.value)
+      } catch (e) {
+        console.log('Fallback parse error:', e)
       }
-    }, 0)
+    } else {
+      ast.value = resultAst
+    }
   }
 
+  worker.onerror = (error) => {
+    console.error('Worker error:', error)
+  }
+
+  // 监听 source 变化，触发解析
   watch(
     [() => source.value, () => loadedLangs.value.length],
     ([val]) => {
-      const markdown = val as string
-
-      if (parseTaskId) {
-        clearTimeout(parseTaskId)
-      }
-
+      const markdown = val
       const taskId = ++currentTaskId
-      parseAsync(markdown, taskId)
+      worker.postMessage({ id: taskId, markdown })
     },
     { immediate: true }
   )
@@ -107,6 +120,14 @@ export function createMarkdown(
       ? preprocessAst(ast.value, source.value, keyPositionMaps, blobUrlManager, highlight)
       : null
   )
+  // const preprocessedAst = computed(() => {
+  //   console.time('preprocess')
+  //   const res = ast.value
+  //     ? preprocessAst(ast.value, source.value, keyPositionMaps, blobUrlManager, highlight)
+  //     : null
+  //   console.timeEnd('preprocess')
+  //   return res
+  // })
 
   const root = () => {
     selector.cursorRendered = false
@@ -137,14 +158,23 @@ export function createMarkdown(
             },
           }
         : {},
+
       preprocessedAst.value?.children.map((node) => renderNode(node))
+      // logTime(() => preprocessedAst.value?.children.map((node) => renderNode(node)))
     )
   }
 
+  // const logTime = (fn: () => any) => {
+  //   try {
+  //     console.time('render')
+  //     return fn()
+  //   } finally {
+  //     console.timeEnd('render')
+  //   }
+  // }
+
   const cleanup = () => {
-    if (parseTaskId) {
-      clearTimeout(parseTaskId)
-    }
+    worker.terminate()
     ime.cleanupImeListener()
     blobUrlManager.cleanup()
   }
@@ -156,4 +186,10 @@ export function createMarkdown(
     ime,
     cleanup,
   }
+}
+
+export const MAX_LENGTH = 80 * 1000
+
+function isOverLength(length: number) {
+  return length > MAX_LENGTH
 }

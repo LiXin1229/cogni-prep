@@ -14,7 +14,6 @@ interface ParseResult {
 
 self.onmessage = (event: MessageEvent<ParseTask>) => {
   const { id, markdown } = event.data
-  console.log('parse markdown: ', markdown)
 
   try {
     const ast = remark().parse(markdown) as Root
