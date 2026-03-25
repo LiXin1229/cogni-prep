@@ -21,6 +21,7 @@
     "dompurify": "^3.2.6",
     "element-plus": "^2.10.4",
     "highlight.js": "^11.11.1",
+    "lru-cache": "^11.2.7",
     "marked": "^16.1.1",
     "marked-highlight": "^2.2.2",
     "pinia": "^3.0.3",

@@ -17,9 +17,11 @@ export default defineConfig({
     vue(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
+      dts: 'src/auto-imports.d.ts',
     }),
     Components({
       resolvers: [ElementPlusResolver()],
+      dts: 'src/components.d.ts',
     }),
     viteCompression({
       algorithm: 'gzip', // 也可 brotli

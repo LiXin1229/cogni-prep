@@ -94,7 +94,7 @@ const setPoint = () => {
 }
 
 const inputHeight = ref(52)
-const textareaHeight = ref(null)
+const textareaHeight = ref(0)
 
 watch(
   () => textareaHeight.value,

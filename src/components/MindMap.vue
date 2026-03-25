@@ -355,8 +355,8 @@ const applyInitialZoom = (svgDimensions: any) => {
 }
 
 // 菜单
-const showCustMenu = ref('')
-const position = ref({})
+const showCustMenu = ref<'node' | 'normal'>('node')
+const position = ref<{ x: number; y: number }>({ x: 0, y: 0 })
 
 // 打开菜单
 const openCustMenu = (e: MouseEvent, type: 'node' | 'normal', node?: TreeNode) => {
