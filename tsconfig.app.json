@@ -13,6 +13,7 @@
       "ES6",
       "ES2023"
     ],
+    // "types": ["vitest/globals"],
 
     /* Linting */
     "strict": true,
