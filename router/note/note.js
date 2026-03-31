@@ -35,7 +35,8 @@ router.post('/getNote', async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
-    res.flushHeaders() // 发送头信息
+    res.setHeader('X-Accel-Buffering', 'no')
+    res.flushHeaders()
 
     const response = await sendToMainAIStream(system, content)
     // console.log(response)

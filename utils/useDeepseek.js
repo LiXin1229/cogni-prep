@@ -1,13 +1,13 @@
 require('dotenv').config()
 const axios = require('axios')
 
-const model = 'deepseek'
+const model = 'qwen'
 
 const AImodel = {
-  'deepseek': {
-    apiKey: process.env.DEEPSEEK_API_KEY,
-    baseUrl: 'https://api.deepseek.com/chat/completions',
-    model: 'deepseek-chat'
+  qwen: {
+    apiKey: process.env.QWEN_API_KEY,
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    model: 'qwen3-coder-plus'
   }
 }
 
@@ -23,7 +23,7 @@ const sendToDS = (system, content) => {
   }]
 
   const messages = [...systemArr, ...contentArr]
-  console.log('messages', messages)
+  // console.log('messages', messages)
 
   const data = JSON.stringify({
     "messages": messages,
@@ -34,15 +34,9 @@ const sendToDS = (system, content) => {
     "response_format": {
       "type": "json_object"
     },
-    "stop": null,
     "stream": false,
-    "stream_options": null,
-    "temperature": 1.0,
-    "top_p": 1,
-    "tools": null,
-    "tool_choice": "none",
-    "logprobs": false,
-    "top_logprobs": null
+    "temperature": 0.5,
+    "top_p": 1
   })
   
   let config = {
