@@ -19,7 +19,6 @@ import type {
   TemTextType,
   CallbackMap,
 } from './types/chat.type'
-import { LRUCache } from 'lru-cache'
 
 export const useChatStore = defineStore('chat', () => {
   const route = useRoute()
@@ -31,103 +30,84 @@ export const useChatStore = defineStore('chat', () => {
   // 会话ID
   const sessionId = computed(() => +route.params.sessionId || -1)
 
-  const chatLRU = new LRUCache<number, ChatMapValueTpye>({
-    max: 2,
-    updateAgeOnGet: true,
-    updateAgeOnHas: true,
-    dispose: (value, key, reason) => {
-      if (reason === 'evict') {
-        value.controller?.abort()
-        console.log(`会话 ${key} 已被 LRU 淘汰`)
-      }
-    },
-  })
+  const chatMap = reactive(new Map<number, ChatMapValueTpye>())
 
-  const lruVersion = ref(0)
+  const chatQueue: number[] = []
 
-  const setLRU = (key: number, value: ChatMapValueTpye) => {
-    chatLRU.set(key, value)
-    triggerUpdate()
+  const pushChatQueue = (currentSessionId: number, data: ChatMapValueTpye) => {
+    const length = chatQueue.length
+    if (length >= 5) {
+      const removeId = chatQueue.shift() as number
+      chatMap.get(removeId)?.controller?.abort()
+      chatMap.delete(removeId)
+    }
+    chatMap.set(currentSessionId, data)
+    chatQueue.push(currentSessionId)
   }
 
-  const triggerUpdate = () => {
-    lruVersion.value++
-  }
-
-  const displayChat = computed(() => {
-    lruVersion.value
-    return chatLRU.get(sessionId.value)?.chatList ?? []
-  })
+  // 当前展示的聊天记录
+  const displayChat = computed(() => chatMap.get(sessionId.value)?.chatList ?? [])
   const setDisplayChat = (value: ChatType[], currentSessionId: number) => {
-    const data = chatLRU.peek(currentSessionId)
-    if (data) {
-      data.chatList = value
-      triggerUpdate()
-    }
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) chatMapValue.chatList = value
   }
 
-  const sendState = computed(() => chatLRU.peek(sessionId.value)?.sendState ?? 'available')
+  const sendState = computed(() => chatMap.get(sessionId.value)?.sendState ?? 'available')
   const setSendState = (value: SendStateType, currentSessionId: number) => {
-    const data = chatLRU.peek(currentSessionId)
-    if (data) {
-      data.sendState = value
-      triggerUpdate()
-    }
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) chatMapValue.sendState = value
   }
 
-  const nextState = computed(() => chatLRU.peek(sessionId.value)?.nextState ?? true)
+  const nextState = computed(() => chatMap.get(sessionId.value)?.nextState ?? true)
   const setNextState = (value: boolean, currentSessionId: number) => {
-    const data = chatLRU.peek(currentSessionId)
-    if (data) {
-      data.nextState = value
-      triggerUpdate()
-    }
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) chatMapValue.nextState = value
   }
 
   const abortStream = () => {
     const currentSessionId = sessionId.value
-    const data = chatLRU.peek(currentSessionId)
-    if (data) {
-      data.controller?.abort()
-      data.controller = null
-      triggerUpdate()
+    const chatMapValue = chatMap.get(currentSessionId)
+    if (chatMapValue) {
+      chatMapValue.controller?.abort()
+      chatMapValue.controller = null
     }
   }
 
+  // 获取当前会话的聊天列表
   const initDisplayChat = async (currentSessionId: number) => {
+    // console.log('initDisplayChat', currentSessionId)
     if (currentSessionId < 0) return
 
-    if (chatLRU.has(currentSessionId)) return
+    if (!chatMap.has(currentSessionId)) {
+      try {
+        const res = await request<{ chatList: ChatType[] }>({
+          url: API.getChatData,
+          method: 'GET',
+          params: {
+            sessionId: currentSessionId,
+          },
+        })
+        console.log('getChatData: ', res)
 
-    try {
-      const res = await request<{ chatList: ChatType[] }>({
-        url: API.getChatData,
-        method: 'GET',
-        params: {
-          sessionId: currentSessionId,
-        },
-      })
-      console.log('getChatData: ', res)
-
-      setLRU(currentSessionId, {
-        chatList: res.data.chatList,
-        backupChatList: clone(res.data.chatList),
-        sendState: 'available',
-        nextState: true,
-        controller: null,
-      })
-    } catch (error) {
-      console.log(error)
+        pushChatQueue(currentSessionId, {
+          chatList: res.data.chatList,
+          backupChatList: clone(res.data.chatList),
+          sendState: 'available',
+          nextState: true,
+          controller: null,
+        })
+      } catch (error) {
+        // 获取聊天失败的处理
+        console.log(error)
+      }
     }
   }
 
   watch(
     () => sessionId.value,
     (sessionId) => {
-      console.log('sessionId', sessionId)
-      console.log('chatLRU', chatLRU.keys())
-      console.log('chatLRU', chatLRU.get(sessionId))
       initDisplayChat(sessionId)
+      // console.log('map', chatMap)
     },
     { immediate: true, flush: 'sync' }
   )
@@ -241,10 +221,12 @@ export const useChatStore = defineStore('chat', () => {
     chatId: number,
     msgType: ChatStatusType
   ) => {
-    const cacheData = chatLRU.peek(data.sessionId)
-    if (cacheData) cacheData.controller = new AbortController()
+    // console.log('getStreamResponse', data)
+    const chatMapValue = chatMap.get(data.sessionId)
+    if (chatMapValue) chatMapValue.controller = new AbortController()
 
-    const abortSignal: AbortSignal | undefined = cacheData?.controller?.signal
+    // 保存信号，用于外部中断
+    const abortSignal: AbortSignal | undefined = chatMapValue?.controller?.signal
 
     const newText = reactive({
       content: '',
@@ -266,7 +248,7 @@ export const useChatStore = defineStore('chat', () => {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
-        signal: abortSignal,
+        signal: abortSignal, // 关联中断信号
       })
 
       if (!response.ok) {
@@ -277,13 +259,13 @@ export const useChatStore = defineStore('chat', () => {
         throw new Error('Response body is null')
       }
 
+      // 读取流式响应
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
-      const streamData = chatLRU.peek(data.sessionId)
-      if (!streamData) return
-      streamData.chatList.push(newText)
-      triggerUpdate()
+      const chatMapValue = chatMap.get(data.sessionId)
+      if (!chatMapValue) return
+      chatMapValue.chatList.push(newText)
 
       while (true) {
         const { done, value } = await reader.read()
@@ -292,27 +274,29 @@ export const useChatStore = defineStore('chat', () => {
           setSendState('available', data.sessionId)
           saveChat(chatId, data.sessionId, newText.content, data, msgType)
 
-          const doneData = chatLRU.peek(data.sessionId)
-          if (doneData) doneData.controller = null
+          const chatMapValue = chatMap.get(data.sessionId)
+          if (chatMapValue) chatMapValue.controller = null
           break
         }
 
         setSendState('streaming', data.sessionId)
 
+        // 解析SSE格式数据（格式：data: [JSON]\n\n）
         const chunk = decoder.decode(value)
-        const lines = chunk.split('\n\n')
+        const lines = chunk.split('\n\n') // 按SSE分隔符分割
 
         lines.forEach((line) => {
           if (line.startsWith('data: ')) {
-            const lineData = line.slice(6)
-            if (lineData === '[DONE]') return
-            const json: { content: string } = JSON.parse(lineData)
+            const data = line.slice(6) // 去掉'data: '前缀
+            if (data === '[DONE]') return // 结束标记
+            const json: { content: string } = JSON.parse(data) // 解析为JSON
+            // console.log('收到流式数据：', json)
             newText.content += json.content
-            triggerUpdate()
           }
         })
       }
     } catch (err: any) {
+      // 捕获中断错误（区别于其他错误）
       if (err.name === 'AbortError') {
         console.log('请求被主动中断')
       } else {
@@ -322,8 +306,8 @@ export const useChatStore = defineStore('chat', () => {
       saveChat(chatId, data.sessionId, newText.content, data, msgType)
       setSendState('available', data.sessionId)
 
-      const errData = chatLRU.peek(data.sessionId)
-      if (errData) errData.controller = null
+      const chatMapValue = chatMap.get(data.sessionId)
+      if (chatMapValue) chatMapValue.controller = null
     }
   }
 
@@ -362,9 +346,9 @@ export const useChatStore = defineStore('chat', () => {
         },
       })
 
-      const data = chatLRU.peek(currentSessionId)
-      if (data)
-        data.backupChatList.push({
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue)
+        chatMapValue.backupChatList.push({
           id: res.data.chatId,
           content,
           messageType: msgType,
@@ -374,8 +358,8 @@ export const useChatStore = defineStore('chat', () => {
       return res
     } catch (error: any) {
       console.log(error)
-      const data = chatLRU.peek(currentSessionId)
-      if (data) setDisplayChat(data.backupChatList, currentSessionId)
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
@@ -386,6 +370,7 @@ export const useChatStore = defineStore('chat', () => {
     data: StreamRequestConfigType,
     msgType: ChatStatusType
   ) => {
+    // displayChat.value.find(item => item.id === chatId).content = content
     try {
       await request({
         url: API.saveChat,
@@ -397,10 +382,11 @@ export const useChatStore = defineStore('chat', () => {
         },
       })
       setNextState(true, currentSessionId)
+      // console.log('保存记录', res)
 
-      const cacheData = chatLRU.peek(currentSessionId)
-      if (cacheData)
-        cacheData.backupChatList.push({
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue)
+        chatMapValue.backupChatList.push({
           id: chatId,
           content,
           messageType: msgType,
@@ -408,8 +394,8 @@ export const useChatStore = defineStore('chat', () => {
         })
     } catch (error) {
       console.log(error)
-      const cacheData = chatLRU.peek(currentSessionId)
-      if (cacheData) setDisplayChat(cacheData.backupChatList, currentSessionId)
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
@@ -530,9 +516,9 @@ export const useChatStore = defineStore('chat', () => {
 
       pushUserText(currentSessionId, { id: res.data.chatId }, true)
 
-      const cacheData = chatLRU.peek(currentSessionId)
-      if (cacheData)
-        cacheData.backupChatList.push({
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue)
+        chatMapValue.backupChatList.push({
           id: res.data.chatId,
           content,
           messageType: MSG_TYPE['question'] as ChatStatusType,
@@ -540,22 +526,20 @@ export const useChatStore = defineStore('chat', () => {
         })
     } catch (error) {
       console.log(error)
-      const cacheData = chatLRU.peek(currentSessionId)
-      if (cacheData) setDisplayChat(cacheData.backupChatList, currentSessionId)
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) setDisplayChat(chatMapValue.backupChatList, currentSessionId)
     }
   }
 
   const pushUserText = (currentSessionId: number, data: TemTextType, isReplace = false) => {
-    console.log('data', data)
-    const curr = chatLRU.peek(currentSessionId)
-    if (!curr) return
+    const curr = chatMap.get(currentSessionId) as ChatMapValueTpye
+    // console.log('pushUserText', data)
     if (isReplace) {
       const lastLength = curr.chatList.length - 1
       curr.chatList[lastLength].id = data.id as number
     } else {
       curr.chatList.push(data as ChatType)
     }
-    triggerUpdate()
   }
 
   // 删除对话
@@ -574,12 +558,12 @@ export const useChatStore = defineStore('chat', () => {
           chatId: selectedChat.id,
         },
       })
+      // console.log(res)
 
-      const cacheData = chatLRU.peek(currentSessionId)
-      if (cacheData) {
-        cacheData.chatList = displayChat.value.filter((item) => item.id !== selectedChat.id)
-        cacheData.backupChatList = clone(cacheData.chatList)
-        triggerUpdate()
+      const chatMapValue = chatMap.get(currentSessionId)
+      if (chatMapValue) {
+        chatMapValue.chatList = displayChat.value.filter((item) => item.id !== selectedChat.id)
+        chatMapValue.backupChatList = clone(chatMapValue.chatList)
       }
     } catch (error) {
       console.log(error)
@@ -663,6 +647,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
+    chatMap,
     displayChat,
     initDisplayChat,
     chatStatus,

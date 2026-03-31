@@ -211,7 +211,7 @@ const title = computed(() => {
         <div class="title">{{ title }}</div>
         <div class="tip">
           内容由
-          <span style="font-style: italic">DeepSeek-V3</span>
+          <span style="font-style: italic">Qwen3-max</span>
           生成
         </div>
       </div>
