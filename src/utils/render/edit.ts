@@ -29,7 +29,7 @@ export function createEditor(
   const record = history.record
 
   const handleKeydown = (e: KeyboardEvent) => {
-    console.log('handleKeydown: ', e)
+    // console.log('handleKeydown: ', e)
     if (e.ctrlKey) {
       switch (e.key) {
         case 'c':
