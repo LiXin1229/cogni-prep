@@ -23,8 +23,8 @@
 │         │                │                    │             │
 │         ▼                ▼                    ▼             │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │    IME      │  │   History   │  │   BlobUrlManager    │  │
-│  │  (输入法)    │  │  (历史栈)    │  │    (图片管理)        │  │
+│  │InputHandler │  │   History   │  │   BlobUrlManager    │  │
+│  │  (输入处理)  │  │  (历史栈)    │  │    (图片管理)        │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -49,14 +49,14 @@ export function createMarkdown(
 - `root: () => VNode` - 渲染根节点
 - `source: Ref<string>` - Markdown 源文本
 - `editor: Editor` - 编辑器实例
-- `ime: Ime` - 输入法管理
+- `inputHandler: InputHandler` - 输入事件处理
 - `cleanup: () => void` - 清理函数
 
 **核心流程**:
 1. 创建 DOM 到 AST 节点的映射 (`domToNode`)
 2. 初始化选区管理器 (`selector`)
 3. 初始化编辑器 (`editor`)
-4. 初始化输入法 (`ime`)
+4. 初始化输入事件处理 (`inputHandler`)
 5. 初始化代码高亮 (`hljs`)
 6. 使用 Remark 解析 Markdown 为 AST
 7. 预处理 AST（代码高亮、图片 URL 转换）
@@ -149,35 +149,65 @@ h('pre', { innerHTML: node.html })
 renderPlainText(node, sliceTextFromSource(node), domToNode)
 ```
 
-### 5. setupIme - 输入法支持
+**光标同步**:
+```typescript
+// 使用浏览器原生 Selection API 同步光标位置
+const sel = window.getSelection()
+if (sel) {
+  const range = document.createRange()
+  range.setStart(el.firstChild, localOffset)
+  range.collapse(true)
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+```
 
-**文件**: `ime.ts`
+### 5. setupInputHandler - 输入事件处理
 
-处理中文、日文等需要输入法编辑的语言。
+**文件**: `inputHandler.ts`
+
+在 contenteditable 元素上监听输入事件，处理普通文本输入和 IME 组合输入。
 
 **实现原理**:
-1. 使用隐藏的 `<textarea class="ime-textarea">` 接收输入
-2. 监听 `compositionstart` 开始输入法编辑
-3. 监听 `compositionupdate` 实时更新 composing 文本
-4. 监听 `compositionend` 完成输入，记录历史
+1. 监听 `beforeinput` 事件，阻止浏览器原生 DOM 修改
+2. 监听 `compositionstart` 标记 IME 组合开始
+3. 监听 `compositionend` 完成组合输入，一次性写入最终文本
+4. 监听 `keydown` 处理控制键（方向键、删除、Tab 等）
+5. 监听 `paste` 处理粘贴操作
 
 **事件处理**:
 ```typescript
-onCompositionStart: () => {
-  isComposing = true
-  compositionStartOffset = selector.cursorOffset.value
+// beforeinput: 始终阻止浏览器原生 DOM 修改
+const onBeforeInput = (e: InputEvent) => {
+  e.preventDefault()
+  if (isComposing) return
+  
+  switch (inputType) {
+    case 'insertText':
+      editor.handleInsert(data)
+      break
+    case 'deleteContentBackward':
+      editor.handleDelete()
+      break
+    // ...
+  }
 }
 
-onCompositionUpdate: (text) => {
-  editor.handleCompositionUpdate(compositionStartOffset, text)
-}
-
-onCompositionEnd: (text) => {
+// compositionend: 一次性写入最终文本
+const onCompositionEnd = (e: CompositionEvent) => {
+  const finalText = e.data || ''
+  if (finalText && compositionStartOffset !== null) {
+    editor.handleCompositionUpdate(compositionStartOffset, finalText)
+    editor.record()
+  }
   isComposing = false
-  editor.handleCompositionUpdate(compositionStartOffset, finalText)
-  editor.record() // 记录历史
 }
 ```
+
+**设计要点**:
+- `beforeinput` 始终调用 `preventDefault()`，确保所有 DOM 修改都通过 `source.value` 驱动
+- IME 组合期间不更新 `source.value`，避免中间态导致的重复渲染
+- 浏览器负责显示 IME 候选窗口，`compositionend` 时一次性写入最终文本
 
 ### 6. setupHistoryStack - 撤销重做
 
@@ -259,9 +289,9 @@ declare module 'mdast' {
 用户输入
    │
    ▼
-┌─────────────┐
-│  IME 处理   │ (中文输入特殊处理)
-└──────┬──────┘
+┌─────────────────┐
+│ InputHandler    │ (beforeinput + compositionend)
+└──────┬──────────┘
        │
        ▼
 ┌─────────────┐
@@ -290,7 +320,7 @@ declare module 'mdast' {
        │
        ▼
 ┌─────────────┐
-│  Vue 更新   │
+│ Selection   │ (同步浏览器光标)
 └─────────────┘
 ```
 
@@ -298,28 +328,32 @@ declare module 'mdast' {
 
 ```vue
 <template>
-  <div ref="editorRef" class="markdown-editor">
-    <component :is="markdown.root" />
+  <div ref="editorRef" class="editor-wapper">
+    <div v-if="md" class="edit-container" :contenteditable="!readonly">
+      <component :is="md.root" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { createMarkdown } from '@/utils/render'
+import { ref, onUnmounted, watch } from 'vue'
+import { createMarkdown, type MarkDown } from '@/utils/render'
 
 const editorRef = ref<HTMLElement>()
-const initialContent = '# Hello World\n\nThis is a **markdown** editor.'
+const md = ref<MarkDown>()
 
-const markdown = createMarkdown(initialContent, editorRef, {
-  isReadonly: false,
-  parseUrlToBlob: (url) => {
-    // 自定义图片 URL 处理
-    return convertToBlobUrl(url)
+watch(
+  () => props.text,
+  (source) => {
+    md.value = createMarkdown(source, editorRef, {
+      isReadonly: false,
+      parseUrlToBlob: (url) => convertToBlobUrl(url)
+    })
   }
-})
+)
 
 onUnmounted(() => {
-  markdown.cleanup() // 清理资源
+  md.value?.cleanup()
 })
 </script>
 ```
@@ -336,7 +370,8 @@ onUnmounted(() => {
 1. **光标唯一性**: 通过 `cursorRendered` 标志确保只有一个光标位置
 2. **选区同步**: 需要同步维护 `cursorOffset` 和 `position` 两个状态
 3. **代码块编辑**: 进入编辑模式时清除高亮 HTML，退出时重新高亮
-4. **输入法冲突**: 使用隐藏 textarea 避免 contenteditable 的输入法问题
+4. **IME 处理**: `beforeinput` 必须始终 `preventDefault()`，避免浏览器原生 DOM 修改与 `source.value` 驱动的渲染冲突
+5. **光标同步**: VNode 重新渲染后，使用 `window.getSelection().addRange()` 同步浏览器原生光标位置
 
 ## 扩展建议
 
