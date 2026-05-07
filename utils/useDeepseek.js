@@ -7,7 +7,7 @@ const AImodel = {
   qwen: {
     apiKey: process.env.QWEN_API_KEY,
     baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
-    model: 'qwen3-coder-plus'
+    model: 'qwen3-coder-plus-2025-09-23'
   }
 }
 
