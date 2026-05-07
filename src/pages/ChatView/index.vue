@@ -108,7 +108,7 @@ const checkAll = () => {
 
 // 自动滚动
 const isAutoToBottom = ref(true)
-const SCROLL_THRESHOLD = userStore.isMobile ? 30 : 60
+const SCROLL_THRESHOLD = userStore.isMobile ? 30 : 40
 
 const handleScroll = () => {
   const { scrollTop, scrollHeight, clientHeight } = scrollRef.value
@@ -135,8 +135,8 @@ const throttleToBottom = throttle(
   () => {
     scrollToBottom()
   },
-  100,
-  { leading: true, trailing: false }
+  200,
+  { leading: true, trailing: true }
 )
 
 watch(

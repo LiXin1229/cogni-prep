@@ -39,8 +39,6 @@ onUnmounted(() => {
     <div v-if="md" class="edit-container" :contenteditable="!readonly">
       <component :is="md.root" />
     </div>
-    <textarea ref="imeTextarea" class="ime-textarea" spellcheck="false"></textarea>
-    <div class="cursor-layer"></div>
   </div>
 </template>
 
@@ -53,6 +51,5 @@ onUnmounted(() => {
 
 .edit-container {
   outline: none;
-  caret-color: transparent;
 }
 </style>

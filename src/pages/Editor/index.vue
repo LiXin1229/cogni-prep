@@ -6,7 +6,6 @@ import Editor from './Editor.vue'
 import Directory from './Directory.vue'
 import FloatingToolbar from './FloatingToolbar.vue'
 import type { Editor as EditorType, KeyCharTypes } from '@/utils/render'
-import type { Ime } from '@/utils/render'
 
 import { useUserInfoStore } from '@/stores/user'
 import { readFileContent, useSearchStore } from '@/stores/search'
@@ -182,7 +181,7 @@ const handleFileClick = async (fileNode: FileNode) => {
 }
 
 type EditorInstance = {
-  md: { source: string; editor: EditorType; ime: Ime; cleanup: () => void } | undefined
+  md: { source: string; editor: EditorType; cleanup: () => void } | undefined
 }
 const editorRef = ref<EditorInstance>()
 
@@ -246,7 +245,6 @@ const handleSetStyle = (type: KeyCharTypes) => {
   if (editorRef.value) {
     const md = editorRef.value.md
     md?.editor.handleInsertKeyChars(type)
-    md?.ime.focusImeTextArea()
   }
 }
 

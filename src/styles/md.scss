@@ -139,44 +139,6 @@ ol {
   list-style-type: decimal;
 }
 
-// 光标图层
-.cursor-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.cursor {
-  position: absolute;
-  width: 1px;
-  height: 16px;
-  background: black;
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-// 输入法 textarea
-.ime-textarea {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  outline: none;
-  background: transparent;
-  color: transparent;
-  caret-color: transparent;
-  resize: none;
-  z-index: -1;
-}
-
 // 移动端样式
 @media (max-aspect-ratio: 1/1) {
   .md-text {

@@ -221,54 +221,26 @@ export function createRenderer(
     if (editorRef.value === undefined) {
       return content
     }
-    const editContainer: HTMLElement | null = editorRef.value.querySelector('.edit-container')
-    const cursorLayer: HTMLElement | null = editorRef.value.querySelector('.cursor-layer')
-    const imeTextarea: HTMLTextAreaElement | null = editorRef.value.querySelector('.ime-textarea')
 
-    if (!editContainer || !cursorLayer) {
-      return content
-    }
-
-    // 该节点需要渲染光标
     if (!selector.cursorRendered && checkCursorInNode(node) && cursorOffset.value !== -1) {
       nextTick(() => {
         const el = node.el
         if (el?.firstChild) {
           const localOffset = cursorOffset.value - node.position.start.offset
 
-          // 光标相对于视口的位置
-          const range = document.createRange()
-          range.setStart(el.firstChild, localOffset)
-          range.setEnd(el.firstChild, localOffset)
-          const rects = range.getClientRects()
-          if (rects.length) {
-            const rect = rects[0]
-
-            // 计算光标相对于容器的位置
-            const boundingClientRect = editContainer.getBoundingClientRect()
-            const top = rect.top - boundingClientRect.top
-            const left = rect.left - boundingClientRect.left
-            const height = rect.height
-            // console.log(top, left, height)
-
-            // 设置光标 html
-            cursorLayer.innerHTML = `<div class="cursor" style="top:${top}px;left:${left}px;height:${height}px;width:0.5px;transform:scaleX(2);"></div>`
-
-            if (imeTextarea) {
-              imeTextarea.style.top = `${top}px`
-              imeTextarea.style.left = `${left}px`
-              imeTextarea.style.height = `${height}px`
-            }
+          const sel = window.getSelection()
+          if (sel) {
+            const range = document.createRange()
+            range.setStart(el.firstChild, localOffset)
+            range.collapse(true)
+            sel.removeAllRanges()
+            sel.addRange(range)
           }
         }
       })
 
       editingNodeMap.value.set(node.nodeId, true)
       selector.cursorRendered = true
-    } else {
-      if (cursorLayer) {
-        cursorLayer.innerHTML = ''
-      }
     }
     return content
   }

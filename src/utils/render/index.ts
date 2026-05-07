@@ -6,20 +6,20 @@ import { isHTMLElement } from './utils/general'
 import { createRenderer, preprocessAst } from './renderer'
 import type { Root } from 'mdast'
 import type { Node } from './ast'
-import { setupIme, type Ime } from './ime'
+import { setupInputHandler, type InputHandler } from './inputHandler'
 import { createBlobUrlManager, type ParseUrlToBlob } from './blobUrlManager'
 import { createHljs } from './hljs'
 
 export * from './select'
 export * from './edit'
-export * from './ime'
+export * from './inputHandler'
 export * from './renderer'
 
 export type MarkDown = {
   root: () => VNode
   source: Ref<string>
   editor: Editor
-  ime: Ime
+  inputHandler: InputHandler
   cleanup: () => void
 }
 export type EditorRef = Ref<HTMLElement | undefined>
@@ -57,7 +57,7 @@ export function createMarkdown(
   const editor = createEditor(input, selector, keyPositionMaps)
   const source = editor.source
 
-  const ime = setupIme(editorRef, editor, selector)
+  const inputHandler = setupInputHandler(editorRef, editor, selector)
 
   const { loadedLangs, highlight } = createHljs()
 
@@ -82,11 +82,22 @@ export function createMarkdown(
   let currentTaskId = 0
 
   // Worker 消息处理
-  worker.onmessage = (event: MessageEvent<{ id: number; ast: Root; error: string | null }>) => {
-    const { id, ast: resultAst, error } = event.data
+  worker.onmessage = (
+    event: MessageEvent<{
+      id: number
+      ast: Root
+      error: string | null
+      timing?: { receivedAt: number; parseDuration: number; postStart: number }
+    }>
+  ) => {
+    const receiveStart = performance.now()
+    const { id, ast: resultAst, error, timing } = event.data
 
     // 只处理最新任务的结果
-    if (id < currentTaskId) return
+    if (id < currentTaskId) {
+      console.log(`[丢弃] 过时任务 id=${id}, 当前=${currentTaskId}`)
+      return
+    }
 
     if (error) {
       console.log('Worker parse error:', error)
@@ -96,7 +107,26 @@ export function createMarkdown(
         console.log('Fallback parse error:', e)
       }
     } else {
+      // ⑥ 测量：ast.value 赋值 + 响应式触发耗时
+      const assignStart = performance.now()
       ast.value = resultAst
+      const assignEnd = performance.now()
+
+      if (timing) {
+        const nodeCount = countNodes(resultAst)
+        const totalDuration = assignEnd - receiveStart
+        const transmissionDelay = receiveStart - timing.postStart
+
+        console.log(
+          `[2] 任务 ${id} 完成:\n` +
+            `    Worker parse: ${timing.parseDuration.toFixed(2)}ms\n` +
+            `    Worker→主线程 传输延迟: ${transmissionDelay.toFixed(2)}ms\n` +
+            `    主线程 onmessage 总耗时: ${totalDuration.toFixed(2)}ms\n` +
+            `      其中 ast.value 赋值: ${(assignEnd - assignStart).toFixed(2)}ms\n` +
+            `    AST 节点数: ${nodeCount}\n` +
+            `    原始文本长度: ${source.value.length} bytes`
+        )
+      }
     }
   }
 
@@ -110,7 +140,12 @@ export function createMarkdown(
     ([val]) => {
       const markdown = val
       const taskId = ++currentTaskId
+
+      // ① 测量：主线程 postMessage 耗时
+      const sendStart = performance.now()
       worker.postMessage({ id: taskId, markdown })
+      const sendEnd = performance.now()
+      console.log(`[1] 任务 ${taskId}: postMessage 耗时: ${(sendEnd - sendStart).toFixed(2)}ms`)
     },
     { immediate: true }
   )
@@ -153,8 +188,6 @@ export function createMarkdown(
                   selector.setEndNode(node)
                 }
               }
-
-              ime.focusImeTextArea()
             },
           }
         : {},
@@ -175,7 +208,7 @@ export function createMarkdown(
 
   const cleanup = () => {
     worker.terminate()
-    ime.cleanupImeListener()
+    inputHandler.cleanup()
     blobUrlManager.cleanup()
   }
 
@@ -183,7 +216,7 @@ export function createMarkdown(
     root,
     source,
     editor,
-    ime,
+    inputHandler,
     cleanup,
   }
 }
@@ -192,4 +225,14 @@ export const MAX_LENGTH = 80 * 1000
 
 function isOverLength(length: number) {
   return length > MAX_LENGTH
+}
+
+function countNodes(node: any): number {
+  let count = 1
+  if (node.children) {
+    for (const child of node.children) {
+      count += countNodes(child)
+    }
+  }
+  return count
 }

@@ -262,15 +262,35 @@ export const useChatStore = defineStore('chat', () => {
       // 读取流式响应
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
+      let buffer = ''
 
       const chatMapValue = chatMap.get(data.sessionId)
       if (!chatMapValue) return
       chatMapValue.chatList.push(newText)
 
+      const processBuffer = (buf: string, isFinal: boolean) => {
+        const parts = buf.split('\n\n')
+        if (!isFinal) {
+          buffer = parts.pop() || ''
+        } else {
+          buffer = ''
+        }
+        parts.forEach((part) => {
+          console.log('line: ', part)
+          if (part.startsWith('data: ')) {
+            const data = part.slice(6)
+            if (data === '[DONE]') return
+            const json: { content: string } = JSON.parse(data)
+            newText.content += json.content
+          }
+        })
+      }
+
       while (true) {
         const { done, value } = await reader.read()
 
         if (done) {
+          if (buffer) processBuffer(buffer, true)
           setSendState('available', data.sessionId)
           saveChat(chatId, data.sessionId, newText.content, data, msgType)
 
@@ -281,19 +301,8 @@ export const useChatStore = defineStore('chat', () => {
 
         setSendState('streaming', data.sessionId)
 
-        // 解析SSE格式数据（格式：data: [JSON]\n\n）
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n\n') // 按SSE分隔符分割
-
-        lines.forEach((line) => {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6) // 去掉'data: '前缀
-            if (data === '[DONE]') return // 结束标记
-            const json: { content: string } = JSON.parse(data) // 解析为JSON
-            // console.log('收到流式数据：', json)
-            newText.content += json.content
-          }
-        })
+        buffer += decoder.decode(value, { stream: true })
+        processBuffer(buffer, false)
       }
     } catch (err: any) {
       // 捕获中断错误（区别于其他错误）
